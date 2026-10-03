@@ -6,7 +6,7 @@ selbst nicht als Quest-Gegenstand erkennt.
 
 - Eckmarkierung oben links: gelb = Ziel offen, grün = erfüllt, Quest noch nicht abgegeben.
 - Set-Modus (Standard an): meldet die Items zusätzlich als Set „Questziel“ an Baganator.
-- Mit Auctionator: Sets „Auktionshaus“ (Auktionspreis ≥ Faktor × Händlerpreis, Standard 2) und „Händler“ (darunter). Ohne bekannten Auktionspreis kein Set. Faktor: `/bqm faktor 3`.
+- Mit Auctionator: Set „Auktionshaus“ (Auktionspreis ≥ Faktor × Händlerpreis, Standard 2). Billigere Handwerkswaren übernimmt Scrap. Ohne bekannten Auktionspreis kein Set. Faktor: `/bqm faktor 3`.
 - Mit Scrap: Handwerkswaren der Stufe „Händler“ (nicht Questziel) gelten als Schrott und werden von Scrap verkauft. Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang. Aus: `/bqm scrap`.
 - `/bqm` listet die erkannten Items, `/bqm set` schaltet den Set-Modus um (danach `/reload`).
 
