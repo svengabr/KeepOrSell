@@ -2,6 +2,8 @@
 local _, ns = ...
 
 ns.SET_NAME = "Questziel"
+ns.SET_AH = "Auktionshaus"
+ns.SET_VENDOR = "Händler"
 local ICON = "Interface\\GossipFrame\\ActiveQuestIcon"
 
 local function ItemIDFromDetails(details)
@@ -36,13 +38,22 @@ function ns.RegisterBaganator()
     return tex
   end, {default_position = "top_left", priority = 1})
 
-  -- Optional: Questziele als Set melden, damit die Suche sie erfasst
+  -- Optional: Questziele und Preis-Einstufung als Sets melden, damit die Suche sie erfasst
   if BagQuestMarksDB.setSource and api.RegisterItemSetSource then
-    local info = {name = ns.SET_NAME, iconTexture = ICON}
+    local questInfo = {name = ns.SET_NAME, iconTexture = ICON}
+    local priceInfo = {
+      ah = {name = ns.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"},
+      vendor = {name = ns.SET_VENDOR, iconTexture = "Interface\\Icons\\INV_Misc_Coin_05"},
+    }
     api.RegisterItemSetSource("BagQuestMarks", "bagquestmarks", function(_, guid)
-      if ns.GetObjectiveState(ItemIDFromGUID(guid)) then return {info} end
+      local sets = {}
+      if ns.GetObjectiveState(ItemIDFromGUID(guid)) then table.insert(sets, questInfo) end
+      local link = guid and C_Item.GetItemLinkByGUID and C_Item.GetItemLinkByGUID(guid)
+      local class = ns.GetPriceClass(link, BagQuestMarksDB.factor)
+      if class then table.insert(sets, priceInfo[class]) end
+      if #sets > 0 then return sets end
     end, function()
-      return {ns.SET_NAME}
+      return {ns.SET_NAME, ns.SET_AH, ns.SET_VENDOR}
     end)
   end
 end
