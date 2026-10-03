@@ -2,11 +2,12 @@
 ## Title: Bag Quest Marks
 ## Notes: Markiert in Baganator Questziel-Items und ob sich das Auktionshaus lohnt.
 ## Author: Sven
-## Version: 0.2.0
+## Version: 0.3.0
 ## SavedVariables: BagQuestMarksDB
-## OptionalDeps: Baganator, Auctionator
+## OptionalDeps: Baganator, Auctionator, Scrap
 
 Objectives.lua
 Prices.lua
+Scrap.lua
 Baganator.lua
 Core.lua

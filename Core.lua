@@ -1,7 +1,7 @@
 -- Einstellungen, Ereignisse und /bqm
 local addonName, ns = ...
 
-local DEFAULTS = {setSource = true, factor = 2}
+local DEFAULTS = {setSource = true, factor = 2, scrap = true}
 
 local frame = CreateFrame("Frame")
 local pending = false
@@ -22,6 +22,8 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     for k, v in pairs(DEFAULTS) do
       if BagQuestMarksDB[k] == nil then BagQuestMarksDB[k] = v end
     end
+    -- früh einhaken, bevor andere Addons Scrap:IsJunk abfragen
+    ns.HookScrap()
   elseif event == "PLAYER_LOGIN" then
     ns.Refresh()
     ns.RegisterBaganator()
@@ -45,6 +47,10 @@ SlashCmdList.BAGQUESTMARKS = function(msg)
     BagQuestMarksDB.factor = factor
     ns.RefreshBaganator()
     print(("|cffffd200BagQuestMarks:|r Auktionshaus ab %sx Händlerpreis."):format(factor))
+  elseif msg == "scrap" then
+    BagQuestMarksDB.scrap = not BagQuestMarksDB.scrap
+    ns.RefreshBaganator()
+    print("|cffffd200BagQuestMarks:|r Billige Handwerkswaren als Scrap-Schrott: " .. (BagQuestMarksDB.scrap and "an" or "aus"))
   elseif msg == "set" then
     BagQuestMarksDB.setSource = not BagQuestMarksDB.setSource
     print("|cffffd200BagQuestMarks:|r Questziele als Set " .. (BagQuestMarksDB.setSource and "an" or "aus") .. " – wirkt nach /reload.")
@@ -54,6 +60,6 @@ SlashCmdList.BAGQUESTMARKS = function(msg)
       n = n + 1
       print(("  %s (%s)"):format(name, state == "open" and "offen" or "erfüllt"))
     end
-    print(("|cffffd200BagQuestMarks:|r %d Questziel-Items. Set-Modus: %s (/bqm set), Auktionshaus ab %sx Händlerpreis (/bqm faktor 2)"):format(n, BagQuestMarksDB.setSource and "an" or "aus", BagQuestMarksDB.factor))
+    print(("|cffffd200BagQuestMarks:|r %d Questziel-Items. Set-Modus: %s (/bqm set), Auktionshaus ab %sx Händlerpreis (/bqm faktor 2), Scrap: %s (/bqm scrap)"):format(n, BagQuestMarksDB.setSource and "an" or "aus", BagQuestMarksDB.factor, BagQuestMarksDB.scrap and "an" or "aus"))
   end
 end
