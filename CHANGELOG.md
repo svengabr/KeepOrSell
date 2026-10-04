@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
 - Options panel under Esc → Options → AddOns → KeepOrSell (auction house threshold, Scrap junk, Baganator groups).
 - `/kos` now only opens the options panel; the `factor`, `scrap` and `sets` subcommands are gone.
