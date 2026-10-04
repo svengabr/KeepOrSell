@@ -9,7 +9,7 @@ It combines **Baganator**, **Auctionator** and **Scrap**:
 | **Quest** | Quest items, regular items an active quest asks for (e.g. "6/10 Lean Wolf Flank") and, with Questie, items a quest you haven't done yet needs (within 5 levels of yours) | Keep |
 | **Profession** | Reagents of your known recipes that still give skill points, and recipes for your professions you haven't learned yet | Keep |
 | **AuctionHouse** | Items whose current auction price is at least 2× the vendor price | Sell on the auction house |
-| **Junk** (Scrap) | Grey items, cheap trade goods no quest or recipe needs, grey and white gear not worth auctioning, gear or items your class can never use, and recipes you already know or for professions you don't have (unless worth auctioning) | Scrap sells them at the vendor |
+| **Junk** (Scrap) | Grey items, cheap trade goods no quest or recipe needs, grey and white gear not worth auctioning, gear or items your class can never use, recipes you already know or for professions you don't have, and, with Questie, quest items of quests you have done (unless worth auctioning) | Scrap sells them at the vendor |
 
 Items without a known or recent auction price are left alone – when in doubt, you keep them. Gear you could wear (green or better) is never junk – it only goes to the auction house when tradeable and worth it.
 
@@ -27,7 +27,7 @@ Get it on [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) – via
 - [Auctionator](https://www.curseforge.com/wow/addons/auctionator) – scan the auction house once, otherwise there are no prices
 - [Scrap](https://www.curseforge.com/wow/addons/scrap) – optional, for automatic vendoring
 
-- [Questie](https://www.curseforge.com/wow/addons/questie) – optional; without it only quests in your quest log count. With it, items for quests you haven't picked up or finished yet are kept too, if the quest is within 5 levels of yours and open to your race and class. The tooltip names the quest.
+- [Questie](https://www.curseforge.com/wow/addons/questie) – optional; without it only quests in your quest log count. With it, items for quests you haven't picked up or finished yet are kept too, if the quest is within 5 levels of yours and open to your race and class. The tooltip names the quest, also for quest items. Quest items whose quests you have all done become junk.
 
 ## Setup
 
@@ -57,7 +57,7 @@ Options that need an addon you don't have (Auctionator for prices, Baganator for
 - **Show hints** – on/off
 - **Show groups in Baganator** – on/off (needs `/reload`)
 
-KeepOrSell only marks **trade goods**, **grey and white gear** and **gear your class can never wear** as junk – never green or better gear you could wear, consumables or quest items. Items you mark as "not junk" in Scrap always win.
+KeepOrSell only marks **trade goods**, **grey and white gear** and **gear your class can never wear** as junk – never green or better gear you could wear, consumables or quest items you may still need. Items you mark as "not junk" in Scrap always win.
 
 Works on Retail and the Classic clients.
 
@@ -70,7 +70,7 @@ Works on Retail and the Classic clients.
 - **Quest**: Quest-Items und normale Items, die eine aktive Quest verlangt (z. B. „6/10 Magere Wolfflanke“), mit Questie auch Items, die eine noch nicht erledigte Quest höchstens 5 Stufen über oder unter deiner braucht – der Tooltip nennt die Quest. Behalten.
 - **Beruf**: Zutaten deiner bekannten Rezepte, die noch Skillpunkte geben, und Rezepte für deine Berufe, die du noch nicht kannst. Behalten.
 - **Auktionshaus**: Auktionspreis mindestens doppelt so hoch wie der Händlerpreis. Im AH verkaufen.
-- **Schrott** (Scrap): graue Items, billige Handwerkswaren ohne Quest- oder Rezeptbezug, graue und weiße Ausrüstung, die sich im AH nicht lohnt, und Ausrüstung oder Items, die deine Klasse nie nutzen kann (z. B. „Klassen: Magier“), sowie Rezepte, die du schon kannst oder für Berufe, die du nicht hast (wenn sie sich im AH nicht lohnen). Scrap verkauft sie beim Händler.
+- **Schrott** (Scrap): graue Items, billige Handwerkswaren ohne Quest- oder Rezeptbezug, graue und weiße Ausrüstung, die sich im AH nicht lohnt, und Ausrüstung oder Items, die deine Klasse nie nutzen kann (z. B. „Klassen: Magier“), sowie Rezepte, die du schon kannst oder für Berufe, die du nicht hast, und mit Questie Questgegenstände erledigter Quests (wenn sie sich im AH nicht lohnen). Scrap verkauft sie beim Händler.
 
 Grüne und bessere Ausrüstung, die du tragen könntest, wird nie Schrott – höchstens Auktionshaus, wenn handelbar und lohnend. Der Tooltip zeigt, wohin ein Item gehört und warum. Braucht KeepOrSell etwas von dir (neuer Auctionator-Scan, Berufsfenster öffnen), erscheint unten links im Baganator-Taschenfenster ein Hinweis-Knopf.
 

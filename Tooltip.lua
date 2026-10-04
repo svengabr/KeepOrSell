@@ -33,6 +33,12 @@ end
 
 local RECIPE_TEXT = {recipe_known = "TIP_RECIPE_KNOWN", recipe_other = "TIP_RECIPE_OTHER"}
 
+-- why an item nobody needs any more is useless: a recipe or a quest item of a done quest
+local function UselessText(verdict)
+  if verdict.reason == "questitem_done" then return L.TIP_QUEST_ITEM_USELESS:format(verdict.quest.name) end
+  return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
+end
+
 -- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying. Pure apart from money formatting.
 function ns.TooltipText(verdict, prices, db)
   prices = prices or {}
@@ -41,6 +47,14 @@ function ns.TooltipText(verdict, prices, db)
   if kind == "quest" and reason == "questie" then
     local q = verdict.quest
     text = q.level and q.level > 0 and L.TIP_QUESTIE:format(q.name, q.level) or L.TIP_QUESTIE_SCALING:format(q.name)
+  elseif kind == "quest" and reason == "questitem" and verdict.quest then
+    local q = verdict.quest
+    if q.done then
+      text = L.TIP_QUEST_ITEM_DONE:format(q.name)
+    else
+      text = q.level and q.level > 0 and L.TIP_QUEST_ITEM_FOR:format(q.name, q.level)
+        or L.TIP_QUEST_ITEM_FOR_SCALING:format(q.name)
+    end
   elseif kind == "quest" then
     text = reason == "done" and L.TIP_QUEST_DONE or reason == "open" and L.TIP_QUEST_OPEN or L.TIP_QUEST_ITEM
   elseif kind == "profession" then
@@ -48,15 +62,15 @@ function ns.TooltipText(verdict, prices, db)
   elseif kind == "ah" then
     text = L.TIP_AH .. " – " .. PriceText(prices, verdict, db)
     if reason == "unusable" then text = text .. ", " .. L.TIP_UNUSABLE end
-    if RECIPE_TEXT[reason] then text = text .. ", " .. L[RECIPE_TEXT[reason]] end
+    if UselessText(verdict) then text = text .. ", " .. UselessText(verdict) end
   elseif kind == "junk" then
     if reason == "plain" then
       text = L.TIP_JUNK .. " – " .. L.TIP_PLAIN .. ", " .. PriceText(prices, verdict, db)
     elseif reason == "unusable_bound" then
       text = L.TIP_JUNK .. " – " .. L.TIP_UNUSABLE .. ", " .. L.TIP_BOUND
-    elseif RECIPE_TEXT[reason] then
+    elseif UselessText(verdict) then
       local detail = verdict.bound and L.TIP_BOUND or PriceText(prices, verdict, db)
-      text = L.TIP_JUNK .. " – " .. L[RECIPE_TEXT[reason]] .. ", " .. detail
+      text = L.TIP_JUNK .. " – " .. UselessText(verdict) .. ", " .. detail
     elseif reason == "unusable" then
       text = L.TIP_JUNK .. " – " .. L.TIP_UNUSABLE .. ", " .. PriceText(prices, verdict, db)
     else

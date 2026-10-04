@@ -21,7 +21,7 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
 | `Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
 | `Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters; erkennt Rezepte als ungelernt/bekannt/fremder Beruf (`ns.GetRecipeState`) |
-| `Questie.lua` | Kommende Quests über QuestieDBs öffentliche API (`LibQuestieDB`, Contract 2): `ns.GetQuestieQuest`, reine Auswahl `ns.PickQuestieQuest` (±5 Stufen, Rasse/Klasse, nicht erledigt). Eigener Item→Quest-Index aus allen Quests, nach dem Login häppchenweise gebaut (`ns.BuildQuestieIndex`) – `Item.relatedQuests` ist auf Forever leer |
+| `Questie.lua` | Kommende Quests über QuestieDBs öffentliche API (`LibQuestieDB`, Contract 2): `ns.GetQuestieQuest`, reine Auswahl `ns.PickQuestieQuest` (±5 Stufen, Rasse/Klasse, nicht erledigt); für Items der Klasse Quest `ns.GetQuestItemQuest` (jede Stufe, sonst erledigte Quest) für die Tooltip-Zeile. Eigener Item→Quest-Index aus allen Quests, nach dem Login häppchenweise gebaut (`ns.BuildQuestieIndex`) – `Item.relatedQuests` ist auf Forever leer |
 | `Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
 | `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
@@ -48,8 +48,9 @@ gibt es nicht. Das Scrap-Schrott-Plugin bringt Baganator selbst mit (`Baganator/
   markiert. Als Junk gelten nur Handwerkswaren (`classID 7`), graue/weiße Ausrüstung (ohne Hemd, Wappenrock,
   Angelrute) und Ausrüstung, die die Klasse **nie** tragen kann (auch nicht nach späterem Training), sowie Items mit
   unerfüllter Klassen-/Rassen-Anforderung (Tooltip-Zeile `UsageRequirement`/`RaceClass`, rot) sowie
-  Rezepte, die schon bekannt sind oder zu einem Beruf gehören, den der Charakter nicht hat (Option `recipeJunk`) – nie grüne
-  oder bessere tragbare Ausrüstung, Verbrauchsgüter, Questitems. Tragbare Ausrüstung darf ins Auktionshaus
+  Rezepte, die schon bekannt sind oder zu einem Beruf gehören, den der Charakter nicht hat (Option `recipeJunk`), sowie
+  Questgegenstände (`classID 12`), deren Quests laut QuestieDB alle erledigt oder für den Charakter nicht machbar sind
+  (Option `questie`) – nie grüne oder bessere tragbare Ausrüstung, Verbrauchsgüter, andere Questitems. Tragbare Ausrüstung darf ins Auktionshaus
   (handelbar und lohnend). Einzige Ausnahme vom „Im Zweifel“: graue/weiße Ausrüstung ohne Auktionspreis gilt als
   nicht lohnend, sobald der Spieler mit Auctionator im AH war (`KeepOrSellDB.ahVisited`).
 - **Neue Texte** immer in `Locales.lua`, englisch und deutsch.

@@ -15,15 +15,17 @@ end
 
 -- quests: {id, name, level, requiredLevel, races, classes, exclusiveTo}; level -1 scales with the player
 -- player: {level, race, class, completed = function(questID)}
--- Returns the open quest within LEVEL_RANGE of the player's level that is closest in level, or nil. Pure.
-function ns.PickQuestieQuest(quests, player)
+-- Returns the open quest within range (default LEVEL_RANGE) of the player's level that is closest in level,
+-- or nil. Pure.
+function ns.PickQuestieQuest(quests, player, range)
+  range = range or LEVEL_RANGE
   local best, bestDistance
   for _, q in ipairs(quests) do
     local level = q.level
     if level == -1 then level = player.level end
     if not level or level <= 0 then level = q.requiredLevel end
     local distance = level and math.abs(level - player.level)
-    local open = distance and distance <= LEVEL_RANGE
+    local open = distance and distance <= range
       and Allowed(q.races, player.race) and Allowed(q.classes, player.class)
       and not player.completed(q.id)
     for _, other in ipairs(q.exclusiveTo or {}) do
@@ -32,6 +34,17 @@ function ns.PickQuestieQuest(quests, player)
     if open and (not best or distance < bestDistance) then best, bestDistance = q, distance end
   end
   return best
+end
+
+-- For an item of the quest item class: the quest it belongs to, at any level. Prefers an open quest
+-- (closest in level), otherwise one the player has done, marked done = true; nil if none. Pure.
+function ns.PickQuestItemQuest(quests, player)
+  local open = ns.PickQuestieQuest(quests, player, math.huge)
+  if open then return open end
+  for _, q in ipairs(quests) do
+    if player.completed(q.id) then return {id = q.id, name = q.name, level = q.level, done = true} end
+  end
+  return nil
 end
 
 local db -- LibQuestieDB once its contract is confirmed, false when missing or incompatible
@@ -96,7 +109,7 @@ function ns.BuildQuestieIndex(done)
   Step()
 end
 
-local function Lookup(lib, itemID)
+local function Lookup(lib, itemID, pick)
   local Quest, quests = lib.Quest, {}
   for _, questID in ipairs(index[itemID] or {}) do
     table.insert(quests, {
@@ -111,14 +124,23 @@ local function Lookup(lib, itemID)
     class = select(3, UnitClass("player")),
     completed = function(id) return C_QuestLog.IsQuestFlaggedCompleted(id) end,
   }
-  return ns.PickQuestieQuest(quests, player)
+  return pick(quests, player)
+end
+
+local function Find(itemID, pick)
+  local lib = itemID and index and QuestieDB()
+  if not (lib and C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) then return nil end
+  -- in doubt the item just isn't protected; a database error must not break the bags
+  local ok, q = pcall(Lookup, lib, itemID, pick)
+  return ok and q and q.name and {name = q.name, level = q.level, done = q.done} or nil
 end
 
 -- {name, level} of an upcoming quest that needs the item, or nil (also without QuestieDB)
 function ns.GetQuestieQuest(itemID)
-  local lib = itemID and index and QuestieDB()
-  if not (lib and C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) then return nil end
-  -- in doubt the item just isn't protected; a database error must not break the bags
-  local ok, q = pcall(Lookup, lib, itemID)
-  return ok and q and q.name and {name = q.name, level = q.level} or nil
+  return Find(itemID, ns.PickQuestieQuest)
+end
+
+-- {name, level, done} of the quest a quest-class item belongs to, at any level, or nil
+function ns.GetQuestItemQuest(itemID)
+  return Find(itemID, ns.PickQuestItemQuest)
 end

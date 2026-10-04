@@ -41,6 +41,11 @@ for _, key in ipairs({"name", "questLevel", "requiredLevel", "requiredRaces", "r
                       "requiredSourceItems", "exclusiveTo"}) do
   LibQuestieDB.Quest[key] = field(key)
 end
+-- item 12 "Okra" is of the quest item class (12); quest 500 "Westfall Stew" (level 14) wants it
+ITEMS[12] = {"Okra", 12, 0, "", 15}
+QUESTS[500] = {name = "Westfall Stew", questLevel = 14, requiredLevel = 10, requiredRaces = 0, requiredClasses = 0,
+               objectives = {nil, nil, {{12}}}}
+IDS[#IDS + 1] = 500
 KeepOrSellDB.questie = true
 """
 
@@ -94,6 +99,30 @@ class PickTests(unittest.TestCase):
         self.assertEqual(self.pick(far, near).name, "Near")
 
 
+class PickQuestItemTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Questie.lua",), base=False)
+        self.player = self.rt.eval("{level = 20, race = 4, class = 11, completed = function(id) return id == 99 end}")
+
+    def pick_item(self, *quests):
+        return self.ns.PickQuestItemQuest(self.rt.eval("function(...) return {...} end")(*quests), self.player)
+
+    def test_any_level(self):
+        self.assertEqual(self.pick_item(quest(self.rt, level=50)).name, "Q")
+
+    def test_open_quest_before_done_one(self):
+        done = quest(self.rt, id=99, name="Done", level=20)
+        far = quest(self.rt, id=1, name="Far", level=40)
+        self.assertEqual(self.pick_item(done, far).name, "Far")
+
+    def test_done_quest_is_marked(self):
+        q = self.pick_item(quest(self.rt, id=99, name="Done"))
+        self.assertEqual((q.name, q.done), ("Done", True))
+
+    def test_other_race_only(self):
+        self.assertIsNone(self.pick_item(quest(self.rt, races=2 ** 1)))
+
+
 class LookupTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(FILES, STUBS)
@@ -118,6 +147,13 @@ class LookupTests(unittest.TestCase):
 
     def test_item_no_quest_needs(self):
         self.assertIsNone(self.ns.GetQuestieQuest(9))
+
+    def test_quest_item_quest_at_any_level(self):
+        self.assertIsNone(self.ns.GetQuestieQuest(12))
+        q = self.ns.GetQuestItemQuest(12)
+        self.assertEqual((q.name, q.level, q.done), ("Westfall Stew", 14, None))
+        self.rt.execute("COMPLETED[500] = true")
+        self.assertTrue(self.ns.GetQuestItemQuest(12).done)
 
     def test_errors_keep_the_item_unprotected_but_quiet(self):
         self.rt.execute("LibQuestieDB.Quest.questLevel = function() error('broken') end")
@@ -184,6 +220,33 @@ class DecideTests(unittest.TestCase):
         facts = self.rt.eval("{quest = 'open', questie = {name = 'X', level = 20}}")
         self.assertEqual(self.ns.Decide(facts, self.rt.eval("KeepOrSellDB")).reason, "open")
 
+    def test_quest_item_names_its_quest(self):
+        verdict = self.ns.Classify(12, "link12")
+        self.assertEqual((verdict.kind, verdict.reason, verdict.quest.name), ("quest", "questitem", "Westfall Stew"))
+
+    def test_done_quest_item_is_junk(self):
+        self.rt.execute("COMPLETED[500] = true; AH.link12 = 5")
+        verdict = self.ns.Classify(12, "link12")
+        self.assertEqual((verdict.kind, verdict.reason, verdict.quest.name), ("junk", "questitem_done", "Westfall Stew"))
+
+    def test_done_quest_item_worth_auctioning(self):
+        self.rt.execute("COMPLETED[500] = true; AH.link12 = 500")
+        self.assertEqual(self.ns.Classify(12, "link12").kind, "ah")
+
+    def test_done_quest_item_without_price_stays(self):
+        self.rt.execute("COMPLETED[500] = true")
+        verdict = self.ns.Classify(12, "link12")
+        self.assertIsNone(verdict.kind)
+        self.assertTrue(verdict.needsPrice)
+
+    def test_done_quest_item_bound_is_junk(self):
+        self.rt.execute("COMPLETED[500] = true; BOUND[12] = true")
+        self.assertEqual(self.ns.Classify(12, "link12").kind, "junk")
+
+    def test_done_quest_item_kept_with_questie_off(self):
+        self.rt.execute("COMPLETED[500] = true; AH.link12 = 5; KeepOrSellDB.questie = false")
+        self.assertEqual(self.ns.Classify(12, "link12").reason, "questitem")
+
     def test_switch_off(self):
         self.rt.execute("KeepOrSellDB.questie = false; AH.link4 = 15")
         self.assertEqual(self.ns.Classify(4, "link4").kind, "junk")
@@ -204,6 +267,21 @@ class TooltipTextTests(unittest.TestCase):
         text = self.text("{kind = 'quest', reason = 'questie', quest = {name = 'Wolf Stew', level = -1}}")
         self.assertIn('needed for "Wolf Stew"', text)
         self.assertNotIn("level", text)
+
+    def test_quest_item_names_its_quest(self):
+        self.assertIn('Quest – quest item for "Westfall Stew" (level 14)',
+                      self.text("{kind = 'quest', reason = 'questitem', quest = {name = 'Westfall Stew', level = 14}}"))
+
+    def test_quest_item_quest_done(self):
+        self.assertIn('quest item for "Westfall Stew" (already done)',
+                      self.text("{kind = 'quest', reason = 'questitem', quest = {name = 'Westfall Stew', level = 14, done = true}}"))
+
+    def test_done_quest_item_junk(self):
+        text = self.text("{kind = 'junk', reason = 'questitem_done', quest = {name = 'Westfall Stew', done = true}, bound = true}")
+        self.assertIn('Junk – "Westfall Stew" already done, soulbound', text)
+
+    def test_quest_item_without_questie(self):
+        self.assertIn("Quest – quest item", self.text("{kind = 'quest', reason = 'questitem'}"))
 
 
 if __name__ == "__main__":

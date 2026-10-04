@@ -4,8 +4,9 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, questie, classID, equipLoc, tool, unusable, plain, bound, reagent, recipe, prices, priceData}
+-- facts: {quest, questie, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, recipe, prices, priceData}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
+-- questItemFor = {name, level, done} of the quest a quest-class item belongs to, at any level (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
@@ -17,7 +18,11 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 function ns.Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
   if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
-  if facts.classID == QUESTITEM then return {kind = "quest", reason = "questitem"} end
+  -- a quest item stays unless every quest the player could do with it is done
+  local doneQuestItem = facts.classID == QUESTITEM and db.questie and facts.questItemFor and facts.questItemFor.done
+  if facts.classID == QUESTITEM and not doneQuestItem then
+    return {kind = "quest", reason = "questitem", quest = facts.questItemFor}
+  end
   if facts.tool then return {reason = "tool"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
@@ -27,9 +32,11 @@ function ns.Decide(facts, db)
   local isGear = (facts.classID == WEAPON or facts.classID == ARMOR) and (facts.equipLoc or "") ~= ""
   local uselessRecipe = db.recipeJunk and (facts.recipe == "known" or facts.recipe == "other")
 
-  if (db.gear and facts.unusable) or uselessRecipe then
+  if (db.gear and facts.unusable) or uselessRecipe or doneQuestItem then
     -- nothing the player can use: auction it when worth it, otherwise sell it
-    if uselessRecipe then
+    if doneQuestItem then
+      verdict.reason, verdict.quest, verdict.bound = "questitem_done", facts.questItemFor, facts.bound
+    elseif uselessRecipe then
       verdict.reason = "recipe_" .. facts.recipe
       verdict.bound = facts.bound
     else
@@ -114,6 +121,7 @@ function ns.ItemFacts(itemID, itemLink, location)
   return {
     quest = ns.GetObjectiveState(itemID),
     questie = ns.GetQuestieQuest(itemID),
+    questItemFor = classID == QUESTITEM and ns.GetQuestItemQuest(itemID) or nil,
     classID = classID,
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID),
