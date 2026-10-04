@@ -71,6 +71,7 @@ function ns.RegisterOptions(db, defaults)
   Checkbox("tooltip", L.OPT_TOOLTIP, L.OPT_TOOLTIP_TIP)
   Checkbox("hints", L.OPT_HINTS, L.OPT_HINTS_TIP, true)
   Checkbox("destroy", L.OPT_DESTROY, L.OPT_DESTROY_TIP, true)
+  Checkbox("bagValue", L.OPT_BAG_VALUE, L.OPT_BAG_VALUE_TIP, true)
   Checkbox("setSource", L.OPT_SETS, L.OPT_SETS_TIP)
 
   if layout and CreateSettingsListSectionHeaderInitializer and Settings.CreateElementInitializer then

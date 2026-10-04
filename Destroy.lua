@@ -18,35 +18,11 @@ function ns.PickCheapest(candidates)
   return best
 end
 
-local BAGS = NUM_BAG_SLOTS or 4
-
--- Scrap decides when present (its list, "not junk" marks and our hook); otherwise grey items and
--- whatever KeepOrSell classifies as junk
-local function IsJunk(info, bag, slot)
-  if Scrap and Scrap.IsJunk then return Scrap:IsJunk(info.itemID, bag, slot) and true or false end
-  return info.quality == 0 or ns.ShouldScrap(info.itemID, bag, slot)
-end
-
-local function VendorPrice(link)
-  return select(11, (C_Item.GetItemInfo or GetItemInfo)(link)) or 0
-end
-
--- Returns {bag, slot, itemID, link, count, value, icon} of the junk to destroy, or nil
+-- Returns the bag item (see ns.ScanBags) of the junk to destroy, or nil
 function ns.FindDestroyTarget()
-  if not (C_Container and C_Container.GetContainerItemInfo) then return nil end
   local candidates = {}
-  for bag = 0, BAGS do
-    for slot = 1, C_Container.GetContainerNumSlots(bag) do
-      local info = C_Container.GetContainerItemInfo(bag, slot)
-      if info and info.itemID and info.hyperlink and IsJunk(info, bag, slot) then
-        local count = info.stackCount or 1
-        table.insert(candidates, {
-          bag = bag, slot = slot, itemID = info.itemID, link = info.hyperlink, count = count,
-          value = VendorPrice(info.hyperlink) * count, quality = info.quality, locked = info.isLocked,
-          icon = info.iconFileID,
-        })
-      end
-    end
+  for _, item in ipairs(ns.ScanBags()) do
+    if item.junk then table.insert(candidates, item) end
   end
   return ns.PickCheapest(candidates)
 end

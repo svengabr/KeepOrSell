@@ -52,6 +52,7 @@ local function Widget()
     if key == "IsShown" then return function(self) return self.shown end end
     if key == "SetShown" then return function(self, v) self.shown = v and true or false end end
     if key == "IsMouseOver" then return function() return false end end
+    if key == "GetStringWidth" then return function() return 0 end end
     if key == "Play" then return function(self) self.playing = true end end
     if key == "Stop" then return function(self) self.playing = false end end
     if key == "IsPlaying" then return function(self) return self.playing == true end end
@@ -74,7 +75,7 @@ def candidate(rt, **kw):
 
 class PickTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS)
 
     def pick(self, *candidates):
         chosen = self.ns.PickCheapest(self.rt.table_from([candidate(self.rt, **c) for c in candidates]))
@@ -102,7 +103,7 @@ class PickTests(unittest.TestCase):
 
 class FindTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS)
 
     def test_without_scrap_grey_and_own_junk(self):
         # staff 50, grey fang 5 x 2 = 10; linen without auction price and the potion are kept
@@ -125,7 +126,7 @@ class FindTests(unittest.TestCase):
 
 class DestroyTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS)
         self.target = self.ns.FindDestroyTarget()
 
     def test_destroys_target(self):
@@ -171,7 +172,7 @@ def loot(rt, *items):
 
 class LootWorthMoreTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS)
         self.target = self.ns.FindDestroyTarget()  # grey fang x5, worth 10
 
     def best(self):
@@ -210,7 +211,7 @@ class LootWorthMoreTests(unittest.TestCase):
 
 class LootFlowTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), FRAMES + STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), FRAMES + STUBS)
         self.rt.execute("KeepOrSellDB.destroy = true")
         self.assertTrue(self.ns.RegisterDestroy())
         self.ns.UpdateDestroy()

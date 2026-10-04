@@ -23,6 +23,8 @@ Scrap.lua
 Baganator.lua
 Tooltip.lua
 Hints.lua
+Bags.lua
 Destroy.lua
+BagValue.lua
 Options.lua
 Core.lua

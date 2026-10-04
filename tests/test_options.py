@@ -71,6 +71,7 @@ def load():
       ns.HookScrap = function() end
       ns.UpdateHints = function() ns.hintsUpdated = (ns.hintsUpdated or 0) + 1 end
       ns.UpdateDestroy = function() ns.destroyUpdated = (ns.destroyUpdated or 0) + 1 end
+      ns.UpdateBagValue = function() ns.valueUpdated = (ns.valueUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
     for f in ("Locales.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
@@ -91,7 +92,7 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy", "checkbox:setSource"])
+            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy", "checkbox:bagValue", "checkbox:setSource"])
 
     def test_sections(self):
         headers = [i.header for i in self.calls.layout.values() if i.header]
@@ -137,12 +138,13 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.settings["scrap"].varType, "boolean")
 
     def test_change_refreshes_baganator(self):
-        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "recipeJunk", "profession", "hints", "destroy", "share")
+        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "recipeJunk", "profession", "hints", "destroy", "bagValue", "share")
         for key in keys:
             self.calls.callbacks["KeepOrSell_" + key]()
         self.assertEqual(self.ns.refreshed, len(keys))
         self.assertEqual(self.ns.hintsUpdated, len(keys))
         self.assertEqual(self.ns.destroyUpdated, len(keys))
+        self.assertEqual(self.ns.valueUpdated, len(keys))
 
     def test_slash_opens_panel(self):
         self.rt.execute("SlashCmdList.KEEPORSELL('factor 5')")
@@ -157,12 +159,12 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNone(self.calls.opened)
 
     def test_options_need_their_addon(self):
-        for key in ("factor", "minProfit", "maxAge", "setSource", "destroy", "questie"):
+        for key in ("factor", "minProfit", "maxAge", "setSource", "destroy", "bagValue", "questie"):
             self.assertFalse(self.rt.eval("ENABLED")(key), key)
         for key in ("scrap", "gear", "tooltip", "hints"):
             self.assertTrue(self.rt.eval("ENABLED")(key), key)
         self.rt.execute("LOADED.Auctionator = true; LOADED.Baganator = true")
-        for key in ("factor", "minProfit", "maxAge", "setSource", "destroy"):
+        for key in ("factor", "minProfit", "maxAge", "setSource", "destroy", "bagValue"):
             self.assertTrue(self.rt.eval("ENABLED")(key), key)
 
     def test_questie_needs_matching_database(self):

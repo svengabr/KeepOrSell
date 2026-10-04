@@ -19,6 +19,8 @@ When KeepOrSell needs something from you – a fresh Auctionator scan, opening a
 
 Bags full and no vendor nearby? A destroy button next to it (the item's icon with a red cross) destroys the cheapest junk item in your bags on each click – vendor price × stack, so a stack of grey vendor trash worth a few copper goes first. Hover it to see which item is next. It only takes what Scrap would sell (without Scrap: grey items and KeepOrSell's junk), never rare or better items. If your bags are full while looting and the loot is worth more than that junk, the button glows and a chat line tells you.
 
+A line next to it shows what your bags are worth, e.g. "Junk 1g 20s · AH 15g" – junk at the vendor, the AuctionHouse group at auction before fees. Hover it for the most valuable auction items.
+
 ## Installation
 
 Get it on [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) – via the CurseForge app or as a manual download into `Interface/AddOns`.
@@ -57,6 +59,7 @@ Options that need an addon you don't have (Auctionator for prices, Baganator for
 - **Show in tooltip** – on/off
 - **Show hints** – on/off
 - **Destroy button** – destroys the cheapest junk on each click, needs Baganator; on/off
+- **Show bag value** – junk and auction house worth of your bags, needs Baganator; on/off
 - **Show groups in Baganator** – on/off (needs `/reload`)
 
 KeepOrSell only marks **trade goods**, **grey and white gear** and **gear your class can never wear** as junk – never green or better gear you could wear, consumables or quest items you may still need. Items you mark as "not junk" in Scrap always win.
@@ -74,11 +77,11 @@ Works on Retail and the Classic clients.
 - **Auktionshaus**: Auktionspreis mindestens doppelt so hoch wie der Händlerpreis. Im AH verkaufen.
 - **Schrott** (Scrap): graue Items, billige Handwerkswaren ohne Quest- oder Rezeptbezug, graue und weiße Ausrüstung, die sich im AH nicht lohnt, und Ausrüstung oder Items, die deine Klasse nie nutzen kann (z. B. „Klassen: Magier“), sowie Rezepte, die du schon kannst oder für Berufe, die du nicht hast, und mit Questie Questgegenstände erledigter Quests (wenn sie sich im AH nicht lohnen). Scrap verkauft sie beim Händler.
 
-Grüne und bessere Ausrüstung, die du tragen könntest, wird nie Schrott – höchstens Auktionshaus, wenn handelbar und lohnend. Der Tooltip zeigt, wohin ein Item gehört und warum. Braucht KeepOrSell etwas von dir (neuer Auctionator-Scan, Berufsfenster öffnen), erscheint unten links im Baganator-Taschenfenster ein Hinweis-Knopf. Daneben zerstört ein Knopf bei jedem Klick den billigsten Schrott in deinen Taschen (Händlerpreis × Stapel) – für volle Taschen fern vom Händler; der Tooltip zeigt, welches Item als Nächstes dran ist. Sind die Taschen beim Looten voll und die Beute mehr wert, leuchtet der Knopf. Nur Schrott, den Scrap verkaufen würde, nie seltene oder bessere Items.
+Grüne und bessere Ausrüstung, die du tragen könntest, wird nie Schrott – höchstens Auktionshaus, wenn handelbar und lohnend. Der Tooltip zeigt, wohin ein Item gehört und warum. Braucht KeepOrSell etwas von dir (neuer Auctionator-Scan, Berufsfenster öffnen), erscheint unten links im Baganator-Taschenfenster ein Hinweis-Knopf. Daneben zerstört ein Knopf bei jedem Klick den billigsten Schrott in deinen Taschen (Händlerpreis × Stapel) – für volle Taschen fern vom Händler; der Tooltip zeigt, welches Item als Nächstes dran ist. Sind die Taschen beim Looten voll und die Beute mehr wert, leuchtet der Knopf. Eine Zeile daneben zeigt den Taschenwert, z. B. „Schrott 1g 20s · AH 15g“ (Händler bzw. Auktionshaus vor Gebühren). Nur Schrott, den Scrap verkaufen würde, nie seltene oder bessere Items.
 
 In der Gruppe halten sich alle gegenseitig die Auktionspreise aktuell: KeepOrSell fragt nach den Items in deiner Tasche, und wer einen frischeren Auctionator-Preis hat, antwortet. Frischer heißt weniger Tage alt; bei zwei Preisen vom selben Tag gewinnt der spätere Komplett-Scan (einzelne Suchen zählen nicht). Nach einem Komplett-Scan sagt KeepOrSell der Gruppe sofort Bescheid. Mit dabei sind Mitglieder deines Realms mit KeepOrSell; der Tooltip zeigt, von wem der Preis stammt und wie alt er ist.
 
-Installation über [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) (App oder manueller Download nach `Interface/AddOns`). Einrichtung ist nicht nötig: Quest, Beruf und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Einstellungen unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`: Auktionshaus-Schwelle, Mindestgewinn, Höchstalter der Preise, Preise in der Gruppe teilen, Schrott, Ausrüstung, graue/weiße Ausrüstung, nutzlose Rezepte, Berufsmaterial, kommende Quests (Questie), Tooltip, Hinweise, Zerstören-Knopf, Gruppen in Baganator. Optionen, deren Addon fehlt, sind ausgegraut; unten im Fenster steht, welche der Addons Auctionator, Baganator, Scrap und Questie aktiv, deaktiviert oder nicht installiert sind.
+Installation über [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) (App oder manueller Download nach `Interface/AddOns`). Einrichtung ist nicht nötig: Quest, Beruf und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Einstellungen unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`: Auktionshaus-Schwelle, Mindestgewinn, Höchstalter der Preise, Preise in der Gruppe teilen, Schrott, Ausrüstung, graue/weiße Ausrüstung, nutzlose Rezepte, Berufsmaterial, kommende Quests (Questie), Tooltip, Hinweise, Zerstören-Knopf, Taschenwert, Gruppen in Baganator. Optionen, deren Addon fehlt, sind ausgegraut; unten im Fenster steht, welche der Addons Auctionator, Baganator, Scrap und Questie aktiv, deaktiviert oder nicht installiert sind.
 
 ## License
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Bag value in Baganator's bag window (bottom left), e.g. "Junk 1g 20s · AH 15g": your junk at the vendor and the AuctionHouse group at auction (before fees). Hover it for item counts and the three most valuable auction items. New option "Show bag value" (default on, needs Baganator).
 - Bags full while looting: when the loot is worth more than your cheapest junk (better of auction and vendor price; quest and profession items always count), the destroy button glows until the loot window closes and one chat line names both items. One click makes room, then loot as usual.
 
 ## 0.9.0
