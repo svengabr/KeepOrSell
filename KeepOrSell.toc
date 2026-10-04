@@ -23,5 +23,6 @@ Scrap.lua
 Baganator.lua
 Tooltip.lua
 Hints.lua
+Destroy.lua
 Options.lua
 Core.lua

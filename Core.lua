@@ -3,7 +3,7 @@ local addonName, ns = ...
 
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
-  profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, share = true,
+  profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, share = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -24,7 +24,11 @@ end
 
 local ScheduleQuests = OncePerFrame(function() return ns.Refresh() end)
 local ScheduleProfession = OncePerFrame(function() return ns.ScanProfession() end)
-local ScheduleHints = OncePerFrame(function() ns.UpdateHints() end)
+-- the destroy button follows the same triggers as the hints
+local ScheduleHints = OncePerFrame(function()
+  ns.UpdateHints()
+  ns.UpdateDestroy()
+end)
 
 local HINT_DELAY = 5 -- seconds after login, so bags and item data are loaded
 
@@ -61,6 +65,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.ScheduleShareQuery()
     ns.BuildQuestieIndex(ns.RefreshBaganator)
     local inBags = ns.RegisterHints()
+    ns.RegisterDestroy()
     C_Timer.After(HINT_DELAY, inBags and ScheduleHints or ns.PrintHints)
     frame:RegisterEvent("QUEST_LOG_UPDATE")
     frame:RegisterEvent("TRADE_SKILL_SHOW")

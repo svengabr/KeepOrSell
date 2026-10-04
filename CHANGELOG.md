@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.0
+
+- Destroy button in Baganator's bag window (bottom left): each click destroys the cheapest junk item in your bags (vendor price × stack) – for small bags far from a vendor. Hover it to see which item goes next. Only items Scrap would sell (without Scrap: grey items and KeepOrSell's junk), never rare or better items. New option "Destroy button" (default on, needs Baganator).
+
 ## 0.8.2
 
 - Shared prices now keep everyone up to date, not only fill gaps: KeepOrSell asks the group about every tradeable item in your bags, and members answer when their price is fresher. Fresher means fewer days old; for two prices from the same day, the later **full scan** wins. KeepOrSell notes the time of your last full auction house scan once its data has arrived (single searches don't count) and tells the group right after, so the others pick up the new prices at once.

@@ -13,7 +13,7 @@ ns.DEPENDENCIES = {
 -- Options that do nothing without the addon
 ns.OPTION_NEEDS = {
   factor = "Auctionator", minProfit = "Auctionator", maxAge = "Auctionator",
-  setSource = "Baganator", questie = "Questie",
+  setSource = "Baganator", destroy = "Baganator", questie = "Questie",
 }
 
 -- "active" | "outdated" (loaded, but its API doesn't match) | "disabled" (installed, not loaded) | "missing". Pure.

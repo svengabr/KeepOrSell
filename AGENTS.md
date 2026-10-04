@@ -27,6 +27,7 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
 | `Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
 | `Hints.lua` | Hinweise (`ns.CollectHints` rein): Knopf im Baganator-Taschenfenster über `Baganator.API.RegisterRegion`, ohne Baganator einmal im Chat |
+| `Destroy.lua` | Zerstören-Knopf im Baganator-Taschenfenster: billigster Schrott nach Händlerpreis × Stapel (`ns.PickCheapest` rein, nie gesperrt oder ab Selten), Kandidaten über `Scrap:IsJunk`, ohne Scrap grau + `ns.ShouldScrap` (`ns.FindDestroyTarget`); `ns.DestroyTarget` prüft Slot und Cursor vor `DeleteCursorItem` |
 | `Dependencies.lua` | Status der optionalen Addons (`ns.DependencyStatus` rein, `ns.GetDependencyStatus`), welche Option welches Addon braucht (`ns.OPTION_NEEDS`), Mixin für die Zeilen-Vorlage in `Options.xml` |
 | `Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API; Optionen ohne ihr Addon ausgegraut (`AddModifyPredicate`), Abhängigkeitsliste am Ende |
 | `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
