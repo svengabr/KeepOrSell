@@ -61,6 +61,20 @@ function ns.IsPlainGear(quality, classID, subclassID, equipLoc)
   return true
 end
 
+-- Items a profession needs in the bags. They look like plain or unusable weapons, so they are listed by ID.
+local PROFESSION_TOOLS = Set(
+  2901, 5956, 7005, 6219, 10498, -- Mining Pick, Blacksmith Hammer, Skinning Knife, Arclight Spanner, Gyromatic Micro-Adjustor
+  6218, 6339, 11130, 11145, 16207, -- runed enchanting rods (copper to arcanite)
+  22461, 22462, 22463, 44452, -- runed enchanting rods (fel iron to titanium)
+  9149, 12709, 19901, 20723, -- Philosopher's Stone, Pip's Skinner, Zulian Slicer, Brann's Trusty Pick
+  20815, 40772, 40892, 40893 -- Jeweler's Kit, Gnomish Army Knife, Hammer Pick, Bladed Pickaxe
+)
+
+-- true = a profession tool that must never be sold
+function ns.IsProfessionTool(itemID)
+  return itemID ~= nil and PROFESSION_TOOLS[itemID] == true
+end
+
 -- true = this class can never wear the item; false otherwise, also for unknown classes and subclasses
 function ns.IsUnusableGear(classFile, classID, subclassID, equipLoc)
   if equipLoc == "INVTYPE_CLOAK" then return false end

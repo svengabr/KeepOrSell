@@ -65,6 +65,13 @@ class PlainGearTests(unittest.TestCase):
     def test_other_items_not_plain(self):
         self.assertFalse(self.ns.IsPlainGear(1, 0, 1, ""))
 
+    def test_profession_tools(self):
+        # Mining Pick, Skinning Knife, Blacksmith Hammer, Arclight Spanner, Runed Copper Rod
+        for item_id in (2901, 7005, 5956, 6219, 6218):
+            self.assertTrue(self.ns.IsProfessionTool(item_id), item_id)
+        self.assertFalse(self.ns.IsProfessionTool(25))  # Worn Shortsword
+        self.assertFalse(self.ns.IsProfessionTool(None))
+
 
 class DecideTests(unittest.TestCase):
     def setUp(self):
@@ -148,6 +155,15 @@ class DecideTests(unittest.TestCase):
         verdict = self.decide(prices={"vendor": 100}, **gear)
         self.assertIsNone(verdict.kind)  # tradeable without known price: keep
         self.assertTrue(verdict.needsPrice)
+
+    def test_profession_tool_never_junk(self):
+        tool = {"classID": 2, "equipLoc": "INVTYPE_WEAPONMAINHAND", "tool": True, "priceData": True}
+        for facts in ({"plain": True}, {"unusable": True}, {"unusable": True, "bound": True}):
+            verdict = self.decide(prices=self.CHEAP, **tool, **facts)
+            self.assertIsNone(verdict.kind, facts)
+            self.assertEqual(verdict.reason, "tool")
+        self.assertIsNone(self.kind(prices=self.FRESH_AH, plain=True, **tool))
+        self.assertEqual(self.kind(quest="open", prices=self.CHEAP, **tool), "quest")
 
     def test_unusable_gear_switch_off(self):
         self.db.gear = False

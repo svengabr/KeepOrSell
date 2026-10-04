@@ -68,6 +68,7 @@ local L = {
   TIP_BELOW_FACTOR = "(below %gx vendor price)",
   TIP_BELOW_PROFIT = "(less than %s profit)",
   TIP_PLAIN = "plain gear",
+  TIP_TOOL = "profession tool",
   TIP_RECIPE_KNOWN = "recipe already known",
   TIP_RECIPE_OTHER = "recipe for a profession you don't have",
   TIP_NO_PRICE = "no auction price yet (scan with Auctionator)",
@@ -139,6 +140,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_BELOW_FACTOR = "(unter %gx Händlerpreis)"
   L.TIP_BELOW_PROFIT = "(weniger als %s Gewinn)"
   L.TIP_PLAIN = "einfache Ausrüstung"
+  L.TIP_TOOL = "Berufswerkzeug"
   L.TIP_RECIPE_KNOWN = "Rezept bereits bekannt"
   L.TIP_RECIPE_OTHER = "Rezept für einen Beruf, den du nicht hast"
   L.TIP_NO_PRICE = "noch kein Auktionspreis (mit Auctionator scannen)"

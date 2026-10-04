@@ -4,10 +4,11 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, questie, classID, equipLoc, unusable, plain, bound, reagent, recipe, prices, priceData}
+-- facts: {quest, questie, classID, equipLoc, tool, unusable, plain, bound, reagent, recipe, prices, priceData}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
+-- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
@@ -17,6 +18,7 @@ function ns.Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
   if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
   if facts.classID == QUESTITEM then return {kind = "quest", reason = "questitem"} end
+  if facts.tool then return {reason = "tool"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
 
@@ -114,6 +116,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     questie = ns.GetQuestieQuest(itemID),
     classID = classID,
     equipLoc = equipLoc,
+    tool = ns.IsProfessionTool(itemID),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or ForOtherClass(itemID),
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),

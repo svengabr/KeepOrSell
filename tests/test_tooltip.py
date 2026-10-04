@@ -95,6 +95,11 @@ class TooltipTests(unittest.TestCase):
         self.assertIsNone(self.show(7))
         self.assertIsNone(self.show(9))
 
+    def test_profession_tool(self):
+        text = self.ns.TooltipText(self.rt.eval("{reason = 'tool'}"), self.rt.eval("{ah = 120, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
+        self.assertIn("Keep", text)
+        self.assertIn("profession tool", text)
+
     def test_switch_off(self):
         self.rt.execute("KeepOrSellDB.tooltip = false")
         self.assertIsNone(self.show(3))

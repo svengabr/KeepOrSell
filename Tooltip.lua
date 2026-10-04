@@ -56,6 +56,8 @@ function ns.TooltipText(verdict, prices, db)
     else
       text = L.TIP_JUNK .. " – " .. PriceText(prices, verdict, db)
     end
+  elseif reason == "tool" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NO_PRICE
   elseif verdict.needsPrice and verdict.priceReason == "stale" then
