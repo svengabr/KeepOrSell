@@ -1,5 +1,10 @@
 package-as: KeepOrSell
 
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
 ignore:
   - tests
   - .gitignore
+  - .github
