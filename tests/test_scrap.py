@@ -22,9 +22,9 @@ def load():
     rt = lua51.LuaRuntime(unpack_returned_tuples=True)
     rt.execute(STUBS)
     ns = rt.eval("{}")
-    rt.execute("BagQuestMarksDB = {factor = 2, scrap = true}")
+    rt.execute("KeepOrSellDB = {factor = 2, scrap = true}")
     for f in ("Objectives.lua", "Scrap.lua"):
-        rt.eval("function(path, ns) assert(loadfile(path))('BagQuestMarks', ns) end")(
+        rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             str(ROOT / f).replace("\\", "/"), ns)
     # Preis-Einstufung und Questziele stubben
     rt.eval("""function(ns)
@@ -60,7 +60,7 @@ class ScrapTests(unittest.TestCase):
         self.assertFalse(self.is_junk(2))
 
     def test_switch_off(self):
-        self.rt.execute("BagQuestMarksDB.scrap = false")
+        self.rt.execute("KeepOrSellDB.scrap = false")
         self.assertFalse(self.is_junk(2))
 
 

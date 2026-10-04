@@ -1,4 +1,4 @@
--- Einstellungen, Ereignisse und /bqm
+-- Einstellungen, Ereignisse und /kos
 local addonName, ns = ...
 
 local DEFAULTS = {setSource = true, factor = 2, scrap = true}
@@ -18,9 +18,9 @@ end
 
 frame:SetScript("OnEvent", function(_, event, arg1)
   if event == "ADDON_LOADED" and arg1 == addonName then
-    BagQuestMarksDB = BagQuestMarksDB or {}
+    KeepOrSellDB = KeepOrSellDB or {}
     for k, v in pairs(DEFAULTS) do
-      if BagQuestMarksDB[k] == nil then BagQuestMarksDB[k] = v end
+      if KeepOrSellDB[k] == nil then KeepOrSellDB[k] = v end
     end
     -- früh einhaken, bevor andere Addons Scrap:IsJunk abfragen
     ns.HookScrap()
@@ -39,27 +39,32 @@ frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
 
-SLASH_BAGQUESTMARKS1 = "/bqm"
-SlashCmdList.BAGQUESTMARKS = function(msg)
+local L = ns.L
+local PREFIX = "|cffffd200KeepOrSell:|r "
+local function OnOff(v) return v and L.ON or L.OFF end
+
+SLASH_KEEPORSELL1 = "/kos"
+SlashCmdList.KEEPORSELL = function(msg)
   msg = (msg or ""):lower():match("^%s*(.-)%s*$")
-  local factor = tonumber(msg:match("^faktor%s+([%d%.]+)$"))
+  local factor = tonumber(msg:match("^fa[kc]tor%s+([%d%.]+)$"))
+  local db = KeepOrSellDB
   if factor and factor > 0 then
-    BagQuestMarksDB.factor = factor
+    db.factor = factor
     ns.RefreshBaganator()
-    print(("|cffffd200BagQuestMarks:|r Auktionshaus ab %sx Händlerpreis."):format(factor))
+    print(PREFIX .. L.FACTOR_SET:format(factor))
   elseif msg == "scrap" then
-    BagQuestMarksDB.scrap = not BagQuestMarksDB.scrap
+    db.scrap = not db.scrap
     ns.RefreshBaganator()
-    print("|cffffd200BagQuestMarks:|r Billige Handwerkswaren als Scrap-Schrott: " .. (BagQuestMarksDB.scrap and "an" or "aus"))
-  elseif msg == "set" then
-    BagQuestMarksDB.setSource = not BagQuestMarksDB.setSource
-    print("|cffffd200BagQuestMarks:|r Questziele als Set " .. (BagQuestMarksDB.setSource and "an" or "aus") .. " – wirkt nach /reload.")
+    print(PREFIX .. L.SCRAP_TOGGLED:format(OnOff(db.scrap)))
+  elseif msg == "sets" then
+    db.setSource = not db.setSource
+    print(PREFIX .. L.SETS_TOGGLED:format(OnOff(db.setSource)))
   else
     local n = 0
     for name, state in pairs(ns.items) do
       n = n + 1
-      print(("  %s (%s)"):format(name, state == "open" and "offen" or "erfüllt"))
+      print(("  %s (%s)"):format(name, state == "open" and L.OPEN or L.DONE))
     end
-    print(("|cffffd200BagQuestMarks:|r %d Questziel-Items. Set-Modus: %s (/bqm set), Auktionshaus ab %sx Händlerpreis (/bqm faktor 2), Scrap: %s (/bqm scrap)"):format(n, BagQuestMarksDB.setSource and "an" or "aus", BagQuestMarksDB.factor, BagQuestMarksDB.scrap and "an" or "aus"))
+    print(PREFIX .. L.STATUS:format(n, db.factor, OnOff(db.scrap), OnOff(db.setSource)))
   end
 end

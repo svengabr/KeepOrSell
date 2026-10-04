@@ -13,11 +13,11 @@ local function ItemLink(id, bag, slot)
 end
 
 function ns.ShouldScrap(id, bag, slot)
-  if not BagQuestMarksDB.scrap then return false end
+  if not KeepOrSellDB.scrap then return false end
   local classID = select(6, C_Item.GetItemInfoInstant(id))
   if classID ~= TRADEGOODS then return false end
   if ns.GetObjectiveState(id) ~= false then return false end -- Questziel oder Name unbekannt
-  return ns.GetPriceClass(ItemLink(id, bag, slot), BagQuestMarksDB.factor) == "vendor"
+  return ns.GetPriceClass(ItemLink(id, bag, slot), KeepOrSellDB.factor) == "vendor"
 end
 
 function ns.HookScrap()

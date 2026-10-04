@@ -12,7 +12,7 @@ def load(stubs=""):
     if stubs:
         rt.execute(stubs)
     ns = rt.eval("{}")
-    rt.eval("function(path, ns) assert(loadfile(path))('BagQuestMarks', ns) end")(
+    rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
         str(ROOT / "Prices.lua").replace("\\", "/"), ns)
     return rt, ns
 

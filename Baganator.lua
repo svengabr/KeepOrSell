@@ -1,8 +1,6 @@
 -- Anbindung an Baganator, nur über dessen öffentliche API (Baganator.API.*)
 local _, ns = ...
 
-ns.SET_NAME = "Questziel"
-ns.SET_AH = "Auktionshaus"
 local ICON = "Interface\\GossipFrame\\ActiveQuestIcon"
 
 local function ItemIDFromDetails(details)
@@ -20,7 +18,7 @@ function ns.RegisterBaganator()
 
   -- Eckmarkierung: gelb = noch offen, grün = Ziel erfüllt, Quest aber noch nicht abgegeben
   -- Rückgabe: true = zeigen, false = nicht zeigen, nil = später erneut fragen (Item-Cache)
-  api.RegisterCornerWidget("Questziel", "bagquestmarks-objective", function(corner, details)
+  api.RegisterCornerWidget(ns.L.SET_QUEST, "keeporsell-objective", function(corner, details)
     local state = ns.GetObjectiveState(ItemIDFromDetails(details))
     if state == nil then return nil end
     if not state then return false end
@@ -39,17 +37,17 @@ function ns.RegisterBaganator()
 
   -- Optional: Questziele und lohnende Auktionshaus-Items als Sets melden, damit die Suche sie erfasst.
   -- Billige Items übernimmt Scrap (Scrap.lua).
-  if BagQuestMarksDB.setSource and api.RegisterItemSetSource then
-    local questInfo = {name = ns.SET_NAME, iconTexture = ICON}
-    local ahInfo = {name = ns.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"}
-    api.RegisterItemSetSource("BagQuestMarks", "bagquestmarks", function(_, guid)
+  if KeepOrSellDB.setSource and api.RegisterItemSetSource then
+    local questInfo = {name = ns.L.SET_QUEST, iconTexture = ICON}
+    local ahInfo = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"}
+    api.RegisterItemSetSource("KeepOrSell", "keeporsell", function(_, guid)
       local sets = {}
       if ns.GetObjectiveState(ItemIDFromGUID(guid)) then table.insert(sets, questInfo) end
       local link = guid and C_Item.GetItemLinkByGUID and C_Item.GetItemLinkByGUID(guid)
-      if ns.GetPriceClass(link, BagQuestMarksDB.factor) == "ah" then table.insert(sets, ahInfo) end
+      if ns.GetPriceClass(link, KeepOrSellDB.factor) == "ah" then table.insert(sets, ahInfo) end
       if #sets > 0 then return sets end
     end, function()
-      return {ns.SET_NAME, ns.SET_AH}
+      return {ns.L.SET_QUEST, ns.L.SET_AH}
     end)
   end
 end
