@@ -50,6 +50,10 @@ NOT_IN_DOCS = {
     "GetNumQuestLogEntries": "Classic quest log fallback, only used without C_QuestLog",
     "GetQuestLogLeaderBoard": "legacy global, used by Blizzard_ObjectiveTracker on Forever",
     "GetNumQuestLeaderBoards": "legacy global, used by Blizzard_ObjectiveTracker on Forever",
+    "IsInGroup": "legacy global, used by Blizzard_FrameXMLUtil/PartyUtil and the unit frames on Forever",
+    "IsInRaid": "legacy global, used by the raid frames on Forever",
+    "GetNumGroupMembers": "legacy global, used by the party and raid frames on Forever",
+    "InCombatLockdown": "legacy global, used throughout FrameXML for secure frames",
 }
 
 

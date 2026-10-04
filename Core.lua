@@ -3,7 +3,7 @@ local addonName, ns = ...
 
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
-  profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true,
+  profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, share = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -34,12 +34,14 @@ function ns.SettingsChanged()
   ScheduleHints()
 end
 
-frame:SetScript("OnEvent", function(_, event, arg1)
+frame:SetScript("OnEvent", function(_, event, arg1, ...)
   if event == "ADDON_LOADED" and arg1 == addonName then
     KeepOrSellDB = KeepOrSellDB or {}
     for k, v in pairs(DEFAULTS) do
       if KeepOrSellDB[k] == nil then KeepOrSellDB[k] = v end
     end
+    -- not in DEFAULTS: a table there would be shared by reference
+    KeepOrSellDB.sharedPrices = KeepOrSellDB.sharedPrices or {}
     -- older versions allowed a lower threshold
     KeepOrSellDB.factor = math.max(KeepOrSellDB.factor, ns.MIN_FACTOR)
     ns.RegisterOptions(KeepOrSellDB, DEFAULTS)
@@ -49,6 +51,9 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     ns.Refresh()
     ns.RegisterBaganator()
     ns.HookTooltip()
+    ns.PruneSharedPrices(KeepOrSellDB.sharedPrices, GetServerTime())
+    ns.RegisterShare()
+    ns.ScheduleShareQuery()
     ns.BuildQuestieIndex(ns.RefreshBaganator)
     local inBags = ns.RegisterHints()
     C_Timer.After(HINT_DELAY, inBags and ScheduleHints or ns.PrintHints)
@@ -59,13 +64,22 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     frame:RegisterEvent("SKILL_LINES_CHANGED")
     frame:RegisterEvent("PLAYER_LEVEL_UP")
     frame:RegisterEvent("QUEST_TURNED_IN")
+    frame:RegisterEvent("GROUP_ROSTER_UPDATE")
+    frame:RegisterEvent("CHAT_MSG_ADDON")
   elseif event == "QUEST_LOG_UPDATE" then
     ScheduleQuests()
   elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_LIST_UPDATE" then
     ScheduleProfession()
     ScheduleHints()
-  elseif event == "BAG_UPDATE_DELAYED" or event == "SKILL_LINES_CHANGED" then
+  elseif event == "BAG_UPDATE_DELAYED" then
     ScheduleHints()
+    ns.ScheduleShareQuery()
+  elseif event == "SKILL_LINES_CHANGED" then
+    ScheduleHints()
+  elseif event == "GROUP_ROSTER_UPDATE" then
+    ns.ShareRosterChanged()
+  elseif event == "CHAT_MSG_ADDON" then
+    ns.HandleShareMessage(arg1, ...)
   elseif event == "PLAYER_LEVEL_UP" or event == "QUEST_TURNED_IN" then
     -- moves the level window for upcoming Questie quests or completes one of them
     ns.RefreshBaganator()

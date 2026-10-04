@@ -21,6 +21,7 @@ read_globals = {
 
   -- WoW API
   "C_AddOns",
+  "C_ChatInfo",
   "C_Container",
   "C_Item",
   "C_QuestLog",
@@ -33,6 +34,8 @@ read_globals = {
   "GetItemInfo",
   "GetLocale",
   "GetMoneyString",
+  "GetNormalizedRealmName",
+  "GetNumGroupMembers",
   "GetNumQuestLeaderBoards",
   "GetNumQuestLogEntries",
   "GetProfessionInfo",
@@ -40,7 +43,11 @@ read_globals = {
   "GetQuestLogLeaderBoard",
   "GetQuestLogTitle",
   "GetRealmName",
+  "GetServerTime",
   "GetTime",
+  "InCombatLockdown",
+  "IsInGroup",
+  "IsInRaid",
   "ItemLocation",
   "UnitClass",
   "UnitLevel",

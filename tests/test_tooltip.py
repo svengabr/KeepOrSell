@@ -108,6 +108,18 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("CURRENT_LINK = 'link3'; POSTCALL({GetItem = GameTooltip.GetItem, AddLine = GameTooltip.AddLine}, {})")
         self.assertEqual(len(list(self.rt.eval("TOOLTIP_LINES").values())), 0)
 
+    def test_shared_price_names_sender(self):
+        db = self.rt.eval("KeepOrSellDB")
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'ah'}"),
+                                   self.rt.eval("{ah = 1000, vendor = 38, age = 2, from = 'Sven'}"), db)
+        self.assertIn("AH 1000c, vendor 38c (price from Sven, 2 days old)", text)
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'ah'}"),
+                                   self.rt.eval("{ah = 1000, vendor = 38, age = 0, from = 'Sven'}"), db)
+        self.assertIn("(price from Sven, today)", text)
+
+    def test_own_price_has_no_sender(self):
+        self.assertNotIn("price from", self.show(3))
+
 
 if __name__ == "__main__":
     unittest.main()

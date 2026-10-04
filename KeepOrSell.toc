@@ -12,6 +12,7 @@
 Locales.lua
 Objectives.lua
 Prices.lua
+Share.lua
 Gear.lua
 Professions.lua
 Questie.lua

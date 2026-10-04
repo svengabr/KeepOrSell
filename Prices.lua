@@ -50,7 +50,23 @@ local function VendorPrice(itemLink)
   return (select(11, getInfo(itemLink)))
 end
 
--- {ah, vendor, age, hasAge}; age = days since last seen on the AH (nil = never or older than 21 days)
+local DAY = 86400
+
+-- own = {ah, vendor, age, hasAge} from Auctionator; shared = {price, seen, from} from a group member.
+-- The shared price wins when the own one is missing or older. Pure.
+function ns.PickPrice(own, shared, now)
+  if not (shared and shared.price and shared.seen) then return own end
+  local sharedAge = math.max(0, math.floor((now - shared.seen) / DAY))
+  if own.ah and own.ah > 0 then
+    -- without an age API the own price is trusted as before
+    if not own.hasAge then return own end
+    if own.age and own.age <= sharedAge then return own end
+  end
+  return {ah = shared.price, vendor = own.vendor, age = sharedAge, hasAge = true, from = shared.from}
+end
+
+-- {ah, vendor, age, hasAge, from}; age = days since last seen on the AH (nil = never or older than 21 days),
+-- from = the group member who shared the price (nil for the own Auctionator price)
 function ns.GetPrices(itemLink)
   local api = Api()
   local prices = {}
@@ -63,5 +79,10 @@ function ns.GetPrices(itemLink)
     prices.age = api.GetAuctionAgeByItemLink(addonName, itemLink)
   end
   prices.vendor = VendorPrice(itemLink)
+  local shared = KeepOrSellDB and KeepOrSellDB.share and KeepOrSellDB.sharedPrices
+  local id = shared and C_Item and C_Item.GetItemInfoInstant and C_Item.GetItemInfoInstant(itemLink)
+  if id and shared[id] and GetServerTime then
+    return ns.PickPrice(prices, shared[id], GetServerTime())
+  end
   return prices
 end

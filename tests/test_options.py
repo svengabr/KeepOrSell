@@ -72,7 +72,7 @@ def load():
       ns.UpdateHints = function() ns.hintsUpdated = (ns.hintsUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
-    for f in ("Locales.lua", "Prices.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
+    for f in ("Locales.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             str(ROOT / f).replace("\\", "/"), ns)
     return rt, ns
@@ -89,7 +89,7 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.categoryName, "KeepOrSell")
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
-            "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:scrap", "checkbox:gear",
+            "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
             "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:tooltip", "checkbox:hints", "checkbox:setSource"])
 
     def test_sections(self):
@@ -101,6 +101,13 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.sliders["minProfit"].label(5), "5 s")
         self.assertEqual(self.calls.sliders["maxAge"].label(7), "7 days")
         self.assertEqual(self.calls.sliders["maxAge"].label(21), "off")
+
+    def test_share_option(self):
+        self.assertTrue(self.rt.eval("KeepOrSellDB.share"))
+        self.assertEqual(self.calls.settings["share"].varType, "boolean")
+        # receiving works without Auctionator, so the option is never greyed out
+        self.assertNotIn("Needs", self.calls.tooltips["share"])
+        self.assertTrue(self.rt.eval("ENABLED('share')"))
 
     def test_factor_minimum(self):
         self.assertEqual(self.calls.sliders["factor"].min, 1.1)
@@ -122,7 +129,7 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.settings["scrap"].varType, "boolean")
 
     def test_change_refreshes_baganator(self):
-        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "recipeJunk", "profession", "hints")
+        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "recipeJunk", "profession", "hints", "share")
         for key in keys:
             self.calls.callbacks["KeepOrSell_" + key]()
         self.assertEqual(self.ns.refreshed, len(keys))

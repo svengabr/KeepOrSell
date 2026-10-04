@@ -11,3 +11,4 @@ ignore:
   - .github
   - media
   - AGENTS.md
+  - docs

@@ -16,6 +16,12 @@ end
 
 local function PriceText(prices, verdict, db)
   local text = L.TIP_PRICES:format(Money(prices.ah), Money(prices.vendor))
+  -- a price shared by a group member names who saw it and when
+  if prices.from then
+    local shared = (prices.age or 0) > 0 and L.TIP_SHARED:format(prices.from, prices.age)
+      or L.TIP_SHARED_TODAY:format(prices.from)
+    text = text .. " " .. shared
+  end
   -- for junk, name the rule that made the auction house not worth it
   if verdict.kind == "junk" and verdict.priceReason == "factor" then
     text = text .. " " .. L.TIP_BELOW_FACTOR:format(db.factor)

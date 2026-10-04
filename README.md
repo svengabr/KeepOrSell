@@ -44,6 +44,7 @@ Esc → Options → AddOns → **KeepOrSell**, or type `/kos`:
 - **Auction house threshold** – auction price must be at least this many times the vendor price (default 2×)
 - **Minimum AH profit** – per item, after the 5% AH cut; below that the item goes to the vendor (default off)
 - **Maximum price age** – auction prices older than this are ignored and the item is kept (default 7 days)
+- **Share prices in the group** – asks your party or raid for missing auction prices and answers with yours; only realm mates with KeepOrSell take part, shared prices keep their age and the tooltip names who shared them; switching it off also ignores prices shared earlier (default on)
 - **Cheap trade goods as junk** – for Scrap, on/off
 - **Items your class can't use** – e.g. mail or swords for a druid, or items marked "Classes: Mage": auction house when tradeable and worth it, otherwise junk; on/off
 - **Grey and white gear as junk** – when not worth auctioning; without an auction price once you have visited the AH with Auctionator. Shirts, tabards and fishing poles are kept; on/off
@@ -73,7 +74,9 @@ Works on Retail and the Classic clients.
 
 Grüne und bessere Ausrüstung, die du tragen könntest, wird nie Schrott – höchstens Auktionshaus, wenn handelbar und lohnend. Der Tooltip zeigt, wohin ein Item gehört und warum. Braucht KeepOrSell etwas von dir (neuer Auctionator-Scan, Berufsfenster öffnen), erscheint unten links im Baganator-Taschenfenster ein Hinweis-Knopf.
 
-Installation über [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) (App oder manueller Download nach `Interface/AddOns`). Einrichtung ist nicht nötig: Quest, Beruf und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Einstellungen unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`: Auktionshaus-Schwelle, Mindestgewinn, Höchstalter der Preise, Schrott, Ausrüstung, graue/weiße Ausrüstung, nutzlose Rezepte, Berufsmaterial, kommende Quests (Questie), Tooltip, Hinweise, Gruppen in Baganator. Optionen, deren Addon fehlt, sind ausgegraut; unten im Fenster steht, welche der Addons Auctionator, Baganator, Scrap und Questie aktiv, deaktiviert oder nicht installiert sind.
+Fehlen dir Auktionspreise, fragt KeepOrSell automatisch deine Gruppe: Mitglieder deines Realms mit KeepOrSell und Auctionator antworten mit ihren Preisen. Der Tooltip zeigt dann, von wem der Preis stammt und wie alt er ist.
+
+Installation über [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) (App oder manueller Download nach `Interface/AddOns`). Einrichtung ist nicht nötig: Quest, Beruf und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Einstellungen unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`: Auktionshaus-Schwelle, Mindestgewinn, Höchstalter der Preise, Preise in der Gruppe teilen, Schrott, Ausrüstung, graue/weiße Ausrüstung, nutzlose Rezepte, Berufsmaterial, kommende Quests (Questie), Tooltip, Hinweise, Gruppen in Baganator. Optionen, deren Addon fehlt, sind ausgegraut; unten im Fenster steht, welche der Addons Auctionator, Baganator, Scrap und Questie aktiv, deaktiviert oder nicht installiert sind.
 
 ## License
 

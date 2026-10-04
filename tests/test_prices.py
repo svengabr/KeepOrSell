@@ -90,5 +90,60 @@ class LookupTests(unittest.TestCase):
         self.assertIsNone(ns.GetPrices(None).vendor)
 
 
+DAY = 86400
+NOW = 100 * DAY
+
+
+class SharedPriceTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Prices.lua",), base=False)
+
+    def pick(self, own, shared):
+        shared = self.rt.table_from(shared) if shared else None
+        return self.ns.PickPrice(self.rt.table_from(own), shared, NOW)
+
+    def test_no_shared_price_keeps_own(self):
+        prices = self.pick({"ah": 300, "vendor": 100, "age": 1, "hasAge": True}, None)
+        self.assertEqual((prices.ah, prices.age), (300, 1))
+
+    def test_shared_fills_missing_price(self):
+        prices = self.pick({"vendor": 100}, {"price": 500, "seen": NOW - 2 * DAY, "from": "Sven"})
+        self.assertEqual((prices.ah, prices.vendor, prices.age, prices.hasAge, prices["from"]),
+                         (500, 100, 2, True, "Sven"))
+
+    def test_shared_replaces_older_own(self):
+        prices = self.pick({"ah": 300, "vendor": 100, "age": 9, "hasAge": True},
+                           {"price": 500, "seen": NOW - 1 * DAY, "from": "Sven"})
+        self.assertEqual((prices.ah, prices["from"]), (500, "Sven"))
+        # own price older than Auctionator reports (age nil) counts as old too
+        prices = self.pick({"ah": 300, "hasAge": True}, {"price": 500, "seen": NOW - 1 * DAY, "from": "Sven"})
+        self.assertEqual(prices.ah, 500)
+
+    def test_fresher_own_wins(self):
+        prices = self.pick({"ah": 300, "vendor": 100, "age": 1, "hasAge": True},
+                           {"price": 500, "seen": NOW - 3 * DAY, "from": "Sven"})
+        self.assertEqual((prices.ah, prices["from"]), (300, None))
+
+    def test_own_without_age_api_wins(self):
+        # older Auctionator without an age: its price is trusted as before
+        prices = self.pick({"ah": 300}, {"price": 500, "seen": NOW, "from": "Sven"})
+        self.assertEqual(prices.ah, 300)
+
+    def lookup(self, share):
+        rt, ns = load(("Prices.lua",), stubs="""
+          function GetServerTime() return %d end
+          KeepOrSellDB.share = %s
+          KeepOrSellDB.sharedPrices = {[3] = {price = 700, seen = %d, from = "Sven"}}
+        """ % (NOW, share, NOW - DAY))
+        return ns.GetPrices("link3")
+
+    def test_lookup_uses_shared_price(self):
+        prices = self.lookup("true")
+        self.assertEqual((prices.ah, prices.vendor, prices.age, prices["from"]), (700, 38, 1, "Sven"))
+
+    def test_lookup_ignores_shared_price_when_option_off(self):
+        self.assertIsNone(self.lookup("false").ah)
+
+
 if __name__ == "__main__":
     unittest.main()

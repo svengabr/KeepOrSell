@@ -14,6 +14,8 @@ local L = {
   OPT_MIN_PROFIT_TIP = "Per item, after the 5% auction house cut. Items earning less than this over the vendor price are sold to the vendor.",
   OPT_MAX_AGE = "Maximum price age",
   OPT_MAX_AGE_TIP = "Auction prices older than this (last Auctionator scan) are ignored and the item is kept.",
+  OPT_SHARE = "Share prices in the group",
+  OPT_SHARE_TIP = "Asks your party or raid for auction prices you are missing and answers with your Auctionator prices. Only members of your realm with KeepOrSell take part. Shared prices keep their age and show who shared them.",
   OPT_SCRAP = "Cheap trade goods as junk",
   OPT_SCRAP_TIP = "Marks trade goods without quest use and below the threshold as junk for Scrap.",
   OPT_GEAR = "Items your class can't use",
@@ -73,6 +75,8 @@ local L = {
   TIP_RECIPE_OTHER = "recipe for a profession you don't have",
   TIP_NO_PRICE = "no auction price yet (scan with Auctionator)",
   TIP_STALE = "auction price older than %d days",
+  TIP_SHARED = "(price from %s, %d days old)",
+  TIP_SHARED_TODAY = "(price from %s, today)",
 }
 
 if GetLocale and GetLocale() == "deDE" then
@@ -87,6 +91,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.OPT_MIN_PROFIT_TIP = "Pro Stück, nach 5 % Auktionsgebühr. Bringt ein Item weniger als das über dem Händlerpreis, geht es zum Händler."
   L.OPT_MAX_AGE = "Höchstalter der Preise"
   L.OPT_MAX_AGE_TIP = "Ältere Auktionspreise (letzter Auctionator-Scan) werden ignoriert, das Item bleibt dann liegen."
+  L.OPT_SHARE = "Preise in der Gruppe teilen"
+  L.OPT_SHARE_TIP = "Fragt deine Gruppe oder deinen Schlachtzug nach Auktionspreisen, die dir fehlen, und antwortet mit deinen Auctionator-Preisen. Mit dabei sind nur Mitglieder deines Realms mit KeepOrSell. Geteilte Preise behalten ihr Alter und zeigen, wer sie geteilt hat."
   L.OPT_SCRAP = "Handwerkswaren als Schrott"
   L.OPT_SCRAP_TIP = "Markiert Handwerkswaren ohne Questbezug unterhalb der Schwelle als Schrott für Scrap."
   L.OPT_GEAR = "Items, die deine Klasse nie nutzt"
@@ -145,6 +151,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_RECIPE_OTHER = "Rezept für einen Beruf, den du nicht hast"
   L.TIP_NO_PRICE = "noch kein Auktionspreis (mit Auctionator scannen)"
   L.TIP_STALE = "Auktionspreis älter als %d Tage"
+  L.TIP_SHARED = "(Preis von %s, %d Tage alt)"
+  L.TIP_SHARED_TODAY = "(Preis von %s, heute)"
 end
 
 ns.L = L
