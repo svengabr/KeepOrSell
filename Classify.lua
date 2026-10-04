@@ -4,7 +4,8 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, classID, equipLoc, unusable, plain, bound, reagent, recipe, prices, priceData}
+-- facts: {quest, questie, classID, equipLoc, unusable, plain, bound, reagent, recipe, prices, priceData}
+-- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
@@ -14,6 +15,7 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- needsPrice = the item stays only because its auction price is missing or too old. Pure.
 function ns.Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
+  if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
   if facts.classID == QUESTITEM then return {kind = "quest", reason = "questitem"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
@@ -109,6 +111,7 @@ function ns.ItemFacts(itemID, itemLink, location)
   local playerClass = UnitClass and select(2, UnitClass("player"))
   return {
     quest = ns.GetObjectiveState(itemID),
+    questie = ns.GetQuestieQuest(itemID),
     classID = classID,
     equipLoc = equipLoc,
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or ForOtherClass(itemID),

@@ -20,8 +20,10 @@ NOT_IN_DOCS = {
     # SavedVariables, slash command and optional third-party addons
     "KeepOrSellDB": "our SavedVariables",
     "SLASH_KEEPORSELL1": "our slash command",
+    "KeepOrSellDependencyMixin": "our mixin for the template in Options.xml",
     "Auctionator": "optional dependency, public API",
     "Baganator": "optional dependency, public API",
+    "LibQuestieDB": "optional dependency (QuestieDB), public API in src/api.lua",
     "Scrap": "optional dependency, public API",
     # FrameXML (Lua/XML side of the client UI), not C API
     "CreateFrame": "core widget API, used throughout FrameXML",
@@ -31,6 +33,8 @@ NOT_IN_DOCS = {
     "SettingsPanel": "FrameXML frame (Blizzard_Settings)",
     "Settings": "FrameXML namespace (Blizzard_Settings)",
     "MinimalSliderWithSteppersMixin": "FrameXML mixin",
+    "SettingsListElementMixin": "FrameXML mixin (Blizzard_Settings_Shared/Blizzard_SettingControls.lua)",
+    "CreateSettingsListSectionHeaderInitializer": "FrameXML (Blizzard_Settings_Shared/Blizzard_SettingControls.lua)",
     "TooltipDataProcessor": "FrameXML (Blizzard_SharedXMLGame/Tooltip/TooltipDataHandler.lua)",
     "ItemLocation": "FrameXML mixin factory (ItemLocation:CreateFromBagAndSlot)",
     "GetMoneyString": "FrameXML (Blizzard_SharedXML/FormattingUtil.lua)",

@@ -7,8 +7,8 @@ Hinweise für KI-Agenten (Claude Code, Codex, Cursor …), die an KeepOrSell arb
 WoW-Addon, das Taschen-Items in Gruppen einteilt: **Quest** (behalten), **Profession** (Zutaten, die noch
 Skillpunkte geben), **AuctionHouse** (Auktionspreis ≥ Faktor × Händlerpreis) und **Junk** über Scrap
 (billige Handwerkswaren, Ausrüstung, die die Klasse nie tragen kann). Eine Tooltip-Zeile erklärt die Einstufung.
-Es setzt auf die öffentlichen APIs von **Baganator**, **Auctionator** und **Scrap** – alle drei
-sind optional (`OptionalDeps`), jede Anbindung muss ohne das jeweilige Addon still nichts tun.
+Es setzt auf die öffentlichen APIs von **Baganator**, **Auctionator**, **Scrap** und **QuestieDB** (Datenbank-Addon
+von Questie) – alle vier sind optional (`OptionalDeps`), jede Anbindung muss ohne das jeweilige Addon still nichts tun.
 
 ## Aufbau
 
@@ -21,12 +21,14 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
 | `Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
 | `Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters; erkennt Rezepte als ungelernt/bekannt/fremder Beruf (`ns.GetRecipeState`) |
+| `Questie.lua` | Kommende Quests über QuestieDBs öffentliche API (`LibQuestieDB`, Contract 2): `ns.GetQuestieQuest`, reine Auswahl `ns.PickQuestieQuest` (±5 Stufen, Rasse/Klasse, nicht erledigt). Eigener Item→Quest-Index aus allen Quests, nach dem Login häppchenweise gebaut (`ns.BuildQuestieIndex`) – `Item.relatedQuests` ist auf Forever leer |
 | `Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
 | `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
 | `Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
 | `Hints.lua` | Hinweise (`ns.CollectHints` rein): Knopf im Baganator-Taschenfenster über `Baganator.API.RegisterRegion`, ohne Baganator einmal im Chat |
-| `Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API |
+| `Dependencies.lua` | Status der optionalen Addons (`ns.DependencyStatus` rein, `ns.GetDependencyStatus`), welche Option welches Addon braucht (`ns.OPTION_NEEDS`), Mixin für die Zeilen-Vorlage in `Options.xml` |
+| `Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API; Optionen ohne ihr Addon ausgegraut (`AddModifyPredicate`), Abhängigkeitsliste am Ende |
 | `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
 
 Baganator-Eigenheiten: Items mit Item-Set landen fest in der Equipment-Sets-Kategorie, vor jeder Suche und

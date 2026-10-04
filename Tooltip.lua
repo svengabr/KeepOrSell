@@ -32,7 +32,10 @@ function ns.TooltipText(verdict, prices, db)
   prices = prices or {}
   local kind, reason = verdict.kind, verdict.reason
   local text
-  if kind == "quest" then
+  if kind == "quest" and reason == "questie" then
+    local q = verdict.quest
+    text = q.level and q.level > 0 and L.TIP_QUESTIE:format(q.name, q.level) or L.TIP_QUESTIE_SCALING:format(q.name)
+  elseif kind == "quest" then
     text = reason == "done" and L.TIP_QUEST_DONE or reason == "open" and L.TIP_QUEST_OPEN or L.TIP_QUEST_ITEM
   elseif kind == "profession" then
     text = reason == "recipe" and L.TIP_RECIPE or L.TIP_PROFESSION

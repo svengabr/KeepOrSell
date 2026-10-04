@@ -1,0 +1,20 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+  <!-- One dependency row in the options panel: addon name left, status and use right (Dependencies.lua) -->
+  <Frame name="KeepOrSellDependencyTemplate" inherits="SettingsListElementTemplate" mixin="KeepOrSellDependencyMixin" virtual="true">
+    <Size x="280" y="26"/>
+    <Layers>
+      <Layer level="OVERLAY">
+        <FontString parentKey="Status" inherits="GameFontHighlight" justifyH="LEFT" wordwrap="false">
+          <Anchors>
+            <Anchor point="LEFT" relativePoint="CENTER" x="-80"/>
+            <Anchor point="RIGHT" x="-10"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    <Scripts>
+      <!-- SettingsListElementMixin:OnLoad sets up cbrHandles, which Init needs; the base template doesn't call it -->
+      <OnLoad method="OnLoad"/>
+    </Scripts>
+  </Frame>
+</Ui>

@@ -10,14 +10,17 @@ globals = {
   "SLASH_KEEPORSELL1",
   "SlashCmdList",
   "Scrap",              -- hooks Scrap.IsJunk
+  "KeepOrSellDependencyMixin", -- mixin of the template in Options.xml
 }
 
 read_globals = {
   -- Third-party addons (all optional)
   "Auctionator",
   "Baganator",
+  "LibQuestieDB",
 
   -- WoW API
+  "C_AddOns",
   "C_Container",
   "C_Item",
   "C_QuestLog",
@@ -25,6 +28,7 @@ read_globals = {
   "C_TooltipInfo",
   "C_TradeSkillUI",
   "CreateFrame",
+  "CreateSettingsListSectionHeaderInitializer",
   "Enum",
   "GetItemInfo",
   "GetLocale",
@@ -39,13 +43,16 @@ read_globals = {
   "GetTime",
   "ItemLocation",
   "UnitClass",
+  "UnitLevel",
   "UnitName",
+  "UnitRace",
 
   -- FrameXML
   "GameTooltip",
   "ItemRefTooltip",
   "MinimalSliderWithSteppersMixin",
   "Settings",
+  "SettingsListElementMixin",
   "SettingsPanel",
   "TooltipDataProcessor",
   "UIParent",

@@ -5,7 +5,7 @@
 ## Author: Conoar
 ## Version: @project-version@
 ## SavedVariables: KeepOrSellDB
-## OptionalDeps: Baganator, Auctionator, Scrap
+## OptionalDeps: Baganator, Auctionator, Scrap, QuestieDB
 ## X-License: GPL-3.0-or-later
 ## X-Curse-Project-ID: 1725855
 
@@ -14,7 +14,10 @@ Objectives.lua
 Prices.lua
 Gear.lua
 Professions.lua
+Questie.lua
 Classify.lua
+Dependencies.lua
+Options.xml
 Scrap.lua
 Baganator.lua
 Tooltip.lua

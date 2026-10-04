@@ -3,7 +3,7 @@ local addonName, ns = ...
 
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
-  profession = true, gear = true, plainGear = true, recipeJunk = true, tooltip = true, hints = true,
+  profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -47,6 +47,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     ns.Refresh()
     ns.RegisterBaganator()
     ns.HookTooltip()
+    ns.BuildQuestieIndex(ns.RefreshBaganator)
     local inBags = ns.RegisterHints()
     C_Timer.After(HINT_DELAY, inBags and ScheduleHints or ns.PrintHints)
     frame:RegisterEvent("QUEST_LOG_UPDATE")
@@ -54,6 +55,8 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     frame:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
     frame:RegisterEvent("BAG_UPDATE_DELAYED")
     frame:RegisterEvent("SKILL_LINES_CHANGED")
+    frame:RegisterEvent("PLAYER_LEVEL_UP")
+    frame:RegisterEvent("QUEST_TURNED_IN")
   elseif event == "QUEST_LOG_UPDATE" then
     ScheduleQuests()
   elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_LIST_UPDATE" then
@@ -61,6 +64,9 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     ScheduleHints()
   elseif event == "BAG_UPDATE_DELAYED" or event == "SKILL_LINES_CHANGED" then
     ScheduleHints()
+  elseif event == "PLAYER_LEVEL_UP" or event == "QUEST_TURNED_IN" then
+    -- moves the level window for upcoming Questie quests or completes one of them
+    ns.RefreshBaganator()
   elseif event == "AUCTION_HOUSE_SHOW" then
     KeepOrSellDB.ahVisited = true
   elseif event == "AUCTION_HOUSE_CLOSED" then
