@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.2
 
 - Hints in Baganator's bag window (bottom left) when KeepOrSell needs something from you: Auctionator missing, no auction house visit yet, outdated prices in your bags, profession windows never opened. Hover for details, click for options. Without Baganator the hints show in chat after login. Can be switched off.
 
