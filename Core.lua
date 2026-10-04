@@ -1,4 +1,4 @@
--- Einstellungen, Ereignisse und /kos
+-- Settings, events and /kos
 local addonName, ns = ...
 
 local DEFAULTS = {setSource = true, factor = 2, scrap = true}
@@ -6,7 +6,7 @@ local DEFAULTS = {setSource = true, factor = 2, scrap = true}
 local frame = CreateFrame("Frame")
 local pending = false
 
--- QUEST_LOG_UPDATE feuert oft hintereinander; einmal pro Frame reicht
+-- QUEST_LOG_UPDATE often fires in bursts; once per frame is enough
 local function ScheduleRefresh()
   if pending then return end
   pending = true
@@ -22,7 +22,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     for k, v in pairs(DEFAULTS) do
       if KeepOrSellDB[k] == nil then KeepOrSellDB[k] = v end
     end
-    -- früh einhaken, bevor andere Addons Scrap:IsJunk abfragen
+    -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()
   elseif event == "PLAYER_LOGIN" then
     ns.Refresh()
@@ -31,7 +31,7 @@ frame:SetScript("OnEvent", function(_, event, arg1)
   elseif event == "QUEST_LOG_UPDATE" then
     ScheduleRefresh()
   elseif event == "AUCTION_HOUSE_CLOSED" then
-    -- nach einem Auctionator-Scan gibt es neue Preise
+    -- an Auctionator scan brings new prices
     ns.RefreshBaganator()
   end
 end)

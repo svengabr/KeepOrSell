@@ -1,8 +1,8 @@
--- Vergleicht Auktionspreis (Auctionator) mit Händlerpreis. Reine Logik, ohne Baganator.
+-- Compares auction price (Auctionator) with vendor price. Pure logic, no Baganator.
 local addonName, ns = ...
 
--- "ah" = Auktionshaus lohnt (mind. factor x Händlerpreis), "vendor" = zum Händler,
--- nil = kein Auktionspreis bekannt (dann bleibt das Item, wo es ist)
+-- "ah" = worth auctioning (at least factor x vendor price), "vendor" = sell to vendor,
+-- nil = no known auction price (the item stays where it is)
 function ns.ClassifyPrice(ahPrice, vendorPrice, factor)
   if not ahPrice or ahPrice <= 0 then return nil end
   if not vendorPrice or vendorPrice <= 0 then return "ah" end

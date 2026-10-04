@@ -1,4 +1,4 @@
-"""Unit-Tests für die reinen Lua-Kernfunktionen. Aufruf: python -m unittest discover -s tests -v"""
+"""Unit tests for the pure Lua core functions. Run: python -m unittest discover -s tests -v"""
 import unittest
 from pathlib import Path
 
@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_addon(stubs=""):
-    """Lädt Objectives.lua wie der Client (addonName, ns), nach optionalen API-Stubs."""
+    """Loads Objectives.lua like the client does (addonName, ns), after optional API stubs."""
     rt = lua51.LuaRuntime(unpack_returned_tuples=True)
     if stubs:
         rt.execute(stubs)
@@ -91,7 +91,7 @@ class CollectTests(unittest.TestCase):
         rt.execute("C_Item = {GetItemNameByID = function(id) if id == 1015 then return 'Magere Wolfflanke' end if id == 2 then return 'Leinenstoff' end end}")
         ns.Refresh()
         self.assertEqual(ns.GetObjectiveState(1015), "open")
-        self.assertIsNone(ns.GetObjectiveState(999))  # Name noch nicht im Cache
+        self.assertIsNone(ns.GetObjectiveState(999))  # name not cached yet
         self.assertFalse(ns.GetObjectiveState(2))
 
     def test_refresh_reports_change(self):

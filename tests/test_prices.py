@@ -1,4 +1,4 @@
-"""Tests für die Preis-Einstufung (Prices.lua)."""
+"""Tests for the price classification (Prices.lua)."""
 import unittest
 from pathlib import Path
 

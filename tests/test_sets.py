@@ -1,4 +1,4 @@
-"""Tests für die Item-Set-Gruppen, die KeepOrSell an Baganator meldet (Baganator.lua)."""
+"""Tests for the item set groups KeepOrSell reports to Baganator (Baganator.lua)."""
 import unittest
 from pathlib import Path
 
@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 STUBS = """
 function GetLocale() return "enUS" end
--- itemID -> {name, classID}; 1 = Wolfflanke (Questziel), 2 = Brief (Questgegenstand), 3 = Seide (AH), 4 = Stoff
+-- itemID -> {name, classID}; 1 = wolf flank (objective), 2 = letter (quest item), 3 = silk (AH), 4 = cloth
 ITEMS = {[1] = {"Lean Wolf Flank", 7}, [2] = {"Sealed Letter", 12}, [3] = {"Silk Cloth", 7}, [4] = {"Linen Cloth", 7}}
 C_Item = {
   GetItemNameByID = function(id) return ITEMS[id] and ITEMS[id][1] end,
@@ -47,11 +47,11 @@ class ItemSetTests(unittest.TestCase):
         self.assertEqual(names(self.ns, 1)[0], "Quest")
 
     def test_quest_class_item_is_quest(self):
-        # echte Questgegenstände landen in derselben Gruppe, die eingebaute Quest-Kategorie bleibt leer
+        # regular quest items share the group, so the built-in quest category stays empty
         self.assertEqual(names(self.ns, 2), ["Quest"])
 
     def test_quest_group_comes_first(self):
-        # Baganator gruppiert nach dem ersten Set; Questziel schlägt Auktionshaus
+        # Baganator groups by the first set; quest beats auction house
         self.assertEqual(names(self.ns, 1), ["Quest", "AuctionHouse"])
 
     def test_auction_house_item(self):

@@ -1,4 +1,4 @@
--- Anbindung an Baganator, nur über dessen öffentliche API (Baganator.API.*)
+-- Baganator integration, using only its public API (Baganator.API.*)
 local _, ns = ...
 
 local ICON = "Interface\\GossipFrame\\ActiveQuestIcon"
@@ -16,8 +16,8 @@ function ns.RegisterBaganator()
   local api = Baganator and Baganator.API
   if not (api and api.RegisterCornerWidget) then return end
 
-  -- Eckmarkierung: gelb = noch offen, grün = Ziel erfüllt, Quest aber noch nicht abgegeben
-  -- Rückgabe: true = zeigen, false = nicht zeigen, nil = später erneut fragen (Item-Cache)
+  -- Corner marker: yellow = objective still open, green = objective done but quest not turned in yet
+  -- Returns true = show, false = hide, nil = ask again later (item cache)
   api.RegisterCornerWidget(ns.L.SET_QUEST, "keeporsell-objective", function(corner, details)
     local state = ns.GetObjectiveState(ItemIDFromDetails(details))
     if state == nil then return nil end
@@ -35,9 +35,9 @@ function ns.RegisterBaganator()
     return tex
   end, {default_position = "top_left", priority = 1})
 
-  -- Questziele und lohnende Auktionshaus-Items als Item-Sets melden. Baganator zeigt jedes Set als
-  -- eigene Gruppe in seiner Equipment-Sets-Kategorie, ohne dass der Spieler etwas einrichten muss.
-  -- Billige Items übernimmt Scrap (Scrap.lua).
+  -- Report quest objectives and items worth auctioning as item sets. Baganator shows each set as its
+  -- own group in its equipment sets category, without any setup by the player.
+  -- Cheap items are handled by Scrap (Scrap.lua).
   if KeepOrSellDB.setSource and api.RegisterItemSetSource then
     api.RegisterItemSetSource("KeepOrSell", "keeporsell", function(_, guid)
       local link = guid and C_Item.GetItemLinkByGUID and C_Item.GetItemLinkByGUID(guid)
@@ -52,8 +52,8 @@ local QUESTITEM = 12 -- Enum.ItemClass.Questitem
 local questInfo = {name = ns.L.SET_QUEST, iconTexture = ICON}
 local ahInfo = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"}
 
--- Sets für ein Item, Quest zuerst (Baganator gruppiert nach dem ersten Set); nil = keins.
--- Echte Questgegenstände gehören auch in die Quest-Gruppe, damit Baganators eigene Quest-Kategorie leer bleibt.
+-- Sets for an item, quest first (Baganator groups by the first set); nil = none.
+-- Regular quest items join the quest group too, so Baganator's own quest category stays empty.
 function ns.ItemSets(itemID, itemLink)
   if not itemID then return nil end
   local sets = {}

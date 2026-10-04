@@ -1,4 +1,4 @@
--- Texte; deDE überschreibt die englischen Standardtexte
+-- Texts; deDE overrides the English defaults
 local _, ns = ...
 
 local L = {

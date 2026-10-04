@@ -1,7 +1,7 @@
--- Liest die Item-Questziele aus dem Questlog. Reine Logik, ohne Baganator.
+-- Reads item quest objectives from the quest log. Pure logic, no Baganator.
 local _, ns = ...
 
--- "6/10 Magere Wolfflanke" (Retail-Format) oder "Magere Wolfflanke: 6/10" (Classic-Format)
+-- "6/10 Lean Wolf Flank" (retail format) or "Lean Wolf Flank: 6/10" (classic format)
 function ns.ParseObjectiveName(text)
   if type(text) ~= "string" then return nil end
   local name = text:match("^%s*%d+%s*/%s*%d+%s+(.-)%s*$")
@@ -11,7 +11,7 @@ function ns.ParseObjectiveName(text)
   return name
 end
 
--- Ruft fn(text, type, finished) für jedes Questziel im Log auf
+-- Calls fn(text, type, finished) for every objective in the quest log
 local function ForEachObjective(fn)
   if C_QuestLog and C_QuestLog.GetInfo and C_QuestLog.GetQuestObjectives then
     for i = 1, C_QuestLog.GetNumQuestLogEntries() do
@@ -34,7 +34,7 @@ local function ForEachObjective(fn)
   end
 end
 
--- Liefert {[Itemname] = "open" | "done"}; "open" gewinnt, wenn mehrere Quests das Item brauchen
+-- Returns {[itemName] = "open" | "done"}; "open" wins when several quests need the item
 function ns.CollectObjectiveItems()
   local items = {}
   ForEachObjective(function(text, objType, finished)
@@ -49,7 +49,7 @@ end
 
 ns.items = {}
 
--- Liest das Questlog neu ein; true, wenn sich etwas geändert hat
+-- Rereads the quest log; true if anything changed
 function ns.Refresh()
   local new = ns.CollectObjectiveItems()
   local changed = false
@@ -68,7 +68,7 @@ local function ItemName(itemID)
   return (GetItemInfo(itemID))
 end
 
--- "open" | "done" | false (kein Questziel) | nil (Itemname noch nicht im Cache)
+-- "open" | "done" | false (no objective) | nil (item name not cached yet)
 function ns.GetObjectiveState(itemID)
   if not itemID then return false end
   local name = ItemName(itemID)

@@ -1,4 +1,4 @@
-"""Tests für die Scrap-Erweiterung (Scrap.lua)."""
+"""Tests for the Scrap extension (Scrap.lua)."""
 import unittest
 from pathlib import Path
 
@@ -7,7 +7,7 @@ import lupa.lua51 as lua51
 ROOT = Path(__file__).resolve().parent.parent
 
 STUBS = """
--- itemID -> {name, classID}; 1 = Wolfflanke (Questziel), 2 = Leinenstoff, 3 = Schwert, 4 = Seide (AH lohnt)
+-- itemID -> {name, classID}; 1 = wolf flank (objective), 2 = linen cloth, 3 = sword, 4 = silk (worth auctioning)
 ITEMS = {[1] = {"Magere Wolfflanke", 7}, [2] = {"Leinenstoff", 7}, [3] = {"Schwert", 2}, [4] = {"Seidenstoff", 7}}
 C_Item = {
   GetItemNameByID = function(id) return ITEMS[id] and ITEMS[id][1] end,
@@ -26,7 +26,7 @@ def load():
     for f in ("Objectives.lua", "Scrap.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             str(ROOT / f).replace("\\", "/"), ns)
-    # Preis-Einstufung und Questziele stubben
+    # stub price classification and quest objectives
     rt.eval("""function(ns)
       ns.GetPriceClass = function(link) if link == "link4" then return "ah" end return "vendor" end
       ns.items = {["Magere Wolfflanke"] = "open"}

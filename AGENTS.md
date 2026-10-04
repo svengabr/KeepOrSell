@@ -36,7 +36,7 @@ gibt es nicht. Das Scrap-Schrott-Plugin bringt Baganator selbst mit (`Baganator/
   markiert. Als Junk gelten nur Handwerkswaren (`classID 7`), nie Ausrüstung, Verbrauchsgüter, Questitems.
 - **Neue Texte** immer in `Locales.lua`, englisch und deutsch.
 - Reine Logik (ohne WoW-Frames) in eigenen Funktionen halten, damit sie testbar bleibt.
-- Code-Kommentare und Commit-Messages auf Deutsch, Conventional Commits (`feat:`, `fix:`, `chore:` …).
+- Code-Kommentare (Lua und Tests) **auf Englisch**. Commit-Messages auf Deutsch, Conventional Commits (`feat:`, `fix:`, `chore:` …).
 - `README.md` ist englisch mit deutschem Abschnitt; `CHANGELOG.md` englisch.
 
 ## Tests
