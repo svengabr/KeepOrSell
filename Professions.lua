@@ -75,3 +75,59 @@ function ns.IsSkillUpReagent(itemID)
   end
   return index[itemID] == true
 end
+
+-- Enum.ItemRecipeSubclass -> profession skill line
+local RECIPE_SKILL_LINES = {
+  [1] = 165, [2] = 197, [3] = 202, [4] = 164, [5] = 185, [6] = 171,
+  [7] = 129, [8] = 333, [9] = 356, [10] = 755, [11] = 773,
+}
+
+-- true / false when the player's professions are known, nil if the client can't tell
+local function HasProfession(skillLine)
+  if not (GetProfessions and GetProfessionInfo) then return nil end
+  for _, index in pairs({GetProfessions()}) do
+    if select(7, GetProfessionInfo(index)) == skillLine then return true end
+  end
+  return false
+end
+
+local RED_TEXT = 0.5
+
+-- Tooltip requirement lines the player doesn't meet are red (1, 0.125, 0.125)
+function ns.IsRedText(color)
+  return color ~= nil and color.r > RED_TEXT and color.g < RED_TEXT and color.b < RED_TEXT
+end
+local IsRed = ns.IsRedText
+
+-- "learn" = recipe for one of the player's professions, not known yet; "known" = already learned;
+-- nil = not for the player. lines are the item's tooltip lines, hasProfession from HasProfession,
+-- types = {line, skill, notKnown, knownText}. Pure.
+function ns.RecipeState(lines, hasProfession, types)
+  local skillMet
+  for _, line in ipairs(lines or {}) do
+    if line.type == types.line and line.requirementType == types.notKnown and IsRed(line.leftColor) then
+      return "known"
+    end
+    if types.knownText and line.leftText == types.knownText and IsRed(line.leftColor) then return "known" end
+    if line.type == types.line and line.requirementType == types.skill then skillMet = not IsRed(line.leftColor) end
+  end
+  if hasProfession == true or (hasProfession == nil and skillMet) then return "learn" end
+  return nil
+end
+
+local RECIPE = 9 -- Enum.ItemClass.Recipe
+
+-- Recipe state of an item (see ns.RecipeState); nil for anything that isn't a profession recipe
+function ns.GetRecipeState(itemID, classID, subclassID)
+  local skillLine = classID == RECIPE and RECIPE_SKILL_LINES[subclassID]
+  if not skillLine then return nil end
+  local lineTypes = Enum and Enum.TooltipDataLineType
+  local reqTypes = Enum and Enum.TooltipDataUsageRequirementType
+  if not (lineTypes and reqTypes and C_TooltipInfo and C_TooltipInfo.GetItemByID) then return nil end
+  local data = C_TooltipInfo.GetItemByID(itemID)
+  if not (data and data.lines) then return nil end
+  return ns.RecipeState(data.lines, HasProfession(skillLine), {
+    line = lineTypes.UsageRequirement, skill = reqTypes.Skill,
+    notKnown = reqTypes.NotAlreadyKnown, knownText = ITEM_SPELL_KNOWN,
+  })
+end

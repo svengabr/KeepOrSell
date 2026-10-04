@@ -68,5 +68,61 @@ class ProfessionTests(unittest.TestCase):
         self.assertFalse(ns.IsSkillUpReagent(4))
 
 
+RECIPE_STUBS = """
+Enum = {TooltipDataLineType = {UsageRequirement = 43}, TooltipDataUsageRequirementType = {Skill = 2, NotAlreadyKnown = 14}}
+ITEM_SPELL_KNOWN = "Already known"
+RED, WHITE = {r = 1, g = 0.125, b = 0.125}, {r = 1, g = 1, b = 1}
+LINES = {
+  [30] = {{type = 43, requirementType = 2, leftColor = WHITE}},                       -- first aid book, skill ok
+  [31] = {{type = 43, requirementType = 2, leftColor = RED}},                         -- skill too low
+  [32] = {{type = 43, requirementType = 14, leftColor = RED}},                        -- already known
+  [33] = {{type = 0, leftText = "Already known", leftColor = RED}},                   -- known, plain text
+}
+ITEMS[30] = {"First Aid Book", 9, 7, "", 2500}
+ITEMS[31] = {"First Aid Manual", 9, 7, "", 2500}
+ITEMS[32] = {"Known Bandage Recipe", 9, 7, "", 100}
+ITEMS[33] = {"Known Cooking Recipe", 9, 5, "", 100}
+ITEMS[34] = {"Tailoring Pattern", 9, 2, "", 100}
+C_TooltipInfo = {GetItemByID = function(id) return {lines = LINES[id] or {}} end}
+-- first aid (129) and cooking (185)
+function GetProfessions() return nil, nil, nil, nil, 2, 1 end
+function GetProfessionInfo(i) if i == 1 then return "First Aid", 0, 125, 225, 0, 0, 129 end return "Cooking", 0, 1, 75, 0, 0, 185 end
+"""
+
+
+class RecipeTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(stubs=RECIPE_STUBS)
+
+    def state(self, item_id):
+        return self.ns.ItemFacts(item_id, "link%d" % item_id).recipe
+
+    def test_unknown_recipe_of_own_profession(self):
+        self.assertEqual(self.state(30), "learn")
+        self.assertEqual(self.state(31), "learn")  # learn it later
+
+    def test_known_recipe(self):
+        self.assertEqual(self.state(32), "known")
+        self.assertEqual(self.state(33), "known")
+
+    def test_other_profession(self):
+        self.assertIsNone(self.state(34))
+
+    def test_not_a_recipe(self):
+        self.assertIsNone(self.state(4))
+
+    def test_without_profession_api_skill_line_decides(self):
+        self.rt.execute("GetProfessions = nil")
+        self.assertEqual(self.state(30), "learn")
+        self.assertIsNone(self.state(31))
+
+    def test_unknown_recipe_kept_in_profession_group(self):
+        self.rt.execute("AH.link30 = 15000")
+        verdict = self.ns.Classify(30, "link30")
+        self.assertEqual((verdict.kind, verdict.reason), ("profession", "recipe"))
+        self.rt.execute("AH.link32 = 15000")
+        self.assertEqual(self.ns.Classify(32, "link32").kind, "ah")
+
+
 if __name__ == "__main__":
     unittest.main()

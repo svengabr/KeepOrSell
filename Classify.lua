@@ -4,7 +4,8 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, classID, equipLoc, unusable, plain, bound, reagent, prices, priceData}
+-- facts: {quest, classID, equipLoc, unusable, plain, bound, reagent, recipe, prices, priceData}
+-- recipe = "learn" for a recipe of the player's profession they don't know yet
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
@@ -14,6 +15,7 @@ function ns.Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
   if facts.classID == QUESTITEM then return {kind = "quest", reason = "questitem"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
+  if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
 
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
   local verdict = {priceReason = priceReason}
@@ -53,14 +55,10 @@ function ns.Decide(facts, db)
   return verdict
 end
 
-local RED_TEXT = 0.5 -- requirement lines the player doesn't meet are red (1, 0.125, 0.125)
-
 -- true if the tooltip lines contain a class or race requirement the player doesn't meet. Pure.
 function ns.HasUnmetClassRequirement(lines, lineType, raceClassType)
   for _, line in ipairs(lines or {}) do
-    local color = line.leftColor
-    if line.type == lineType and line.requirementType == raceClassType
-      and color and color.r > RED_TEXT and color.g < RED_TEXT and color.b < RED_TEXT then
+    if line.type == lineType and line.requirementType == raceClassType and ns.IsRedText(line.leftColor) then
       return true
     end
   end
@@ -109,6 +107,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
     reagent = ns.IsSkillUpReagent(itemID),
+    recipe = ns.GetRecipeState(itemID, classID, subclassID),
     prices = ns.GetPrices(itemLink),
     priceData = ns.HasPriceData(),
   }

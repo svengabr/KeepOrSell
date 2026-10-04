@@ -20,7 +20,7 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Objectives.lua` | Questziele aus dem Questlog lesen (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`) – reine Logik |
 | `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
 | `Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
-| `Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters |
+| `Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters; erkennt noch nicht gelernte Rezepte für eigene Berufe (`ns.GetRecipeState`) |
 | `Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
 | `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Recipes for your own professions that you haven't learned yet go to the Profession group instead of the auction house. Already known recipes are classified as before.
+
 ## 0.6.0
 
 - Options panel under Esc → Options → AddOns → KeepOrSell (auction house threshold, Scrap junk, Baganator groups).

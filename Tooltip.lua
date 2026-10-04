@@ -33,7 +33,7 @@ function ns.TooltipText(verdict, prices, db)
   if kind == "quest" then
     text = reason == "done" and L.TIP_QUEST_DONE or reason == "open" and L.TIP_QUEST_OPEN or L.TIP_QUEST_ITEM
   elseif kind == "profession" then
-    text = L.TIP_PROFESSION
+    text = reason == "recipe" and L.TIP_RECIPE or L.TIP_PROFESSION
   elseif kind == "ah" then
     text = L.TIP_AH .. " – " .. PriceText(prices, verdict, db)
     if reason == "unusable" then text = text .. ", " .. L.TIP_UNUSABLE end

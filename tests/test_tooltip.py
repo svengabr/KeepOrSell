@@ -63,6 +63,10 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("AH.link9 = 1000; AGE.link9 = 30")
         self.assertIn("older than 7 days", self.show(9))
 
+    def test_recipe_text(self):
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'profession', reason = 'recipe'}"), None, None)
+        self.assertIn("recipe for your profession", text)
+
     def test_stale_price(self):
         self.rt.execute("AGE.link4 = 30")
         self.assertIn("older than 7 days", self.show(4))

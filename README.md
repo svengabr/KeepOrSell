@@ -7,7 +7,7 @@ It combines **Baganator**, **Auctionator** and **Scrap**:
 | Group | What ends up there | What to do |
 |---|---|---|
 | **Quest** | Quest items *and* regular items an active quest asks for (e.g. "6/10 Lean Wolf Flank") | Keep |
-| **Profession** | Reagents of your known recipes that still give skill points | Keep |
+| **Profession** | Reagents of your known recipes that still give skill points, and recipes for your professions you haven't learned yet | Keep |
 | **AuctionHouse** | Items whose current auction price is at least 2× the vendor price | Sell on the auction house |
 | **Junk** (Scrap) | Grey items, cheap trade goods no quest or recipe needs, grey and white gear not worth auctioning, and gear or items your class can never use | Scrap sells them at the vendor |
 
@@ -56,7 +56,7 @@ Works on Retail and the Classic clients.
 **Behalten, ins Auktionshaus oder zum Händler?** KeepOrSell beantwortet das für jedes Item in der Tasche – gedacht für Einsteiger.
 
 - **Quest**: Quest-Items und normale Items, die eine aktive Quest verlangt (z. B. „6/10 Magere Wolfflanke“). Behalten.
-- **Beruf**: Zutaten deiner bekannten Rezepte, die noch Skillpunkte geben. Behalten.
+- **Beruf**: Zutaten deiner bekannten Rezepte, die noch Skillpunkte geben, und Rezepte für deine Berufe, die du noch nicht kannst. Behalten.
 - **Auktionshaus**: Auktionspreis mindestens doppelt so hoch wie der Händlerpreis. Im AH verkaufen.
 - **Schrott** (Scrap): graue Items, billige Handwerkswaren ohne Quest- oder Rezeptbezug, graue und weiße Ausrüstung, die sich im AH nicht lohnt, und Ausrüstung oder Items, die deine Klasse nie nutzen kann (z. B. „Klassen: Magier“). Scrap verkauft sie beim Händler.
 
