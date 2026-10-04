@@ -40,8 +40,13 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     for k, v in pairs(DEFAULTS) do
       if KeepOrSellDB[k] == nil then KeepOrSellDB[k] = v end
     end
-    -- not in DEFAULTS: a table there would be shared by reference
+    -- not in DEFAULTS: a table there would be shared by reference; both are kept per auction house
     KeepOrSellDB.sharedPrices = KeepOrSellDB.sharedPrices or {}
+    KeepOrSellDB.fullScans = KeepOrSellDB.fullScans or {}
+    -- 0.8.0/0.8.1 kept shared prices by item ID for all realms; without a realm they can't be trusted
+    for key in pairs(KeepOrSellDB.sharedPrices) do
+      if type(key) ~= "string" then KeepOrSellDB.sharedPrices[key] = nil end
+    end
     -- older versions allowed a lower threshold
     KeepOrSellDB.factor = math.max(KeepOrSellDB.factor, ns.MIN_FACTOR)
     ns.RegisterOptions(KeepOrSellDB, DEFAULTS)
@@ -51,7 +56,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.Refresh()
     ns.RegisterBaganator()
     ns.HookTooltip()
-    ns.PruneSharedPrices(KeepOrSellDB.sharedPrices, GetServerTime())
+    for _, prices in pairs(KeepOrSellDB.sharedPrices) do ns.PruneSharedPrices(prices, GetServerTime()) end
     ns.RegisterShare()
     ns.ScheduleShareQuery()
     ns.BuildQuestieIndex(ns.RefreshBaganator)
@@ -85,16 +90,22 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.RefreshBaganator()
   elseif event == "AUCTION_HOUSE_SHOW" then
     KeepOrSellDB.ahVisited = true
+    ns.ShareAuctionHouseShown()
   elseif event == "AUCTION_HOUSE_CLOSED" then
     -- an Auctionator scan brings new prices
     ns.RefreshBaganator()
     ScheduleHints()
+    ns.ShareAuctionHouseClosed()
+  elseif event == "REPLICATE_ITEM_LIST_UPDATE" then
+    ns.ShareFullScanArrived()
   end
 end)
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("PLAYER_LOGIN")
 frame:RegisterEvent("AUCTION_HOUSE_SHOW")
 frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
+-- full scan data; clients with the legacy auction house don't know this event
+if C_AuctionHouse and C_AuctionHouse.ReplicateItems then frame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE") end
 
 SLASH_KEEPORSELL1 = "/kos"
 SlashCmdList.KEEPORSELL = function() ns.OpenOptions() end

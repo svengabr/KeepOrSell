@@ -121,6 +121,13 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual((db.minProfit, db.maxAge, db.gear, db.plainGear, db.recipeJunk, db.profession, db.tooltip),
                          (0, 7, True, True, True, True, True))
 
+    def test_shared_prices_without_realm_dropped(self):
+        # 0.8.0/0.8.1 stored shared prices by item ID for all realms
+        self.rt.execute("KeepOrSellDB = {sharedPrices = {[3] = {price = 1, seen = 1}, ['Realm-Horde'] = {[4] = {price = 2, seen = 1}}}}")
+        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertEqual(list(self.rt.eval("KeepOrSellDB.sharedPrices").keys()), ["Realm-Horde"])
+        self.assertIsNotNone(self.rt.eval("KeepOrSellDB.fullScans"))
+
     def test_settings_bound_to_saved_variables(self):
         factor = self.calls.settings["factor"]
         self.assertTrue(self.rt.eval("CALLS.settings.factor.tbl == KeepOrSellDB"))

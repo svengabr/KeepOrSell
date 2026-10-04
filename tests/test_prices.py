@@ -94,6 +94,48 @@ DAY = 86400
 NOW = 100 * DAY
 
 
+class FreshnessTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Prices.lua",), base=False)
+
+    def fresh(self, days, visit=None):
+        return self.rt.table_from({"days": days, "visit": visit} if visit else {"days": days})
+
+    def test_fewer_days_win_regardless_of_scan_time(self):
+        self.assertTrue(self.ns.IsFresher(self.fresh(0), self.fresh(1, NOW)))
+        self.assertFalse(self.ns.IsFresher(self.fresh(2, NOW), self.fresh(1)))
+
+    def test_same_day_later_full_scan_wins(self):
+        self.assertTrue(self.ns.IsFresher(self.fresh(0, NOW - 300), self.fresh(0, NOW - 3 * 3600)))
+        self.assertFalse(self.ns.IsFresher(self.fresh(0, NOW - 3 * 3600), self.fresh(0, NOW - 300)))
+        # less than a minute apart counts as the same scan
+        self.assertFalse(self.ns.IsFresher(self.fresh(0, NOW - 30), self.fresh(0, NOW - 60)))
+
+    def test_same_day_without_scan_time_is_a_tie(self):
+        self.assertFalse(self.ns.IsFresher(self.fresh(0, NOW), self.fresh(0)))
+        self.assertFalse(self.ns.IsFresher(self.fresh(0), self.fresh(0, NOW - 3600)))
+        self.assertFalse(self.ns.IsFresher(self.fresh(1), self.fresh(1)))
+
+    def test_anything_beats_no_price(self):
+        self.assertTrue(self.ns.IsFresher(self.fresh(5), None))
+        self.assertFalse(self.ns.IsFresher(None, self.fresh(5)))
+
+    def test_own_freshness_uses_full_scan_only_for_todays_prices(self):
+        own = self.ns.OwnFreshness(0, NOW - 3600, NOW)
+        self.assertEqual((own.days, own.visit), (0, NOW - 3600))
+        self.assertIsNone(self.ns.OwnFreshness(1, NOW - 3600, NOW).visit)
+        self.assertIsNone(self.ns.OwnFreshness(0, NOW - 2 * DAY, NOW).visit)  # scan was before today's price
+        self.assertIsNone(self.ns.OwnFreshness(0, None, NOW).visit)
+        self.assertIsNone(self.ns.OwnFreshness(None, NOW, NOW))  # no age, no usable price
+
+    def test_shared_freshness(self):
+        entry = self.rt.table_from({"price": 1, "seen": NOW - 300, "visit": NOW - 300})
+        fresh = self.ns.SharedFreshness(entry, NOW)
+        self.assertEqual((fresh.days, fresh.visit), (0, NOW - 300))
+        fresh = self.ns.SharedFreshness(self.rt.table_from({"price": 1, "seen": NOW - 2 * DAY}), NOW)
+        self.assertEqual((fresh.days, fresh.visit), (2, None))
+
+
 class SharedPriceTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(("Prices.lua",), base=False)
@@ -129,11 +171,30 @@ class SharedPriceTests(unittest.TestCase):
         prices = self.pick({"ah": 300}, {"price": 500, "seen": NOW, "from": "Sven"})
         self.assertEqual(prices.ah, 300)
 
+    def test_same_day_newer_full_scan_wins(self):
+        # both today: the later full scan (here the sender's, 5 minutes ago) beats ours from 3 hours ago
+        shared = {"price": 40, "seen": NOW - 300, "visit": NOW - 300, "from": "Sven"}
+        own = {"ah": 35, "age": 0, "hasAge": True}
+        prices = self.ns.PickPrice(self.rt.table_from(own), self.rt.table_from(shared), NOW, NOW - 3 * 3600)
+        self.assertEqual((prices.ah, prices.age, prices["from"]), (40, 0, "Sven"))
+        # our own full scan is the later one: keep ours
+        prices = self.ns.PickPrice(self.rt.table_from(own), self.rt.table_from(shared), NOW, NOW - 60)
+        self.assertEqual(prices.ah, 35)
+
+    def test_same_day_without_own_full_scan_keeps_own(self):
+        # only searched single items today: no scan time to compare, a tie keeps our price
+        shared = {"price": 40, "seen": NOW - 300, "visit": NOW - 300, "from": "Sven"}
+        prices = self.ns.PickPrice(self.rt.table_from({"ah": 35, "age": 0, "hasAge": True}),
+                                   self.rt.table_from(shared), NOW, None)
+        self.assertEqual(prices.ah, 35)
+
     def lookup(self, share):
         rt, ns = load(("Prices.lua",), stubs="""
           function GetServerTime() return %d end
           KeepOrSellDB.share = %s
-          KeepOrSellDB.sharedPrices = {[3] = {price = 700, seen = %d, from = "Sven"}}
+          function GetNormalizedRealmName() return "Realm" end
+          function UnitFactionGroup() return "Horde" end
+          KeepOrSellDB.sharedPrices = {["Realm-Horde"] = {[3] = {price = 700, seen = %d, from = "Sven"}}}
         """ % (NOW, share, NOW - DAY))
         return ns.GetPrices("link3")
 

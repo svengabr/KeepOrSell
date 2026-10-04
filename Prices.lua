@@ -51,18 +51,64 @@ local function VendorPrice(itemLink)
 end
 
 local DAY = 86400
+local SCAN_MARGIN = 60 -- seconds; closer full scans count as the same one
 
--- own = {ah, vendor, age, hasAge} from Auctionator; shared = {price, seen, from} from a group member.
--- The shared price wins when the own one is missing or older. Pure.
-function ns.PickPrice(own, shared, now)
+-- Auction houses are per realm and faction, so full scan times and shared prices are kept per house
+function ns.RealmKey()
+  local realm = GetNormalizedRealmName and GetNormalizedRealmName() or "?"
+  local faction = UnitFactionGroup and UnitFactionGroup("player") or "?"
+  return realm .. "-" .. faction
+end
+
+-- itemID -> {price, seen, visit, from} shared for this auction house, nil when none yet
+function ns.SharedPrices()
+  local all = KeepOrSellDB and KeepOrSellDB.sharedPrices
+  return all and all[ns.RealmKey()]
+end
+
+-- server time of our last full scan of this auction house
+function ns.LastFullScan()
+  local scans = KeepOrSellDB and KeepOrSellDB.fullScans
+  return scans and scans[ns.RealmKey()]
+end
+
+-- How fresh a price is: {days = Auctionator's age in days, visit = server time of the full auction
+-- house scan it came from}. Auctionator only knows days, so the full scan time can only break a tie
+-- between two prices from today. nil = no usable price.
+
+-- age = Auctionator's age in days, lastScan = server time of our last full scan. Pure.
+function ns.OwnFreshness(age, lastScan, now)
+  if not age then return nil end
+  local visit = age == 0 and lastScan and now - lastScan < DAY and lastScan or nil
+  return {days = age, visit = visit}
+end
+
+-- entry = a stored shared price {price, seen, visit}. Pure.
+function ns.SharedFreshness(entry, now)
+  local days = math.max(0, math.floor((now - entry.seen) / DAY))
+  return {days = days, visit = days == 0 and entry.visit or nil}
+end
+
+-- true when a is fresher than b: fewer days old, or both from today and a's full scan at least a
+-- minute later. Without a full scan time on both sides, the same day is a tie. Pure.
+function ns.IsFresher(a, b)
+  if not a then return false end
+  if not b then return true end
+  if a.days ~= b.days then return a.days < b.days end
+  return a.days == 0 and a.visit ~= nil and b.visit ~= nil and a.visit >= b.visit + SCAN_MARGIN
+end
+
+-- own = {ah, vendor, age, hasAge} from Auctionator; shared = {price, seen, visit, from} from a group
+-- member; lastScan = our last full scan. The shared price wins when the own one is missing or older. Pure.
+function ns.PickPrice(own, shared, now, lastScan)
   if not (shared and shared.price and shared.seen) then return own end
-  local sharedAge = math.max(0, math.floor((now - shared.seen) / DAY))
+  local fresh = ns.SharedFreshness(shared, now)
   if own.ah and own.ah > 0 then
     -- without an age API the own price is trusted as before
     if not own.hasAge then return own end
-    if own.age and own.age <= sharedAge then return own end
+    if own.age and not ns.IsFresher(fresh, ns.OwnFreshness(own.age, lastScan, now)) then return own end
   end
-  return {ah = shared.price, vendor = own.vendor, age = sharedAge, hasAge = true, from = shared.from}
+  return {ah = shared.price, vendor = own.vendor, age = fresh.days, hasAge = true, from = shared.from}
 end
 
 -- {ah, vendor, age, hasAge, from}; age = days since last seen on the AH (nil = never or older than 21 days),
@@ -79,10 +125,10 @@ function ns.GetPrices(itemLink)
     prices.age = api.GetAuctionAgeByItemLink(addonName, itemLink)
   end
   prices.vendor = VendorPrice(itemLink)
-  local shared = KeepOrSellDB and KeepOrSellDB.share and KeepOrSellDB.sharedPrices
+  local shared = KeepOrSellDB and KeepOrSellDB.share and ns.SharedPrices()
   local id = shared and C_Item and C_Item.GetItemInfoInstant and C_Item.GetItemInfoInstant(itemLink)
   if id and shared[id] and GetServerTime then
-    return ns.PickPrice(prices, shared[id], GetServerTime())
+    return ns.PickPrice(prices, shared[id], GetServerTime(), ns.LastFullScan())
   end
   return prices
 end

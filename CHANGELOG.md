@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2
+
+- Shared prices now keep everyone up to date, not only fill gaps: KeepOrSell asks the group about every tradeable item in your bags, and members answer when their price is fresher. Fresher means fewer days old; for two prices from the same day, the later **full scan** wins. KeepOrSell notes the time of your last full auction house scan once its data has arrived (single searches don't count) and tells the group right after, so the others pick up the new prices at once.
+- Full scan times and shared prices are kept per realm and faction, since each has its own auction house. Prices shared with 0.8.0 or 0.8.1 are dropped once, they don't say which auction house they came from.
+- The group protocol changed: 0.8.1 and earlier don't exchange prices with 0.8.2, everyone in the group needs 0.8.2.
+
 ## 0.8.1
 
 - Quest items (item class Quest) now name their quest in the tooltip, e.g. "Quest – quest item for \"Westfall Stew\" (level 14)", looked up with Questie at any level.

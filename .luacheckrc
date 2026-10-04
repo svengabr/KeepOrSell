@@ -21,6 +21,7 @@ read_globals = {
 
   -- WoW API
   "C_AddOns",
+  "C_AuctionHouse",
   "C_ChatInfo",
   "C_Container",
   "C_Item",
@@ -45,11 +46,13 @@ read_globals = {
   "GetRealmName",
   "GetServerTime",
   "GetTime",
+  "hooksecurefunc",
   "InCombatLockdown",
   "IsInGroup",
   "IsInRaid",
   "ItemLocation",
   "UnitClass",
+  "UnitFactionGroup",
   "UnitLevel",
   "UnitName",
   "UnitRace",

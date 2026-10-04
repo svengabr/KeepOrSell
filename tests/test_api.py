@@ -44,6 +44,7 @@ NOT_IN_DOCS = {
     "Enum": "checked per value below",
     # Legacy global C functions without generated docs
     "GetProfessions": "legacy global, used by Blizzard_Professions on Forever",
+    "hooksecurefunc": "core global for post-hooks, used throughout FrameXML",
     "GetProfessionInfo": "legacy global, used by Blizzard_Professions on Forever",
     "GetItemInfo": "fallback where C_Item.GetItemInfo is missing (always guarded)",
     "GetQuestLogTitle": "Classic quest log fallback, only used without C_QuestLog.GetInfo",

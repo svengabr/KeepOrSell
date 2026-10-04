@@ -119,3 +119,29 @@ der Baganator-Anzeige und der Tooltip-Zusatz.
 - Antwort „nicht im AH“ für Items ohne Preis
 - Preise je Zufallssuffix
 - Teilen über Gilde oder Flüstern
+
+## Nachtrag 0.8.2: frischere Preise statt nur fehlende
+
+Gefragt wird nach **allen handelbaren Taschen-Items** (nicht seelengebunden), jeweils mit der Frische des
+besten bekannten Preises (eigener oder bereits geteilter). Geantwortet wird nur mit einem frischeren
+eigenen Auctionator-Preis.
+
+**Frische** (`ns.IsFresher`, `Prices.lua`): zuerst Auctionators Alter in ganzen Tagen (weniger gewinnt).
+Bei gleichem Tag (nur heute) entscheidet der Zeitpunkt des letzten **Komplett-Scans**, mindestens eine
+Minute Abstand; fehlt er auf einer Seite, ist es ein Gleichstand und der eigene Preis bleibt. Einzelne
+Suchen zählen nicht. Den Komplett-Scan erkennt KeepOrSell über einen Hook auf Blizzards
+`C_AuctionHouse.ReplicateItems` (Forever hat das moderne Auktionshaus) und zählt ihn erst, wenn
+`REPLICATE_ITEM_LIST_UPDATE` Daten liefert; ein abgebrochener Scan zählt nicht. Gespeichert in
+`KeepOrSellDB.fullScans[<Realm>-<Fraktion>]` (Serverzeit). Geteilte Preise liegen ebenso pro
+Auktionshaus in `KeepOrSellDB.sharedPrices[<Realm>-<Fraktion>][itemID]`; Einträge aus 0.8.0/0.8.1 ohne
+Realm werden einmalig verworfen.
+
+**Protokoll Version 2** (Version 1 wird ignoriert):
+- Frage `2|Q|<id>[:<tage>[:<Serverzeit des Komplett-Scans>]],…`
+- Antwort `2|A|<id>:<preis>:<tage>[:<Serverzeit>],…` – absolute Serverzeit, weil sie auf dem Realm für alle
+  gleich ist; so verschieben Rundung und Wartezeit in der Sendeschlange nichts. Geantwortet wird, wenn der
+  eigene Preis frischer ist als der von mindestens einem Fragenden.
+- Meldung `2|N|` beim Schließen des AH, wenn während des Besuchs ein Komplett-Scan ankam; Empfänger fragen sofort neu (höchstens einmal pro Minute und Absender).
+
+Gespeichert wird `{price, seen, visit, from}`; `visit` = Zeitpunkt des Komplett-Scans des Absenders
+(nur bei Preisen von heute).
