@@ -89,8 +89,8 @@ function ns.UnopenedProfessions()
   local missing = {}
   if not (GetProfessions and GetProfessionInfo) then return missing end
   local opened = CharacterTable("opened")
-  for _, index in pairs({GetProfessions()}) do
-    local name, _, _, _, _, _, skillLine = GetProfessionInfo(index)
+  for _, profIndex in pairs({GetProfessions()}) do
+    local name, _, _, _, _, _, skillLine = GetProfessionInfo(profIndex)
     if name and not NO_RECIPES[skillLine] and not opened[name] then table.insert(missing, name) end
   end
   table.sort(missing)
@@ -106,8 +106,8 @@ local RECIPE_SKILL_LINES = {
 -- true / false when the player's professions are known, nil if the client can't tell
 local function HasProfession(skillLine)
   if not (GetProfessions and GetProfessionInfo) then return nil end
-  for _, index in pairs({GetProfessions()}) do
-    if select(7, GetProfessionInfo(index)) == skillLine then return true end
+  for _, profIndex in pairs({GetProfessions()}) do
+    if select(7, GetProfessionInfo(profIndex)) == skillLine then return true end
   end
   return false
 end

@@ -1,7 +1,7 @@
 """Shared loader: runs addon files like the client does (addonName, ns), after WoW API stubs."""
 from pathlib import Path
 
-import lupa.lua51 as lua51
+from wowapi import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -56,7 +56,7 @@ CORE_FILES = ("Locales.lua", "Objectives.lua", "Prices.lua", "Gear.lua", "Profes
 
 
 def load(files=CORE_FILES, stubs="", base=True):
-    rt = lua51.LuaRuntime(unpack_returned_tuples=True)
+    rt = runtime()
     if base:
         rt.execute(BASE_STUBS)
     if stubs:

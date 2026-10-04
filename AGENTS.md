@@ -69,6 +69,21 @@ python -m unittest discover -s tests -v
 Neue Logik bekommt einen Test; Ingame-Verhalten (Frames, Events, Baganator-Anzeige) lässt sich
 nur im Client prüfen – das ehrlich so benennen.
 
+**Abgleich mit der Forever-API:** `tests/data/forever_api.json` enthält Blizzards generierte API-Doku
+(Funktionen, Events, Enums) aus Gethe/wow-ui-source, Branch `forever`. `tests/test_api.py` prüft den
+Addon-Code dagegen (`C_*`-Aufrufe, `Enum`-Werte, Events, Globals aus `.luacheckrc`), und jeder Test-Stub
+für `C_*`/`Enum` wird beim Laden gegen sie geprüft (`tests/wowapi.py`). Fehlt etwas in der Doku, das es
+trotzdem gibt oder das nur abgesichert genutzt wird: mit Begründung in `UNDOCUMENTED_FUNCTIONS`
+(`wowapi.py`) bzw. `NOT_IN_DOCS` (`test_api.py`) eintragen. Nach einem Client-Patch neu erzeugen:
+`python tests/update_api.py`.
+
+**luacheck:** `.luacheckrc` listet jedes Global, das das Addon nutzt – ein neues Global dort eintragen.
+Lokal ohne Lua-Installation über Docker:
+`docker run --rm -v "$PWD:/data" -w /data ghcr.io/lunarmodules/luacheck .`
+
+Beides läuft in `.github/workflows/test.yml` bei Push und Pull Request; der Release-Workflow
+startet erst nach grünen Tests.
+
 ## Release
 
 Veröffentlicht wird automatisch über `.github/workflows/release.yml` (BigWigsMods/packager) zu

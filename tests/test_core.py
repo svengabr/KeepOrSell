@@ -2,14 +2,14 @@
 import unittest
 from pathlib import Path
 
-import lupa.lua51 as lua51
+from wowapi import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
 def load_addon(stubs=""):
     """Loads Objectives.lua like the client does (addonName, ns), after optional API stubs."""
-    rt = lua51.LuaRuntime(unpack_returned_tuples=True)
+    rt = runtime()
     if stubs:
         rt.execute(stubs)
     ns = rt.eval("{}")

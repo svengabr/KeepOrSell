@@ -2,7 +2,7 @@
 import unittest
 from pathlib import Path
 
-import lupa.lua51 as lua51
+from wowapi import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -41,7 +41,7 @@ C_Timer = {After = function(_, fn) fn() end}
 
 
 def load():
-    rt = lua51.LuaRuntime(unpack_returned_tuples=True)
+    rt = runtime()
     rt.execute(STUBS)
     ns = rt.eval("{}")
     rt.eval("""function(ns)
