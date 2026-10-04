@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- Profession tools (Mining Pick, Blacksmith Hammer, Skinning Knife, runed enchanting rods, Arclight Spanner and others) are never sold or sent to the auction house anymore. The tooltip says "Keep – profession tool".
+
 ## 0.7.0
 
 - Questie support: items a quest you haven't done yet needs (within 5 levels of yours, open to your race and class) go to the Quest group instead of being sold. The tooltip names the quest. Needs Questie (QuestieDB); new option "Upcoming quests (Questie)".
