@@ -35,6 +35,8 @@ To move the groups elsewhere in your bags, move the *equipment sets* category in
 
 Only **trade goods** are ever marked as junk by KeepOrSell – never gear, consumables or quest items. Items you mark as "not junk" in Scrap always win.
 
+Works on Retail and the Classic clients.
+
 ---
 
 ## Deutsch
@@ -49,4 +51,4 @@ Einrichtung ist nicht nötig: Quest und Auktionshaus erscheinen als eigene Grupp
 
 ## License
 
-GPL-3.0-or-later
+GPL-3.0-or-later · Source & issues: https://github.com/svengabr/KeepOrSell

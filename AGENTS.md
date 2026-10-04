@@ -38,6 +38,8 @@ gibt es nicht. Das Scrap-Schrott-Plugin bringt Baganator selbst mit (`Baganator/
 - Reine Logik (ohne WoW-Frames) in eigenen Funktionen halten, damit sie testbar bleibt.
 - Code-Kommentare (Lua und Tests) **auf Englisch**. Commit-Messages auf Deutsch, Conventional Commits (`feat:`, `fix:`, `chore:` …).
 - `README.md` ist englisch mit deutschem Abschnitt; `CHANGELOG.md` englisch.
+- Die README ist zugleich die **CurseForge-Projektbeschreibung** (Markdown). CurseForge kann sie nicht per API
+  übernehmen – nach README-Änderungen den Maintainer erinnern, sie dort von Hand einzufügen.
 
 ## Tests
 
