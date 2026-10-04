@@ -57,3 +57,40 @@ function ns.RefreshBaganator()
     Baganator.API.RequestItemButtonsRefresh()
   end
 end
+
+-- Kategorien Quest und AuctionHouse automatisch anlegen, über Baganator.API.ImportString.
+-- Ohne "order" stellt Baganator sie nur vorne an und lässt das übrige Layout des Spielers in Ruhe.
+-- Eigene Kategorien schlagen mit Priorität 1 sicher die eingebauten (Equipment-Sets, Questitems).
+local PRIORITY = 1
+
+local function JSONString(s)
+  return '"' .. s:gsub('[%c"\\]', function(c) return ("\\u%04x"):format(c:byte()) end) .. '"'
+end
+
+function ns.CategoryImportJSON()
+  local L = ns.L
+  local categories = {
+    {source = "keeporsell_quest", name = L.CAT_QUEST, search = "quest"},
+    {source = "keeporsell_ah", name = L.SET_AH, search = L.SET_AH:lower() .. " & ~quest"},
+  }
+  local cats, mods = {}, {}
+  for _, c in ipairs(categories) do
+    table.insert(cats, ('{"source":%s,"name":%s,"search":%s}'):format(
+      JSONString(c.source), JSONString(c.name), JSONString(c.search)))
+    table.insert(mods, ('{"source":%s,"priority":%d}'):format(JSONString(c.source), PRIORITY))
+  end
+  return ('{"addon":"Baganator","version":3,"kind":"categories","categories":[%s],"modifications":[%s]}'):format(
+    table.concat(cats, ","), table.concat(mods, ","))
+end
+
+-- Legt die Kategorien einmalig an (force = erneut). Jeder Import fügt neue Kategorien hinzu,
+-- deshalb merkt sich KeepOrSellDB.categoriesImported den ersten Erfolg.
+-- true = angelegt, false = Import gescheitert, nil = nichts zu tun bzw. Baganator fehlt
+function ns.SetupBaganatorCategories(force)
+  if KeepOrSellDB.categoriesImported and not force then return nil end
+  local api = Baganator and Baganator.API
+  if not (api and api.ImportString) then return nil end
+  if not pcall(api.ImportString, ns.CategoryImportJSON()) then return false end
+  KeepOrSellDB.categoriesImported = true
+  return true
+end
