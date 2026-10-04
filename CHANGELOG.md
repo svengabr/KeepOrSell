@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.2
+
+- The auction house threshold is now at least 1.1× the vendor price (slider 1.1–10 in steps of 0.1). Below that, the 5% auction house cut could leave you with less than the vendor pays, and Auctionator warned when posting. Lower saved values are raised to 1.1.
+
 ## 0.7.1
 
 - Profession tools (Mining Pick, Blacksmith Hammer, Skinning Knife, runed enchanting rods, Arclight Spanner and others) are never sold or sent to the auction house anymore. The tooltip says "Keep – profession tool".
