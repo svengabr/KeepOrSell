@@ -26,7 +26,6 @@ Get it on [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) – via
 - [Baganator](https://www.curseforge.com/wow/addons/baganator) (category view)
 - [Auctionator](https://www.curseforge.com/wow/addons/auctionator) – scan the auction house once, otherwise there are no prices
 - [Scrap](https://www.curseforge.com/wow/addons/scrap) – optional, for automatic vendoring
-
 - [Questie](https://www.curseforge.com/wow/addons/questie) – optional; without it only quests in your quest log count. With it, items for quests you haven't picked up or finished yet are kept too, if the quest is within 5 levels of yours and open to your race and class. The tooltip names the quest, also for quest items. Quest items whose quests you have all done become junk.
 
 ## Setup
