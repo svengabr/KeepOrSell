@@ -40,6 +40,8 @@ frame:SetScript("OnEvent", function(_, event, arg1)
     for k, v in pairs(DEFAULTS) do
       if KeepOrSellDB[k] == nil then KeepOrSellDB[k] = v end
     end
+    -- older versions allowed a lower threshold
+    KeepOrSellDB.factor = math.max(KeepOrSellDB.factor, ns.MIN_FACTOR)
     ns.RegisterOptions(KeepOrSellDB, DEFAULTS)
     -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()

@@ -51,7 +51,7 @@ function ns.RegisterOptions(db, defaults)
 
   -- grouped by purpose; the header names the addon a group depends on
   Header(L.SECTION_AH)
-  Slider("factor", L.OPT_FACTOR, L.OPT_FACTOR_TIP, 1, 10, 0.5, function(v) return ("%gx"):format(v) end)
+  Slider("factor", L.OPT_FACTOR, L.OPT_FACTOR_TIP, ns.MIN_FACTOR, 10, 0.1, function(v) return ("%gx"):format(v) end)
   Slider("minProfit", L.OPT_MIN_PROFIT, L.OPT_MIN_PROFIT_TIP, 0, 100, 1, function(v)
     return v == 0 and L.OFF or L.SILVER:format(v)
   end)

@@ -72,7 +72,7 @@ def load():
       ns.UpdateHints = function() ns.hintsUpdated = (ns.hintsUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
-    for f in ("Locales.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
+    for f in ("Locales.lua", "Prices.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             str(ROOT / f).replace("\\", "/"), ns)
     return rt, ns
@@ -101,6 +101,13 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.sliders["minProfit"].label(5), "5 s")
         self.assertEqual(self.calls.sliders["maxAge"].label(7), "7 days")
         self.assertEqual(self.calls.sliders["maxAge"].label(21), "off")
+
+    def test_factor_minimum(self):
+        self.assertEqual(self.calls.sliders["factor"].min, 1.1)
+        self.assertEqual(self.calls.sliders["factor"].label(1.1), "1.1x")
+        self.rt.execute("KeepOrSellDB = {factor = 1}")
+        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertEqual(self.rt.eval("KeepOrSellDB.factor"), 1.1)  # old saved value raised
 
     def test_defaults_for_new_options(self):
         db = self.rt.eval("KeepOrSellDB")

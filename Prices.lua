@@ -3,6 +3,8 @@ local addonName, ns = ...
 
 local AH_CUT = 0.05 -- auction house fee on a sale
 local MAX_AUCTIONATOR_AGE = 21 -- Auctionator reports no age beyond this
+-- lowest auction house threshold: below it the AH cut can leave less than the vendor pays
+ns.MIN_FACTOR = 1.1
 
 -- "ah" = worth auctioning (at least factor x vendor price and at least minProfit copper more per item
 -- after the AH cut), "vendor" = sell to vendor, nil = no known auction price (the item stays where it is).
@@ -10,7 +12,8 @@ local MAX_AUCTIONATOR_AGE = 21 -- Auctionator reports no age beyond this
 function ns.ClassifyPrice(ahPrice, vendorPrice, factor, minProfit)
   if not ahPrice or ahPrice <= 0 then return nil end
   local vendorable = vendorPrice and vendorPrice > 0
-  if vendorable and ahPrice < vendorPrice * factor then return "vendor", "factor" end
+  -- rounded to whole copper, so 100 x 1.1 is 110 and not 110.00000000000001
+  if vendorable and ahPrice < math.floor(vendorPrice * factor + 0.5) then return "vendor", "factor" end
   if minProfit and minProfit > 0 and ahPrice * (1 - AH_CUT) - (vendorPrice or 0) < minProfit then
     -- not worth the trip; without vendor price it can't be sold there either, so keep it
     if vendorable then return "vendor", "minprofit" end
@@ -28,7 +31,8 @@ function ns.ClassifyPrices(prices, db)
     and (prices.age == nil or prices.age > db.maxAge) then
     return nil, "stale"
   end
-  return ns.ClassifyPrice(prices.ah, prices.vendor, db.factor, (db.minProfit or 0) * 100)
+  local factor = math.max(db.factor or ns.MIN_FACTOR, ns.MIN_FACTOR)
+  return ns.ClassifyPrice(prices.ah, prices.vendor, factor, (db.minProfit or 0) * 100)
 end
 
 local function Api()

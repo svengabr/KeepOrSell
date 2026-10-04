@@ -46,6 +46,12 @@ class PricesTests(unittest.TestCase):
     def test_fresh_price(self):
         self.assertEqual(self.classify(ah=300, vendor=100, age=2, hasAge=True), ("ah", None))
 
+    def test_factor_at_least_minimum(self):
+        # below 1.1x the 5% AH cut can make the vendor pay more (Auctionator warns then)
+        self.db.factor = 1
+        self.assertEqual(self.classify(ah=105, vendor=100), ("vendor", "factor"))
+        self.assertEqual(self.classify(ah=110, vendor=100), ("ah", None))
+
     def test_stale_price_kept(self):
         self.assertEqual(self.classify(ah=300, vendor=100, age=8, hasAge=True), (None, "stale"))
 
