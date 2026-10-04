@@ -121,7 +121,7 @@ end
 local IsRed = ns.IsRedText
 
 -- "learn" = recipe for one of the player's professions, not known yet; "known" = already learned;
--- nil = not for the player. lines are the item's tooltip lines, hasProfession from HasProfession,
+-- "other" = for a profession the player doesn't have; nil = can't tell. lines are the item's tooltip lines, hasProfession from HasProfession,
 -- types = {line, skill, notKnown, knownText}. Pure.
 function ns.RecipeState(lines, hasProfession, types)
   local skillMet
@@ -133,6 +133,7 @@ function ns.RecipeState(lines, hasProfession, types)
     if line.type == types.line and line.requirementType == types.skill then skillMet = not IsRed(line.leftColor) end
   end
   if hasProfession == true or (hasProfession == nil and skillMet) then return "learn" end
+  if hasProfession == false then return "other" end
   return nil
 end
 

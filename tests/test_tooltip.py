@@ -58,10 +58,30 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("CURRENT_LINK = 'link10'; POSTCALL(GameTooltip, {guid = 'g'})")
         self.assertEqual(len(list(self.rt.eval("TOOLTIP_LINES").values())), 0)
 
+    def test_buyback_item_with_empty_location(self):
+        # buyback items have a GUID, but their location is empty and IsValid() raises
+        self.rt.execute("C_Item.IsBound = function() return true end")
+        self.rt.execute("""C_Item.GetItemLocation = function() return {
+          IsEquipmentSlot = function() return false end,
+          IsBagAndSlot = function() return false end,
+          IsValid = function() error("bad argument #1 to 'DoesItemExist'") end,
+        } end""")
+        self.rt.execute("CURRENT_LINK = 'link10'; POSTCALL(GameTooltip, {guid = 'g'})")
+        self.assertIn("Junk – plain gear", list(self.rt.eval("TOOLTIP_LINES").values())[0])
+
     def test_stale_price_on_other_items(self):
         # a potion with an outdated price could be an auction house item; say why it stays
         self.rt.execute("AH.link9 = 1000; AGE.link9 = 30")
         self.assertIn("older than 7 days", self.show(9))
+
+    def test_useless_recipe_text(self):
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'junk', reason = 'recipe_known'}"), self.rt.eval("{ah = 120, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
+        self.assertIn("Junk – recipe already known, AH", text)
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'junk', reason = 'recipe_other', bound = true}"), None, self.rt.eval("KeepOrSellDB"))
+        self.assertIn("recipe for a profession you don't have, soulbound", text)
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'ah', reason = 'recipe_other'}"), self.rt.eval("{ah = 5000, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
+        self.assertIn("Auction house", text)
+        self.assertIn("recipe for a profession you don't have", text)
 
     def test_recipe_text(self):
         text = self.ns.TooltipText(self.rt.eval("{kind = 'profession', reason = 'recipe'}"), None, None)

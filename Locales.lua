@@ -20,6 +20,8 @@ local L = {
   OPT_GEAR_TIP = "Weapons and armor your class can never use (e.g. mail or swords for a druid) and items for other classes (\"Classes: Mage\"): AuctionHouse when tradeable and worth it, otherwise junk. Gear you could wear is never junk.",
   OPT_PLAIN_GEAR = "Grey and white gear as junk",
   OPT_PLAIN_GEAR_TIP = "Grey and white weapons and armor that no quest needs and that aren't worth auctioning. Without an auction price they count as not worth it once you have visited the auction house with Auctionator. Shirts, tabards and fishing poles are kept.",
+  OPT_RECIPES = "Useless recipes",
+  OPT_RECIPES_TIP = "Recipes you already know and recipes for professions you don't have: AuctionHouse when tradeable and worth it, otherwise junk.",
   OPT_PROFESSION = "Keep profession reagents",
   OPT_PROFESSION_TIP = "Reagents of your known recipes that still give skill points go to the Profession group and are never junk. Open each profession window once so KeepOrSell learns your recipes. Recipes for your professions you don't know yet are kept too.",
   OPT_TOOLTIP = "Show in tooltip",
@@ -48,6 +50,8 @@ local L = {
   TIP_BELOW_FACTOR = "(below %gx vendor price)",
   TIP_BELOW_PROFIT = "(less than %s profit)",
   TIP_PLAIN = "plain gear",
+  TIP_RECIPE_KNOWN = "recipe already known",
+  TIP_RECIPE_OTHER = "recipe for a profession you don't have",
   TIP_NO_PRICE = "no auction price yet (scan with Auctionator)",
   TIP_STALE = "auction price older than %d days",
 }
@@ -70,6 +74,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.OPT_GEAR_TIP = "Waffen und Rüstung, die deine Klasse nie benutzen kann (z. B. Kette oder Schwerter als Druide), und Items für andere Klassen („Klassen: Magier“): Auktionshaus, wenn handelbar und lohnend, sonst Schrott. Ausrüstung, die du tragen könntest, wird nie Schrott."
   L.OPT_PLAIN_GEAR = "Graue und weiße Ausrüstung als Schrott"
   L.OPT_PLAIN_GEAR_TIP = "Graue und weiße Waffen und Rüstung, die keine Quest braucht und die sich im AH nicht lohnen. Ohne Auktionspreis gelten sie als nicht lohnend, sobald du mit Auctionator einmal im Auktionshaus warst. Hemden, Wappenröcke und Angelruten bleiben."
+  L.OPT_RECIPES = "Nutzlose Rezepte"
+  L.OPT_RECIPES_TIP = "Rezepte, die du schon kannst, und Rezepte für Berufe, die du nicht hast: Auktionshaus, wenn handelbar und lohnend, sonst Schrott."
   L.OPT_PROFESSION = "Berufsmaterial behalten"
   L.OPT_PROFESSION_TIP = "Zutaten deiner bekannten Rezepte, die noch Skillpunkte geben, kommen in die Gruppe Beruf und sind nie Schrott. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Rezepte für deine Berufe, die du noch nicht kannst, bleiben ebenfalls."
   L.OPT_TOOLTIP = "Im Tooltip anzeigen"
@@ -97,6 +103,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_BELOW_FACTOR = "(unter %gx Händlerpreis)"
   L.TIP_BELOW_PROFIT = "(weniger als %s Gewinn)"
   L.TIP_PLAIN = "einfache Ausrüstung"
+  L.TIP_RECIPE_KNOWN = "Rezept bereits bekannt"
+  L.TIP_RECIPE_OTHER = "Rezept für einen Beruf, den du nicht hast"
   L.TIP_NO_PRICE = "noch kein Auktionspreis (mit Auctionator scannen)"
   L.TIP_STALE = "Auktionspreis älter als %d Tage"
 end

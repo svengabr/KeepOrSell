@@ -67,7 +67,7 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:profession", "checkbox:tooltip", "checkbox:hints", "checkbox:setSource"])
+            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:tooltip", "checkbox:hints", "checkbox:setSource"])
 
     def test_slider_labels(self):
         self.assertEqual(self.calls.sliders["minProfit"].label(0), "off")
@@ -77,8 +77,8 @@ class OptionsTests(unittest.TestCase):
 
     def test_defaults_for_new_options(self):
         db = self.rt.eval("KeepOrSellDB")
-        self.assertEqual((db.minProfit, db.maxAge, db.gear, db.plainGear, db.profession, db.tooltip),
-                         (0, 7, True, True, True, True))
+        self.assertEqual((db.minProfit, db.maxAge, db.gear, db.plainGear, db.recipeJunk, db.profession, db.tooltip),
+                         (0, 7, True, True, True, True, True))
 
     def test_settings_bound_to_saved_variables(self):
         factor = self.calls.settings["factor"]
@@ -88,7 +88,7 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.settings["scrap"].varType, "boolean")
 
     def test_change_refreshes_baganator(self):
-        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "profession", "hints")
+        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "recipeJunk", "profession", "hints")
         for key in keys:
             self.calls.callbacks["KeepOrSell_" + key]()
         self.assertEqual(self.ns.refreshed, len(keys))

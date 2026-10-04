@@ -9,13 +9,17 @@ It combines **Baganator**, **Auctionator** and **Scrap**:
 | **Quest** | Quest items *and* regular items an active quest asks for (e.g. "6/10 Lean Wolf Flank") | Keep |
 | **Profession** | Reagents of your known recipes that still give skill points, and recipes for your professions you haven't learned yet | Keep |
 | **AuctionHouse** | Items whose current auction price is at least 2× the vendor price | Sell on the auction house |
-| **Junk** (Scrap) | Grey items, cheap trade goods no quest or recipe needs, grey and white gear not worth auctioning, and gear or items your class can never use | Scrap sells them at the vendor |
+| **Junk** (Scrap) | Grey items, cheap trade goods no quest or recipe needs, grey and white gear not worth auctioning, gear or items your class can never use, and recipes you already know or for professions you don't have (unless worth auctioning) | Scrap sells them at the vendor |
 
 Items without a known or recent auction price are left alone – when in doubt, you keep them. Gear you could wear (green or better) is never junk – it only goes to the auction house when tradeable and worth it.
 
 Hover over an item: a tooltip line tells you where it goes and why (e.g. "Auction house – AH 1g 20s, vendor 15s").
 
 When KeepOrSell needs something from you – a fresh Auctionator scan, opening a profession window – a small hint button appears at the bottom left of Baganator's bag window. Hover it for details. Without Baganator the hints show in chat after login.
+
+## Installation
+
+Get it on [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) – via the CurseForge app or as a manual download into `Interface/AddOns`.
 
 ## Requirements
 
@@ -43,6 +47,7 @@ Esc → Options → AddOns → **KeepOrSell**, or type `/kos`:
 - **Cheap trade goods as junk** – for Scrap, on/off
 - **Items your class can't use** – e.g. mail or swords for a druid, or items marked "Classes: Mage": auction house when tradeable and worth it, otherwise junk; on/off
 - **Grey and white gear as junk** – when not worth auctioning; without an auction price once you have visited the AH with Auctionator. Shirts, tabards and fishing poles are kept; on/off
+- **Useless recipes** – recipes you already know or for professions you don't have: auction house when tradeable and worth it, otherwise junk; on/off
 - **Keep profession reagents** – on/off
 - **Show in tooltip** – on/off
 - **Show hints** – on/off
@@ -61,12 +66,12 @@ Works on Retail and the Classic clients.
 - **Quest**: Quest-Items und normale Items, die eine aktive Quest verlangt (z. B. „6/10 Magere Wolfflanke“). Behalten.
 - **Beruf**: Zutaten deiner bekannten Rezepte, die noch Skillpunkte geben, und Rezepte für deine Berufe, die du noch nicht kannst. Behalten.
 - **Auktionshaus**: Auktionspreis mindestens doppelt so hoch wie der Händlerpreis. Im AH verkaufen.
-- **Schrott** (Scrap): graue Items, billige Handwerkswaren ohne Quest- oder Rezeptbezug, graue und weiße Ausrüstung, die sich im AH nicht lohnt, und Ausrüstung oder Items, die deine Klasse nie nutzen kann (z. B. „Klassen: Magier“). Scrap verkauft sie beim Händler.
+- **Schrott** (Scrap): graue Items, billige Handwerkswaren ohne Quest- oder Rezeptbezug, graue und weiße Ausrüstung, die sich im AH nicht lohnt, und Ausrüstung oder Items, die deine Klasse nie nutzen kann (z. B. „Klassen: Magier“), sowie Rezepte, die du schon kannst oder für Berufe, die du nicht hast (wenn sie sich im AH nicht lohnen). Scrap verkauft sie beim Händler.
 
 Grüne und bessere Ausrüstung, die du tragen könntest, wird nie Schrott – höchstens Auktionshaus, wenn handelbar und lohnend. Der Tooltip zeigt, wohin ein Item gehört und warum. Braucht KeepOrSell etwas von dir (neuer Auctionator-Scan, Berufsfenster öffnen), erscheint unten links im Baganator-Taschenfenster ein Hinweis-Knopf.
 
-Einrichtung ist nicht nötig: Quest, Beruf und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Einstellungen unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`: Auktionshaus-Schwelle, Mindestgewinn, Höchstalter der Preise, Schrott, Ausrüstung, graue/weiße Ausrüstung, Berufsmaterial, Tooltip, Hinweise, Gruppen in Baganator.
+Installation über [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) (App oder manueller Download nach `Interface/AddOns`). Einrichtung ist nicht nötig: Quest, Beruf und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Öffne jedes Berufsfenster einmal, damit KeepOrSell deine Rezepte kennt. Einstellungen unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`: Auktionshaus-Schwelle, Mindestgewinn, Höchstalter der Preise, Schrott, Ausrüstung, graue/weiße Ausrüstung, nutzlose Rezepte, Berufsmaterial, Tooltip, Hinweise, Gruppen in Baganator.
 
 ## License
 
-GPL-3.0-or-later · Source & issues: https://github.com/svengabr/KeepOrSell
+GPL-3.0-or-later · Download: https://www.curseforge.com/wow/addons/keeporsell · Source & issues: https://github.com/svengabr/KeepOrSell

@@ -90,6 +90,8 @@ function ns.UpdateHints()
   local hints = KeepOrSellDB.hints and ns.GetHints() or {}
   button.hints = hints
   local shown = #hints > 0
+  if shown == button:IsShown() and #hints == button.count then return end -- no relayout needed
+  button.count = #hints
   button.Text:SetText(L.HINT_COUNT:format(#hints))
   -- a hidden region still takes its width in Baganator's row
   button:SetWidth(shown and (22 + button.Text:GetStringWidth()) or 1)

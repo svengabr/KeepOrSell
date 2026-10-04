@@ -5,7 +5,8 @@ local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
 -- facts: {quest, classID, equipLoc, unusable, plain, bound, reagent, recipe, prices, priceData}
--- recipe = "learn" for a recipe of the player's profession they don't know yet
+-- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
+-- learned, "other" for a profession the player doesn't have
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
@@ -20,9 +21,16 @@ function ns.Decide(facts, db)
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
   local verdict = {priceReason = priceReason}
   local isGear = (facts.classID == WEAPON or facts.classID == ARMOR) and (facts.equipLoc or "") ~= ""
+  local uselessRecipe = db.recipeJunk and (facts.recipe == "known" or facts.recipe == "other")
 
-  if db.gear and facts.unusable then
-    verdict.reason = facts.bound and "unusable_bound" or "unusable"
+  if (db.gear and facts.unusable) or uselessRecipe then
+    -- nothing the player can use: auction it when worth it, otherwise sell it
+    if uselessRecipe then
+      verdict.reason = "recipe_" .. facts.recipe
+      verdict.bound = facts.bound
+    else
+      verdict.reason = facts.bound and "unusable_bound" or "unusable"
+    end
     if facts.bound or priceClass == "vendor" then
       verdict.kind = "junk"
     elseif priceClass == "ah" then
@@ -87,7 +95,7 @@ local function Quality(itemID, itemLink)
 end
 
 local function IsBound(itemLink, location)
-  if location and C_Item.IsBound and (not location.IsValid or location:IsValid()) then
+  if location and C_Item.IsBound and (not location.IsBagAndSlot or location:IsBagAndSlot()) and (not location.IsValid or location:IsValid()) then
     return C_Item.IsBound(location)
   end
   local getInfo = C_Item.GetItemInfo or GetItemInfo
@@ -113,7 +121,24 @@ function ns.ItemFacts(itemID, itemLink, location)
   }
 end
 
+-- Baganator asks for every item on each button refresh, so decisions are cached. The cache is cleared
+-- whenever something they depend on changes (ns.ClearCache) and every few minutes, as prices age.
+local CACHE_SECONDS = 300
+local cache, cacheTime = {}, 0
+
+function ns.ClearCache()
+  cache = {}
+end
+
 function ns.Classify(itemID, itemLink, location)
   if not itemID then return {} end
-  return ns.Decide(ns.ItemFacts(itemID, itemLink, location), KeepOrSellDB)
+  local now = GetTime and GetTime() or 0
+  if now - cacheTime > CACHE_SECONDS then cache, cacheTime = {}, now end
+  local key = tostring(itemLink or itemID) .. (IsBound(itemLink, location) and "|bound" or "")
+  if cache[key] then return cache[key] end
+  local facts = ns.ItemFacts(itemID, itemLink, location)
+  local verdict = ns.Decide(facts, KeepOrSellDB)
+  -- item name not loaded yet: ask again next time
+  if facts.quest ~= nil then cache[key] = verdict end
+  return verdict
 end

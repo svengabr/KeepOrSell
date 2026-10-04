@@ -64,6 +64,7 @@ function ns.ItemSets(itemID, itemLink, location)
 end
 
 function ns.RefreshBaganator()
+  ns.ClearCache()
   if Baganator and Baganator.API and Baganator.API.RequestItemButtonsRefresh then
     Baganator.API.RequestItemButtonsRefresh()
   end

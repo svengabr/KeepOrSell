@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Faster: item decisions are cached, so Baganator refreshes no longer recalculate every item (fixes stutter with the bag window open).
+- The hint button only asks Baganator for a new layout when it actually changes.
+- Author name in the TOC is now Conoar.
+- Recipes you already know and recipes for professions you don't have now go to AuctionHouse when worth it, otherwise to junk (new option "Useless recipes").
+- Fixed a Lua error (`DoesItemExist`) when hovering items in the merchant's buyback tab.
+
 ## 0.6.2
 
 - Hints in Baganator's bag window (bottom left) when KeepOrSell needs something from you: Auctionator missing, no auction house visit yet, outdated prices in your bags, profession windows never opened. Hover for details, click for options. Without Baganator the hints show in chat after login. Can be switched off.

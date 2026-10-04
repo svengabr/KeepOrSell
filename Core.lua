@@ -3,7 +3,7 @@ local addonName, ns = ...
 
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
-  profession = true, gear = true, plainGear = true, tooltip = true, hints = true,
+  profession = true, gear = true, plainGear = true, recipeJunk = true, tooltip = true, hints = true,
 }
 
 local frame = CreateFrame("Frame")

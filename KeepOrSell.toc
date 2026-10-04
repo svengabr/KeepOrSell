@@ -2,7 +2,7 @@
 ## Title: KeepOrSell
 ## Notes: Sorts your bags into keep, auction house and vendor: quest objective items, items worth more on the AH, and cheap junk for Scrap. Works with Baganator, Auctionator and Scrap.
 ## Notes-deDE: Sortiert die Taschen in Behalten, Auktionshaus und Händler: Questziel-Items, Items die im AH mehr bringen und billigen Schrott für Scrap. Für Baganator, Auctionator und Scrap.
-## Author: Sven
+## Author: Conoar
 ## Version: @project-version@
 ## SavedVariables: KeepOrSellDB
 ## OptionalDeps: Baganator, Auctionator, Scrap

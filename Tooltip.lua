@@ -25,6 +25,8 @@ local function PriceText(prices, verdict, db)
   return text
 end
 
+local RECIPE_TEXT = {recipe_known = "TIP_RECIPE_KNOWN", recipe_other = "TIP_RECIPE_OTHER"}
+
 -- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying. Pure apart from money formatting.
 function ns.TooltipText(verdict, prices, db)
   prices = prices or {}
@@ -37,11 +39,15 @@ function ns.TooltipText(verdict, prices, db)
   elseif kind == "ah" then
     text = L.TIP_AH .. " – " .. PriceText(prices, verdict, db)
     if reason == "unusable" then text = text .. ", " .. L.TIP_UNUSABLE end
+    if RECIPE_TEXT[reason] then text = text .. ", " .. L[RECIPE_TEXT[reason]] end
   elseif kind == "junk" then
     if reason == "plain" then
       text = L.TIP_JUNK .. " – " .. L.TIP_PLAIN .. ", " .. PriceText(prices, verdict, db)
     elseif reason == "unusable_bound" then
       text = L.TIP_JUNK .. " – " .. L.TIP_UNUSABLE .. ", " .. L.TIP_BOUND
+    elseif RECIPE_TEXT[reason] then
+      local detail = verdict.bound and L.TIP_BOUND or PriceText(prices, verdict, db)
+      text = L.TIP_JUNK .. " – " .. L[RECIPE_TEXT[reason]] .. ", " .. detail
     elseif reason == "unusable" then
       text = L.TIP_JUNK .. " – " .. L.TIP_UNUSABLE .. ", " .. PriceText(prices, verdict, db)
     else
@@ -68,6 +74,8 @@ local function AddLine(tooltip, data)
   local location = data and data.guid and C_Item.GetItemLocation and C_Item.GetItemLocation(data.guid)
   -- worn items are not for sale; Scrap only sells from the bags anyway
   if location and location.IsEquipmentSlot and location:IsEquipmentSlot() then return end
+  -- buyback/merchant items have a GUID but an empty location, which IsValid() rejects with an error
+  if location and not (location.IsBagAndSlot and location:IsBagAndSlot()) then location = nil end
   local facts = ns.ItemFacts(id, link, location)
   local text = ns.TooltipText(ns.Decide(facts, KeepOrSellDB), facts.prices, KeepOrSellDB)
   if text then

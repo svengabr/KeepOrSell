@@ -196,6 +196,7 @@ class ClassRestrictionTests(unittest.TestCase):
         self.rt.execute('AH.link12 = 100')
         self.assertEqual(self.ns.Classify(12, "link12").kind, "ah")
         self.rt.execute('AH.link12 = 16')
+        self.ns.ClearCache()  # new prices arrive with a refresh
         self.assertEqual(self.ns.Classify(12, "link12").kind, "junk")
 
     def test_result_cached(self):
@@ -208,6 +209,35 @@ class ClassRestrictionTests(unittest.TestCase):
         self.ns.ItemFacts(15, "link15")
         self.ns.ItemFacts(15, "link15")
         self.assertEqual(self.rt.eval("CALLS"), 2)
+
+
+class CacheTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(stubs="AH.link4 = 15; NOW = 0; GetTime = function() return NOW end")
+        self.ns.items = self.rt.eval("{}")
+
+    def test_cached_until_cleared(self):
+        self.assertEqual(self.ns.Classify(4, "link4").kind, "junk")
+        self.rt.execute("AH.link4 = 1000")
+        self.assertEqual(self.ns.Classify(4, "link4").kind, "junk")
+        self.ns.ClearCache()
+        self.assertEqual(self.ns.Classify(4, "link4").kind, "ah")
+
+    def test_expires_as_prices_age(self):
+        self.ns.Classify(4, "link4")
+        self.rt.execute("AH.link4 = 1000; NOW = 301")
+        self.assertEqual(self.ns.Classify(4, "link4").kind, "ah")
+
+    def test_bound_copy_cached_separately(self):
+        self.rt.execute("AH.link3 = 1000; C_Item.IsBound = function(loc) return loc.bound end")
+        self.assertEqual(self.ns.Classify(3, "link3", self.rt.eval("{bound = false}")).kind, "ah")
+        self.assertIsNone(self.ns.Classify(3, "link3", self.rt.eval("{bound = true}")).kind)
+
+    def test_unloaded_name_not_cached(self):
+        self.rt.execute("ITEMS[4][1] = nil")
+        self.assertIsNone(self.ns.Classify(4, "link4").kind)
+        self.rt.execute("ITEMS[4][1] = 'Linen Cloth'")
+        self.assertEqual(self.ns.Classify(4, "link4").kind, "junk")
 
 
 class FactsTests(unittest.TestCase):

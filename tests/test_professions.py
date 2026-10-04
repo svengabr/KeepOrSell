@@ -106,7 +106,7 @@ class RecipeTests(unittest.TestCase):
         self.assertEqual(self.state(33), "known")
 
     def test_other_profession(self):
-        self.assertIsNone(self.state(34))
+        self.assertEqual(self.state(34), "other")
 
     def test_not_a_recipe(self):
         self.assertIsNone(self.state(4))
@@ -122,6 +122,32 @@ class RecipeTests(unittest.TestCase):
         self.assertEqual((verdict.kind, verdict.reason), ("profession", "recipe"))
         self.rt.execute("AH.link32 = 15000")
         self.assertEqual(self.ns.Classify(32, "link32").kind, "ah")
+
+    def test_known_recipe_sold_when_not_worth_auctioning(self):
+        self.rt.execute("AH.link32 = 120")
+        verdict = self.ns.Classify(32, "link32")
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", "recipe_known"))
+
+    def test_other_profession_recipe(self):
+        self.rt.execute("AH.link34 = 120")
+        verdict = self.ns.Classify(34, "link34")
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", "recipe_other"))
+        self.rt.execute("AH.link34 = 15000")
+        self.ns.ClearCache()
+        self.assertEqual(self.ns.Classify(34, "link34").kind, "ah")
+
+    def test_recipe_without_price_kept(self):
+        verdict = self.ns.Classify(34, "link34")
+        self.assertIsNone(verdict.kind)
+        self.assertTrue(verdict.needsPrice)
+
+    def test_bound_known_recipe_is_junk(self):
+        self.rt.execute("BOUND[32] = true")
+        self.assertEqual(self.ns.Classify(32, "link32").kind, "junk")
+
+    def test_recipes_option_off(self):
+        self.rt.execute("AH.link32 = 120; KeepOrSellDB.recipeJunk = false")
+        self.assertIsNone(self.ns.Classify(32, "link32").kind)
 
 
 if __name__ == "__main__":
