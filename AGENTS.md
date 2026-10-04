@@ -19,10 +19,8 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Objectives.lua` | Questziele aus dem Questlog lesen (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`) – reine Logik |
 | `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.GetPriceClass` über Auctionator – reine Logik |
 | `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
-| `Baganator.lua` | Eck-Widget, Item-Set-Quelle und einmaliges Anlegen der Kategorien (`Baganator.API.ImportString`) |
+| `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
 | `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` |
-
-Den Schrott-Plugin-Eintrag für Scrap bringt Baganator selbst mit (`Baganator/API/Junk.lua`).
 
 ## Regeln
 

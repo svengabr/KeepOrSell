@@ -1,10 +1,5 @@
 # Changelog
 
-## 0.5.0
-
-- Baganator categories Quest and AuctionHouse are created automatically on first login.
-- New command `/kos setup` to create them again.
-
 ## 0.4.1
 
 - First release on CurseForge.

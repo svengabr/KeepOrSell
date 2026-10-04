@@ -22,9 +22,12 @@ Questie is **not** required; quest objectives are read from your quest log.
 
 ## Setup in Baganator
 
-Nothing to do: on first login KeepOrSell creates the Baganator categories **Quest** (search `quest`) and **AuctionHouse** (search `auctionhouse & ~quest`) for you, with a priority that beats Baganator's built-in quest and equipment set categories. Baganator selects **Scrap** as junk plugin on its own.
+Bags → cog → Categories:
 
-If you deleted the categories or something went wrong, `/kos setup` creates them again. Manual setup (Bags → cog → Categories): create the two categories above with a priority above normal and choose **Scrap** under junk.
+1. Hide the **equipment sets** category (KeepOrSell reports its groups as item sets).
+2. Create a category **Quest** with the search `quest` and use it instead of the default quest category.
+3. Create a category **AuctionHouse** with the search `auctionhouse & ~quest`.
+4. Under junk, select **Scrap** as plugin.
 
 ## Commands
 
@@ -32,7 +35,6 @@ If you deleted the categories or something went wrong, `/kos setup` creates them
 - `/kos factor 3` – auction house threshold (default 2× vendor price)
 - `/kos scrap` – cheap trade goods as Scrap junk on/off
 - `/kos sets` – report groups to Baganator on/off (needs `/reload`)
-- `/kos setup` – create the Baganator categories again
 
 Only **trade goods** are ever marked as junk by KeepOrSell – never gear, consumables or quest items. Items you mark as "not junk" in Scrap always win.
 
@@ -46,7 +48,7 @@ Only **trade goods** are ever marked as junk by KeepOrSell – never gear, consu
 - **Auktionshaus**: Auktionspreis mindestens doppelt so hoch wie der Händlerpreis. Im AH verkaufen.
 - **Schrott** (Scrap): graue Items plus billige Handwerkswaren ohne Questbezug. Scrap verkauft sie beim Händler.
 
-Die Baganator-Kategorien **Quest** (`quest`) und **Auktionshaus** (`auktionshaus & ~quest`) legt KeepOrSell beim ersten Login selbst an; `/kos setup` legt sie bei Bedarf neu an. Befehle: `/kos`, `/kos faktor 3`, `/kos scrap`, `/kos sets`, `/kos setup`.
+Einrichtung wie oben, mit den deutschen Suchen `quest` und `auktionshaus & ~quest`. Befehle: `/kos`, `/kos faktor 3`, `/kos scrap`, `/kos sets`.
 
 ## License
 
