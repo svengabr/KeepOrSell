@@ -20,14 +20,11 @@ Items without a known auction price are left alone – when in doubt, you keep t
 
 Questie is **not** required; quest objectives are read from your quest log.
 
-## Setup in Baganator
+## Setup
 
-Bags → cog → Categories:
+Nothing to do. KeepOrSell reports its groups to Baganator as item sets, so **Quest** and **AuctionHouse** show up as their own groups inside Baganator's equipment sets category (category view). Regular quest items are put into the Quest group too. Baganator picks **Scrap** as junk plugin on its own.
 
-1. Hide the **equipment sets** category (KeepOrSell reports its groups as item sets).
-2. Create a category **Quest** with the search `quest` and use it instead of the default quest category.
-3. Create a category **AuctionHouse** with the search `auctionhouse & ~quest`.
-4. Under junk, select **Scrap** as plugin.
+To move the groups elsewhere in your bags, move the *equipment sets* category in Baganator (Bags → cog → Categories).
 
 ## Commands
 
@@ -48,7 +45,7 @@ Only **trade goods** are ever marked as junk by KeepOrSell – never gear, consu
 - **Auktionshaus**: Auktionspreis mindestens doppelt so hoch wie der Händlerpreis. Im AH verkaufen.
 - **Schrott** (Scrap): graue Items plus billige Handwerkswaren ohne Questbezug. Scrap verkauft sie beim Händler.
 
-Einrichtung wie oben, mit den deutschen Suchen `quest` und `auktionshaus & ~quest`. Befehle: `/kos`, `/kos faktor 3`, `/kos scrap`, `/kos sets`.
+Einrichtung ist nicht nötig: Quest und Auktionshaus erscheinen als eigene Gruppen in Baganators Equipment-Sets-Kategorie, Scrap wählt Baganator selbst als Schrott-Plugin. Befehle: `/kos`, `/kos faktor 3`, `/kos scrap`, `/kos sets`.
 
 ## License
 

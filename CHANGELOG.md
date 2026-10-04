@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0
+
+- No Baganator setup needed anymore: Quest and AuctionHouse appear as groups in the equipment sets category.
+- Regular quest items are part of the Quest group.
+- Quest group renamed from "Quest Objective" to "Quest".
+
 ## 0.4.1
 
 - First release on CurseForge.

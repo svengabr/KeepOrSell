@@ -22,6 +22,10 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
 | `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` |
 
+Baganator-Eigenheiten: Items mit Item-Set landen fest in der Equipment-Sets-Kategorie, vor jeder Suche und
+unabhängig von Prioritäten – eigene Suchkategorien auf Set-Namen greifen deshalb nie. Ein API für Quest-Addons
+gibt es nicht. Das Scrap-Schrott-Plugin bringt Baganator selbst mit (`Baganator/API/Junk.lua`).
+
 ## Regeln
 
 - **Nur öffentliche APIs** der Fremd-Addons nutzen, keine Interna. Vorhandensein immer prüfen

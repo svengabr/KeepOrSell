@@ -35,21 +35,33 @@ function ns.RegisterBaganator()
     return tex
   end, {default_position = "top_left", priority = 1})
 
-  -- Optional: Questziele und lohnende Auktionshaus-Items als Sets melden, damit die Suche sie erfasst.
+  -- Questziele und lohnende Auktionshaus-Items als Item-Sets melden. Baganator zeigt jedes Set als
+  -- eigene Gruppe in seiner Equipment-Sets-Kategorie, ohne dass der Spieler etwas einrichten muss.
   -- Billige Items übernimmt Scrap (Scrap.lua).
   if KeepOrSellDB.setSource and api.RegisterItemSetSource then
-    local questInfo = {name = ns.L.SET_QUEST, iconTexture = ICON}
-    local ahInfo = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"}
     api.RegisterItemSetSource("KeepOrSell", "keeporsell", function(_, guid)
-      local sets = {}
-      if ns.GetObjectiveState(ItemIDFromGUID(guid)) then table.insert(sets, questInfo) end
       local link = guid and C_Item.GetItemLinkByGUID and C_Item.GetItemLinkByGUID(guid)
-      if ns.GetPriceClass(link, KeepOrSellDB.factor) == "ah" then table.insert(sets, ahInfo) end
-      if #sets > 0 then return sets end
+      return ns.ItemSets(ItemIDFromGUID(guid), link)
     end, function()
       return {ns.L.SET_QUEST, ns.L.SET_AH}
     end)
   end
+end
+
+local QUESTITEM = 12 -- Enum.ItemClass.Questitem
+local questInfo = {name = ns.L.SET_QUEST, iconTexture = ICON}
+local ahInfo = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"}
+
+-- Sets für ein Item, Quest zuerst (Baganator gruppiert nach dem ersten Set); nil = keins.
+-- Echte Questgegenstände gehören auch in die Quest-Gruppe, damit Baganators eigene Quest-Kategorie leer bleibt.
+function ns.ItemSets(itemID, itemLink)
+  if not itemID then return nil end
+  local sets = {}
+  if ns.GetObjectiveState(itemID) or select(6, C_Item.GetItemInfoInstant(itemID)) == QUESTITEM then
+    table.insert(sets, questInfo)
+  end
+  if ns.GetPriceClass(itemLink, KeepOrSellDB.factor) == "ah" then table.insert(sets, ahInfo) end
+  if #sets > 0 then return sets end
 end
 
 function ns.RefreshBaganator()

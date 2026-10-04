@@ -2,7 +2,7 @@
 local _, ns = ...
 
 local L = {
-  SET_QUEST = "Quest Objective",
+  SET_QUEST = "Quest",
   SET_AH = "AuctionHouse",
   ON = "on",
   OFF = "off",
@@ -15,7 +15,6 @@ local L = {
 }
 
 if GetLocale and GetLocale() == "deDE" then
-  L.SET_QUEST = "Questziel"
   L.SET_AH = "Auktionshaus"
   L.ON = "an"
   L.OFF = "aus"
