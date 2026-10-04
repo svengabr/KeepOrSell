@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Bags full while looting: when the loot is worth more than your cheapest junk (better of auction and vendor price; quest and profession items always count), the destroy button glows until the loot window closes and one chat line names both items. One click makes room, then loot as usual.
+
 ## 0.9.0
 
 - Destroy button in Baganator's bag window (bottom left): each click destroys the cheapest junk item in your bags (vendor price × stack) – for small bags far from a vendor. Hover it to see which item goes next. Only items Scrap would sell (without Scrap: grey items and KeepOrSell's junk), never rare or better items. New option "Destroy button" (default on, needs Baganator).

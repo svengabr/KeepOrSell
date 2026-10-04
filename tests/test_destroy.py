@@ -3,8 +3,8 @@ import unittest
 
 from addon import CORE_FILES, load
 
-# bag 0: linen x3 (cheap trade good, junk), potion (kept), white staff (junk without price),
-# grey item (quality 0, sells for nothing)
+# bag 0: linen x3 (no auction price, kept), potion (kept), white staff (junk without price),
+# grey fang x5 (quality 0, 2c each)
 STUBS = """
 ITEMS[20] = {"Broken Fang", 15, 0, "", 2, 0}
 SLOTS = {
@@ -33,6 +33,36 @@ function ClearCursor() CURSOR = nil end
 function GetMoneyString(copper) return copper .. "c" end
 PRINTED = {}
 print = function(text) table.insert(PRINTED, text) end
+ITEMS[21] = {"Smooth Pebble", 15, 0, "", 10, 0}
+-- loot window: slot -> {itemID, quantity}
+LOOT = {}
+function GetNumLootItems() return #LOOT end
+function GetLootSlotLink(slot) return LOOT[slot] and "link" .. LOOT[slot][1] end
+function GetLootSlotInfo(slot) return 0, "", LOOT[slot] and LOOT[slot][2] or 0 end
+ERR_INV_FULL = "Inventory is full."
+"""
+
+# minimal widgets: every unknown method is a no-op returning another widget
+FRAMES = """
+local function Widget()
+  local w = {shown = true}
+  return setmetatable(w, {__index = function(_, key)
+    if key == "Show" then return function(self) self.shown = true end end
+    if key == "Hide" then return function(self) self.shown = false end end
+    if key == "IsShown" then return function(self) return self.shown end end
+    if key == "SetShown" then return function(self, v) self.shown = v and true or false end end
+    if key == "IsMouseOver" then return function() return false end end
+    if key == "Play" then return function(self) self.playing = true end end
+    if key == "Stop" then return function(self) self.playing = false end end
+    if key == "IsPlaying" then return function(self) return self.playing == true end end
+    if key == "SetScript" then return function(self, name, fn) self[name] = fn end end
+    return function() return Widget() end
+  end})
+end
+CreateFrame = function() return Widget() end
+UIParent = Widget()
+GameTooltip = Widget()
+Baganator = {API = {RegisterRegion = function(_, _, _, _, frame) DESTROY_BUTTON = frame end, RequestLayoutUpdate = function() end}}
 """
 
 
@@ -131,6 +161,110 @@ class DestroyTests(unittest.TestCase):
 
     def test_no_target(self):
         self.assertFalse(self.ns.DestroyTarget(None))
+
+
+def loot(rt, *items):
+    rt.execute("LOOT = {}")
+    for item_id, quantity in items:
+        rt.execute(f"table.insert(LOOT, {{{item_id}, {quantity}}})")
+
+
+class LootWorthMoreTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), STUBS)
+        self.target = self.ns.FindDestroyTarget()  # grey fang x5, worth 10
+
+    def best(self):
+        best = self.ns.LootWorthMore(self.ns.LootItems(), self.target)
+        return best and best.link
+
+    def test_more_valuable_loot(self):
+        loot(self.rt, (4, 1))  # linen, 13 at the vendor
+        self.assertEqual(self.best(), "link4")
+
+    def test_same_value_no_hint(self):
+        loot(self.rt, (21, 1))
+        self.assertIsNone(self.best())
+
+    def test_quantity_counts(self):
+        loot(self.rt, (21, 2))
+        self.assertEqual(self.best(), "link21")
+
+    def test_auction_price_beats_vendor(self):
+        self.rt.execute("AH.link21 = 500")
+        loot(self.rt, (4, 1), (21, 1))
+        self.assertEqual(self.best(), "link21")
+
+    def test_quest_item_always_worth_it(self):
+        self.rt.execute("ITEMS[2][5] = 0")
+        loot(self.rt, (2, 1), (4, 1))  # sealed letter, a quest item worth nothing
+        self.assertEqual(self.best(), "link2")
+
+    def test_no_junk_no_hint(self):
+        loot(self.rt, (4, 1))
+        self.assertIsNone(self.ns.LootWorthMore(self.ns.LootItems(), None))
+
+    def test_no_loot(self):
+        self.assertIsNone(self.best())
+
+
+class LootFlowTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Destroy.lua"), FRAMES + STUBS)
+        self.rt.execute("KeepOrSellDB.destroy = true")
+        self.assertTrue(self.ns.RegisterDestroy())
+        self.ns.UpdateDestroy()
+        loot(self.rt, (4, 1))
+
+    def full(self):
+        self.ns.InventoryFull(self.rt.eval("ERR_INV_FULL"))
+
+    def test_glows_and_tells_once_per_loot_window(self):
+        self.ns.LootOpened()
+        self.full()
+        self.full()
+        self.assertTrue(self.ns.IsDestroyGlowing())
+        printed = list(self.rt.eval("PRINTED").values())
+        self.assertEqual(len(printed), 1)
+        self.assertIn("link4", printed[0])
+        self.assertIn("link20", printed[0])
+
+    def test_glow_ends_when_loot_closes(self):
+        self.ns.LootOpened()
+        self.full()
+        self.ns.LootClosed()
+        self.assertFalse(self.ns.IsDestroyGlowing())
+
+    def test_glow_ends_after_destroying(self):
+        self.ns.LootOpened()
+        self.full()
+        self.rt.eval("function(b) b.OnClick(b) end")(self.rt.eval("DESTROY_BUTTON"))
+        self.assertEqual(self.rt.eval("DELETED"), 20)
+        self.assertFalse(self.ns.IsDestroyGlowing())
+
+    def test_other_errors_ignored(self):
+        self.ns.LootOpened()
+        self.ns.InventoryFull("You are too far away.")
+        self.assertFalse(self.ns.IsDestroyGlowing())
+
+    def test_only_while_looting(self):
+        self.full()
+        self.assertFalse(self.ns.IsDestroyGlowing())
+
+    def test_switched_off(self):
+        self.rt.execute("KeepOrSellDB.destroy = false")
+        self.ns.LootOpened()
+        self.full()
+        self.assertFalse(self.ns.IsDestroyGlowing())
+        self.assertEqual(len(self.rt.eval("PRINTED")), 0)
+
+    def test_new_loot_window_tells_again(self):
+        self.ns.LootOpened()
+        self.full()
+        self.ns.LootClosed()
+        self.ns.LootOpened()
+        self.full()
+        self.assertEqual(len(self.rt.eval("PRINTED")), 2)
 
 
 if __name__ == "__main__":

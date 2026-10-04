@@ -53,6 +53,7 @@ local L = {
   DESTROY_TIP = "Click destroys: %s ×%d (worth %s)",
   DESTROY_CLICK = "Cheapest junk in your bags",
   DESTROY_DONE = "Destroyed %s ×%d.",
+  DESTROY_LOOT = "Bags full – %s (%s) is worth more than %s (%s). The glowing button makes room.",
   HINT_COUNT = "%d",
   HINT_CLICK = "Click for options",
   HINT_NO_AUCTIONATOR = "Auctionator is not loaded – without auction prices nothing goes to the auction house.",
@@ -139,6 +140,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.DESTROY_TIP = "Klick zerstört: %s ×%d (Wert %s)"
   L.DESTROY_CLICK = "Billigster Schrott in deinen Taschen"
   L.DESTROY_DONE = "%s ×%d zerstört."
+  L.DESTROY_LOOT = "Taschen voll – %s (%s) ist mehr wert als %s (%s). Der leuchtende Knopf macht Platz."
   L.HINT_CLICK = "Klick öffnet die Optionen"
   L.HINT_NO_AUCTIONATOR = "Auctionator ist nicht geladen – ohne Auktionspreise kommt nichts ins Auktionshaus."
   L.HINT_NO_SCAN = "Besuche einmal das Auktionshaus und scanne mit Auctionator, damit KeepOrSell Preise kennt."

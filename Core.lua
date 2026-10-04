@@ -76,6 +76,9 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     frame:RegisterEvent("QUEST_TURNED_IN")
     frame:RegisterEvent("GROUP_ROSTER_UPDATE")
     frame:RegisterEvent("CHAT_MSG_ADDON")
+    frame:RegisterEvent("LOOT_OPENED")
+    frame:RegisterEvent("LOOT_CLOSED")
+    frame:RegisterEvent("UI_ERROR_MESSAGE")
   elseif event == "QUEST_LOG_UPDATE" then
     ScheduleQuests()
   elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_LIST_UPDATE" then
@@ -88,6 +91,12 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ScheduleHints()
   elseif event == "GROUP_ROSTER_UPDATE" then
     ns.ShareRosterChanged()
+  elseif event == "LOOT_OPENED" then
+    ns.LootOpened()
+  elseif event == "LOOT_CLOSED" then
+    ns.LootClosed()
+  elseif event == "UI_ERROR_MESSAGE" then
+    ns.InventoryFull(...) -- arg1 is the error type, the message follows
   elseif event == "CHAT_MSG_ADDON" then
     ns.HandleShareMessage(arg1, ...)
   elseif event == "PLAYER_LEVEL_UP" or event == "QUEST_TURNED_IN" then

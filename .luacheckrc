@@ -36,6 +36,9 @@ read_globals = {
   "CreateSettingsListSectionHeaderInitializer",
   "Enum",
   "GetCursorInfo",
+  "GetLootSlotInfo",
+  "GetLootSlotLink",
+  "GetNumLootItems",
   "GetItemInfo",
   "GetLocale",
   "GetMoneyString",
@@ -72,6 +75,7 @@ read_globals = {
   "UIParent",
 
   -- Constants
+  "ERR_INV_FULL",
   "ITEM_SPELL_KNOWN",
   "NUM_BAG_SLOTS",
 }

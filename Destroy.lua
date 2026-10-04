@@ -69,7 +69,74 @@ function ns.DestroyTarget(target)
   return true
 end
 
+-- loot: list of {link, count, value, keep}; keep = KeepOrSell would keep it (quest, profession).
+-- Returns the loot item worth destroying target for, or nil. Pure.
+function ns.LootWorthMore(loot, target)
+  if not target then return nil end
+  local best
+  for _, item in ipairs(loot) do
+    if item.keep or item.value > target.value then
+      if not best or (item.keep and not best.keep) or (item.keep == best.keep and item.value > best.value) then
+        best = item
+      end
+    end
+  end
+  return best
+end
+
+-- The items in the open loot window, valued at the better of auction and vendor price
+function ns.LootItems()
+  local items = {}
+  if not (GetNumLootItems and GetLootSlotLink and GetLootSlotInfo) then return items end
+  for slot = 1, GetNumLootItems() do
+    local link = GetLootSlotLink(slot)
+    if link then
+      local count = select(3, GetLootSlotInfo(slot)) or 1
+      local prices = ns.GetPrices(link)
+      local kind = ns.Classify(C_Item.GetItemInfoInstant(link), link).kind
+      table.insert(items, {
+        link = link, count = count, value = math.max(prices.ah or 0, prices.vendor or 0) * count,
+        keep = kind == "quest" or kind == "profession",
+      })
+    end
+  end
+  return items
+end
+
 local button
+local looting, told = false, false
+
+local function SetGlow(on)
+  if not button then return end
+  if on then button.Pulse:Play() else button.Pulse:Stop() end
+  button.Glow:SetShown(on)
+end
+
+function ns.IsDestroyGlowing()
+  return button ~= nil and button.Pulse:IsPlaying()
+end
+
+function ns.LootOpened()
+  looting, told = true, false
+end
+
+function ns.LootClosed()
+  looting = false
+  SetGlow(false)
+end
+
+-- UI_ERROR_MESSAGE while looting: when the bags are full and the loot is worth more than the
+-- cheapest junk, the destroy button glows and one chat line per loot window says why
+function ns.InventoryFull(message)
+  if not (looting and button and KeepOrSellDB.destroy and message == ERR_INV_FULL) then return end
+  local target = ns.FindDestroyTarget()
+  local best = ns.LootWorthMore(ns.LootItems(), target)
+  if not best then return end
+  SetGlow(true)
+  if told then return end
+  told = true
+  print(PREFIX .. L.DESTROY_LOOT:format(best.link, GetMoneyString(best.value), target.link, GetMoneyString(target.value)))
+end
 
 local function ShowTooltip(self)
   local target = self.target
@@ -92,8 +159,23 @@ local function CreateButton()
   frame.Cross:SetPoint("BOTTOMRIGHT", 2, -2)
   frame:SetScript("OnEnter", ShowTooltip)
   frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
+  frame.Glow = frame:CreateTexture(nil, "OVERLAY")
+  frame.Glow:SetTexture("Interface\\Buttons\\CheckButtonHilight")
+  frame.Glow:SetBlendMode("ADD")
+  frame.Glow:SetPoint("CENTER")
+  frame.Glow:SetSize(28, 28)
+  frame.Glow:Hide()
+  frame.Pulse = frame.Glow:CreateAnimationGroup()
+  frame.Pulse:SetLooping("BOUNCE")
+  local fade = frame.Pulse:CreateAnimation("Alpha")
+  fade:SetFromAlpha(1)
+  fade:SetToAlpha(0.2)
+  fade:SetDuration(0.6)
   frame:SetScript("OnClick", function(self)
-    if ns.DestroyTarget(self.target) then GameTooltip:Hide() end
+    if ns.DestroyTarget(self.target) then
+      GameTooltip:Hide()
+      SetGlow(false)
+    end
   end)
   frame:Hide()
   return frame

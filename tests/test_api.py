@@ -40,6 +40,10 @@ NOT_IN_DOCS = {
     "GetMoneyString": "FrameXML (Blizzard_SharedXML/FormattingUtil.lua)",
     "SlashCmdList": "FrameXML (Blizzard_ChatFrameBase)",
     "ITEM_SPELL_KNOWN": "GlobalStrings",
+    "ERR_INV_FULL": "GlobalStrings",
+    "GetNumLootItems": "legacy global, used by Blizzard's LootFrame; Destroy.lua checks it exists",
+    "GetLootSlotLink": "legacy global, used by Blizzard's LootFrame; Destroy.lua checks it exists",
+    "GetLootSlotInfo": "legacy global, used by Blizzard's LootFrame; Destroy.lua checks it exists",
     "NUM_BAG_SLOTS": "FrameXML constant (Blizzard_FrameXMLBase/Constants.lua)",
     "Enum": "checked per value below",
     # Legacy global C functions without generated docs
