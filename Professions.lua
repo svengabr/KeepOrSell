@@ -34,11 +34,15 @@ local function CharacterKey()
   return (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
 end
 
-local function CharacterRecipes()
-  KeepOrSellDB.recipes = KeepOrSellDB.recipes or {}
+local function CharacterTable(name)
+  KeepOrSellDB[name] = KeepOrSellDB[name] or {}
   local key = CharacterKey()
-  KeepOrSellDB.recipes[key] = KeepOrSellDB.recipes[key] or {}
-  return KeepOrSellDB.recipes[key]
+  KeepOrSellDB[name][key] = KeepOrSellDB[name][key] or {}
+  return KeepOrSellDB[name][key]
+end
+
+local function CharacterRecipes()
+  return CharacterTable("recipes")
 end
 
 -- Rereads the open profession; true if anything changed. The window may show a filtered list, so only
@@ -52,6 +56,8 @@ function ns.ScanProfession()
   end
   local getIDs = api.GetAllRecipeIDs or api.GetFilteredRecipeIDs
   if not getIDs then return false end
+  local profession = api.GetBaseProfessionInfo and api.GetBaseProfessionInfo()
+  if profession and profession.professionName then CharacterTable("opened")[profession.professionName] = true end
 
   local stored = CharacterRecipes()
   local changed = false
@@ -74,6 +80,21 @@ function ns.IsSkillUpReagent(itemID)
     end
   end
   return index[itemID] == true
+end
+
+local NO_RECIPES = {[356] = true, [794] = true} -- fishing, archaeology
+
+-- Names of the player's professions whose window was never opened; empty if the client can't tell
+function ns.UnopenedProfessions()
+  local missing = {}
+  if not (GetProfessions and GetProfessionInfo) then return missing end
+  local opened = CharacterTable("opened")
+  for _, index in pairs({GetProfessions()}) do
+    local name, _, _, _, _, _, skillLine = GetProfessionInfo(index)
+    if name and not NO_RECIPES[skillLine] and not opened[name] then table.insert(missing, name) end
+  end
+  table.sort(missing)
+  return missing
 end
 
 -- Enum.ItemRecipeSubclass -> profession skill line

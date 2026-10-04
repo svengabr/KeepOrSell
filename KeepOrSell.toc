@@ -18,5 +18,6 @@ Classify.lua
 Scrap.lua
 Baganator.lua
 Tooltip.lua
+Hints.lua
 Options.lua
 Core.lua

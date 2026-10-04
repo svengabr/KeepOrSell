@@ -25,6 +25,7 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 | `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
 | `Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
+| `Hints.lua` | Hinweise (`ns.CollectHints` rein): Knopf im Baganator-Taschenfenster über `Baganator.API.RegisterRegion`, ohne Baganator einmal im Chat |
 | `Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API |
 | `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
 

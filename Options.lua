@@ -20,13 +20,13 @@ function ns.RegisterOptions(db, defaults)
     local options = Settings.CreateSliderOptions(min, max, step)
     options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, label)
     Settings.CreateSlider(category, setting, options, tooltip)
-    Settings.SetOnValueChangedCallback(variable, function() ns.RefreshBaganator() end)
+    Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end)
   end
 
   local function Checkbox(key, name, tooltip, refresh)
     local setting, variable = Add(key, Settings.VarType.Boolean, name)
     Settings.CreateCheckbox(category, setting, tooltip)
-    if refresh then Settings.SetOnValueChangedCallback(variable, function() ns.RefreshBaganator() end) end
+    if refresh then Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end) end
   end
 
   Slider("factor", L.OPT_FACTOR, L.OPT_FACTOR_TIP, 1, 10, 0.5, function(v) return ("%gx"):format(v) end)
@@ -41,6 +41,7 @@ function ns.RegisterOptions(db, defaults)
   Checkbox("plainGear", L.OPT_PLAIN_GEAR, L.OPT_PLAIN_GEAR_TIP, true)
   Checkbox("profession", L.OPT_PROFESSION, L.OPT_PROFESSION_TIP, true)
   Checkbox("tooltip", L.OPT_TOOLTIP, L.OPT_TOOLTIP_TIP)
+  Checkbox("hints", L.OPT_HINTS, L.OPT_HINTS_TIP, true)
   Checkbox("setSource", L.OPT_SETS, L.OPT_SETS_TIP)
 
   Settings.RegisterAddOnCategory(category)

@@ -36,6 +36,7 @@ CreateFrame = function()
 end
 function FireEvent(...) handler(nil, ...) end
 SlashCmdList = {}
+C_Timer = {After = function(_, fn) fn() end}
 """
 
 
@@ -45,6 +46,7 @@ def load():
     ns = rt.eval("{}")
     rt.eval("""function(ns)
       ns.HookScrap = function() end
+      ns.UpdateHints = function() ns.hintsUpdated = (ns.hintsUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
     for f in ("Locales.lua", "Options.lua", "Core.lua"):
@@ -65,7 +67,7 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:profession", "checkbox:tooltip", "checkbox:setSource"])
+            "checkbox:plainGear", "checkbox:profession", "checkbox:tooltip", "checkbox:hints", "checkbox:setSource"])
 
     def test_slider_labels(self):
         self.assertEqual(self.calls.sliders["minProfit"].label(0), "off")
@@ -86,10 +88,11 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(self.calls.settings["scrap"].varType, "boolean")
 
     def test_change_refreshes_baganator(self):
-        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "profession")
+        keys = ("factor", "minProfit", "maxAge", "scrap", "gear", "plainGear", "profession", "hints")
         for key in keys:
             self.calls.callbacks["KeepOrSell_" + key]()
         self.assertEqual(self.ns.refreshed, len(keys))
+        self.assertEqual(self.ns.hintsUpdated, len(keys))
 
     def test_slash_opens_panel(self):
         self.rt.execute("SlashCmdList.KEEPORSELL('factor 5')")
