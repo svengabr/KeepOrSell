@@ -7,6 +7,7 @@
 ## SavedVariables: KeepOrSellDB
 ## OptionalDeps: Baganator, Auctionator, Scrap
 ## X-License: GPL-3.0-or-later
+## X-Curse-Project-ID: 1725855
 
 Locales.lua
 Objectives.lua

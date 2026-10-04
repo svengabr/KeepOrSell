@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+- First release on CurseForge.
+- Automated packaging via GitHub Actions.
+
 ## 0.4.0
 
 - Renamed from BagQuestMarks to **KeepOrSell**, slash command `/kos`.
