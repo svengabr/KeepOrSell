@@ -35,33 +35,32 @@ function ns.RegisterBaganator()
     return tex
   end, {default_position = "top_left", priority = 1})
 
-  -- Report quest objectives and items worth auctioning as item sets. Baganator shows each set as its
+  -- Report quest items, profession reagents and items worth auctioning as item sets. Baganator shows each set as its
   -- own group in its equipment sets category, without any setup by the player.
   -- Cheap items are handled by Scrap (Scrap.lua).
   if KeepOrSellDB.setSource and api.RegisterItemSetSource then
     api.RegisterItemSetSource("KeepOrSell", "keeporsell", function(_, guid)
       local link = guid and C_Item.GetItemLinkByGUID and C_Item.GetItemLinkByGUID(guid)
-      return ns.ItemSets(ItemIDFromGUID(guid), link)
+      local location = guid and C_Item.GetItemLocation and C_Item.GetItemLocation(guid)
+      return ns.ItemSets(ItemIDFromGUID(guid), link, location)
     end, function()
-      return {ns.L.SET_QUEST, ns.L.SET_AH}
+      return {ns.L.SET_QUEST, ns.L.SET_PROFESSION, ns.L.SET_AH}
     end)
   end
 end
 
-local QUESTITEM = 12 -- Enum.ItemClass.Questitem
-local questInfo = {name = ns.L.SET_QUEST, iconTexture = ICON}
-local ahInfo = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"}
+local INFO = {
+  quest = {name = ns.L.SET_QUEST, iconTexture = ICON},
+  profession = {name = ns.L.SET_PROFESSION, iconTexture = "Interface\\Icons\\INV_Misc_Note_01"},
+  ah = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"},
+}
 
--- Sets for an item, quest first (Baganator groups by the first set); nil = none.
+-- Set for an item as a list, as Baganator expects; nil = none.
 -- Regular quest items join the quest group too, so Baganator's own quest category stays empty.
-function ns.ItemSets(itemID, itemLink)
+function ns.ItemSets(itemID, itemLink, location)
   if not itemID then return nil end
-  local sets = {}
-  if ns.GetObjectiveState(itemID) or select(6, C_Item.GetItemInfoInstant(itemID)) == QUESTITEM then
-    table.insert(sets, questInfo)
-  end
-  if ns.GetPriceClass(itemLink, KeepOrSellDB.factor) == "ah" then table.insert(sets, ahInfo) end
-  if #sets > 0 then return sets end
+  local info = INFO[ns.Classify(itemID, itemLink, location).kind]
+  if info then return {info} end
 end
 
 function ns.RefreshBaganator()

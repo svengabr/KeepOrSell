@@ -1,67 +1,59 @@
 """Tests for the Scrap extension (Scrap.lua)."""
 import unittest
-from pathlib import Path
 
-import lupa.lua51 as lua51
+from addon import CORE_FILES, load
 
-ROOT = Path(__file__).resolve().parent.parent
-
+# 3 silk is worth auctioning, 4 linen is cheap, 5 mail vest is unusable for a druid
 STUBS = """
--- itemID -> {name, classID}; 1 = wolf flank (objective), 2 = linen cloth, 3 = sword, 4 = silk (worth auctioning)
-ITEMS = {[1] = {"Magere Wolfflanke", 7}, [2] = {"Leinenstoff", 7}, [3] = {"Schwert", 2}, [4] = {"Seidenstoff", 7}}
-C_Item = {
-  GetItemNameByID = function(id) return ITEMS[id] and ITEMS[id][1] end,
-  GetItemInfoInstant = function(id) return id, nil, nil, nil, nil, ITEMS[id] and ITEMS[id][2] end,
-  GetItemInfo = function(id) return nil, "link" .. id end,
-}
+AH = {link3 = 1000, link4 = 15, link5 = 120}
 Scrap = {junk = {}, IsJunk = function(self, id) return id == 99 end}
 """
 
 
-def load():
-    rt = lua51.LuaRuntime(unpack_returned_tuples=True)
-    rt.execute(STUBS)
-    ns = rt.eval("{}")
-    rt.execute("KeepOrSellDB = {factor = 2, scrap = true}")
-    for f in ("Objectives.lua", "Scrap.lua"):
-        rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
-            str(ROOT / f).replace("\\", "/"), ns)
-    # stub price classification and quest objectives
-    rt.eval("""function(ns)
-      ns.GetPriceClass = function(link) if link == "link4" then return "ah" end return "vendor" end
-      ns.items = {["Magere Wolfflanke"] = "open"}
-    end""")(ns)
-    ns.HookScrap()
-    return rt, ns
-
-
 class ScrapTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load()
-        self.is_junk = self.rt.eval("function(id) return Scrap:IsJunk(id, 0, 1) end")
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua",), STUBS)
+        self.ns.items = self.rt.eval("{['Lean Wolf Flank'] = 'open'}")
+        self.ns.HookScrap()
+        self.is_junk = self.rt.eval("function(id) return Scrap:IsJunk(id) end")
 
     def test_cheap_tradegood_is_junk(self):
-        self.assertTrue(self.is_junk(2))
+        self.assertTrue(self.is_junk(4))
 
     def test_quest_objective_never_junk(self):
+        self.rt.execute("AH.link1 = 6")
         self.assertFalse(self.is_junk(1))
 
     def test_ah_worthy_not_junk(self):
-        self.assertFalse(self.is_junk(4))
-
-    def test_equipment_untouched(self):
         self.assertFalse(self.is_junk(3))
+
+    def test_wearable_equipment_never_junk(self):
+        self.rt.execute("AH.link7 = 1")
+        self.assertFalse(self.is_junk(7))
+
+    def test_white_gear_without_price_is_junk(self):
+        self.assertTrue(self.is_junk(10))
+
+    def test_white_gear_kept_before_auction_house_visit(self):
+        self.rt.execute("KeepOrSellDB.ahVisited = nil")
+        self.assertFalse(self.is_junk(10))
+
+    def test_white_shirt_kept(self):
+        self.assertFalse(self.is_junk(11))
+
+    def test_unusable_equipment_is_junk(self):
+        self.assertTrue(self.is_junk(5))
 
     def test_scrap_own_junk_kept(self):
         self.assertTrue(self.is_junk(99))
 
     def test_user_marked_not_junk_respected(self):
-        self.rt.execute("Scrap.junk[2] = false")
-        self.assertFalse(self.is_junk(2))
+        self.rt.execute("Scrap.junk[4] = false")
+        self.assertFalse(self.is_junk(4))
 
     def test_switch_off(self):
         self.rt.execute("KeepOrSellDB.scrap = false")
-        self.assertFalse(self.is_junk(2))
+        self.assertFalse(self.is_junk(4))
 
 
 if __name__ == "__main__":

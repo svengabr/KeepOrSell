@@ -12,6 +12,11 @@
 Locales.lua
 Objectives.lua
 Prices.lua
+Gear.lua
+Professions.lua
+Classify.lua
 Scrap.lua
 Baganator.lua
+Tooltip.lua
+Options.lua
 Core.lua

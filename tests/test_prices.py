@@ -1,32 +1,19 @@
 """Tests for the price classification (Prices.lua)."""
 import unittest
-from pathlib import Path
 
-import lupa.lua51 as lua51
-
-ROOT = Path(__file__).resolve().parent.parent
-
-
-def load(stubs=""):
-    rt = lua51.LuaRuntime(unpack_returned_tuples=True)
-    if stubs:
-        rt.execute(stubs)
-    ns = rt.eval("{}")
-    rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
-        str(ROOT / "Prices.lua").replace("\\", "/"), ns)
-    return rt, ns
+from addon import load
 
 
 class ClassifyTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load()
+        self.rt, self.ns = load(("Prices.lua",), base=False)
 
     def test_ah_at_least_factor(self):
         self.assertEqual(self.ns.ClassifyPrice(200, 100, 2), "ah")
         self.assertEqual(self.ns.ClassifyPrice(500, 100, 2), "ah")
 
     def test_vendor_below_factor(self):
-        self.assertEqual(self.ns.ClassifyPrice(199, 100, 2), "vendor")
+        self.assertEqual(self.ns.ClassifyPrice(199, 100, 2), ("vendor", "factor"))
 
     def test_unknown_ah_price(self):
         self.assertIsNone(self.ns.ClassifyPrice(None, 100, 2))
@@ -36,23 +23,65 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(self.ns.ClassifyPrice(50, 0, 2), "ah")
         self.assertEqual(self.ns.ClassifyPrice(50, None, 2), "ah")
 
+    def test_min_profit_after_cut(self):
+        # 1000 * 0.95 - 100 = 850 copper profit
+        self.assertEqual(self.ns.ClassifyPrice(1000, 100, 2, 850), "ah")
+        self.assertEqual(self.ns.ClassifyPrice(1000, 100, 2, 851), ("vendor", "minprofit"))
+
+    def test_min_profit_without_vendor_price_keeps(self):
+        # can't be sold to a vendor either
+        self.assertIsNone(self.ns.ClassifyPrice(50, 0, 2, 100))
+
+
+class PricesTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Prices.lua",), base=False)
+        self.db = self.rt.eval("{factor = 2, minProfit = 0, maxAge = 7}")
+
+    def classify(self, **prices):
+        result = self.ns.ClassifyPrices(self.rt.table_from(prices), self.db)
+        # lupa unpacks two return values into a tuple, a single one stays as is
+        return result if isinstance(result, tuple) else (result, None)
+
+    def test_fresh_price(self):
+        self.assertEqual(self.classify(ah=300, vendor=100, age=2, hasAge=True), ("ah", None))
+
+    def test_stale_price_kept(self):
+        self.assertEqual(self.classify(ah=300, vendor=100, age=8, hasAge=True), (None, "stale"))
+
+    def test_older_than_auctionator_keeps_age_is_stale(self):
+        self.assertEqual(self.classify(ah=300, vendor=100, hasAge=True), (None, "stale"))
+
+    def test_age_check_off_at_21(self):
+        self.db.maxAge = 21
+        self.assertEqual(self.classify(ah=300, vendor=100, hasAge=True), ("ah", None))
+
+    def test_no_age_api(self):
+        self.assertEqual(self.classify(ah=300, vendor=100), ("ah", None))
+
+    def test_no_price(self):
+        self.assertEqual(self.classify(vendor=100), (None, "noprice"))
+
+    def test_min_profit_in_silver(self):
+        self.db.minProfit = 9  # 900 copper
+        self.assertEqual(self.classify(ah=1000, vendor=100, age=0, hasAge=True), ("vendor", "minprofit"))
+
 
 class LookupTests(unittest.TestCase):
-    STUBS = """
-    Auctionator = {API = {v1 = {GetAuctionPriceByItemLink = function(caller, link)
-      if link == "flanke" then return 200 end end}}}
-    C_Item = {GetItemInfo = function(link) return link, nil, nil, nil, nil, nil, nil, nil, nil, nil, 24 end}
-    """
-
     def test_lookup_uses_auctionator_and_vendor(self):
-        rt, ns = load(self.STUBS)
-        self.assertEqual(ns.GetPriceClass("flanke", 2), "ah")
-        self.assertEqual(ns.GetPriceClass("flanke", 10), "vendor")
-        self.assertIsNone(ns.GetPriceClass("unbekannt", 2))
+        rt, ns = load(("Prices.lua",), stubs='AH["link4"] = 200; AGE["link4"] = 1')
+        prices = ns.GetPrices("link4")
+        self.assertEqual((prices.ah, prices.vendor, prices.age, prices.hasAge), (200, 13, 1, True))
+        self.assertIsNone(ns.GetPrices("link3").ah)
 
     def test_without_auctionator(self):
-        rt, ns = load()
-        self.assertIsNone(ns.GetPriceClass("flanke", 2))
+        rt, ns = load(("Prices.lua",), stubs="Auctionator = nil")
+        prices = ns.GetPrices("link4")
+        self.assertEqual((prices.ah, prices.vendor), (None, 13))
+
+    def test_without_link(self):
+        rt, ns = load(("Prices.lua",))
+        self.assertIsNone(ns.GetPrices(None).vendor)
 
 
 if __name__ == "__main__":

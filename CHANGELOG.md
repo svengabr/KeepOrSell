@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased
+
+- Options panel under Esc → Options → AddOns → KeepOrSell (auction house threshold, Scrap junk, Baganator groups).
+- `/kos` now only opens the options panel; the `factor`, `scrap` and `sets` subcommands are gone.
+- Tooltip line explaining where an item goes and why (can be switched off).
+- Minimum auction house profit per item, after the 5% AH cut.
+- Maximum auction price age: older Auctionator prices are ignored and the item is kept.
+- New Profession group: reagents of known recipes that still give skill points are kept and never junk.
+- Gear your class can never wear (e.g. mail or swords for a druid) goes to the auction house when tradeable and worth it, otherwise to junk. Gear you could wear is never junk.
+- Grey and white gear that no quest needs and that isn't worth auctioning is junk; without an auction price once you have visited the auction house with Auctionator. Shirts, tabards and fishing poles are kept.
+- Worn items get no tooltip line.
+- Items for other classes ("Classes: Mage") are treated like gear your class can't use.
+- The tooltip also says when an outdated auction price is the reason an item stays.
+- Soulbound items are no longer put into the AuctionHouse group.
+
 ## 0.5.0
 
 - No Baganator setup needed anymore: Quest and AuctionHouse appear as groups in the equipment sets category.

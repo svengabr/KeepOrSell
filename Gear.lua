@@ -1,0 +1,76 @@
+-- Which gear a class can never wear. Pure logic, no frames.
+local _, ns = ...
+
+local WEAPON, ARMOR = 2, 4 -- Enum.ItemClass
+
+-- Enum.ItemWeaponSubclass
+local AXE1H, AXE2H, BOW, GUN, MACE1H, MACE2H, POLEARM, SWORD1H, SWORD2H = 0, 1, 2, 3, 4, 5, 6, 7, 8
+local STAFF, FIST, DAGGER, THROWN, CROSSBOW, WAND = 10, 13, 15, 16, 18, 19
+-- Enum.ItemArmorSubclass
+local LEATHER, MAIL, PLATE, SHIELD, LIBRAM, IDOL, TOTEM = 2, 3, 4, 6, 7, 8, 9
+
+local function Set(...)
+  local t = {}
+  for i = 1, select("#", ...) do t[select(i, ...)] = true end
+  return t
+end
+
+-- Everything a class can ever learn, including proficiencies trained later (mail at 40 etc.).
+-- Generous on purpose: an item that might become wearable is kept.
+local WEAPONS = {
+  WARRIOR = Set(AXE1H, AXE2H, BOW, GUN, MACE1H, MACE2H, POLEARM, SWORD1H, SWORD2H, STAFF, FIST, DAGGER, THROWN, CROSSBOW),
+  PALADIN = Set(AXE1H, AXE2H, MACE1H, MACE2H, POLEARM, SWORD1H, SWORD2H),
+  HUNTER = Set(AXE1H, AXE2H, BOW, GUN, POLEARM, SWORD1H, SWORD2H, STAFF, FIST, DAGGER, THROWN, CROSSBOW),
+  ROGUE = Set(AXE1H, BOW, GUN, MACE1H, SWORD1H, FIST, DAGGER, THROWN, CROSSBOW),
+  PRIEST = Set(MACE1H, STAFF, DAGGER, WAND),
+  SHAMAN = Set(AXE1H, AXE2H, MACE1H, MACE2H, STAFF, FIST, DAGGER),
+  MAGE = Set(SWORD1H, STAFF, DAGGER, WAND),
+  WARLOCK = Set(SWORD1H, STAFF, DAGGER, WAND),
+  DRUID = Set(MACE1H, MACE2H, POLEARM, STAFF, FIST, DAGGER),
+}
+
+local ARMORS = {
+  WARRIOR = Set(LEATHER, MAIL, PLATE, SHIELD),
+  PALADIN = Set(LEATHER, MAIL, PLATE, SHIELD, LIBRAM),
+  HUNTER = Set(LEATHER, MAIL),
+  ROGUE = Set(LEATHER),
+  PRIEST = Set(),
+  SHAMAN = Set(LEATHER, MAIL, SHIELD, TOTEM),
+  MAGE = Set(),
+  WARLOCK = Set(),
+  DRUID = Set(LEATHER, IDOL),
+}
+
+-- Armor subclasses that are restricted at all; cloth, generic (rings, necks, trinkets, off-hands) and
+-- cosmetic items are wearable by everyone
+local RESTRICTED_ARMOR = Set(LEATHER, MAIL, PLATE, SHIELD, LIBRAM, IDOL, TOTEM)
+local RESTRICTED_WEAPONS = Set(AXE1H, AXE2H, BOW, GUN, MACE1H, MACE2H, POLEARM, SWORD1H, SWORD2H,
+  STAFF, FIST, DAGGER, THROWN, CROSSBOW, WAND)
+
+local POOR, COMMON = 0, 1 -- Enum.ItemQuality
+local FISHING_POLE = 20
+-- white or grey slots players keep for looks, not stats
+local KEEP_SLOTS = Set("INVTYPE_BODY", "INVTYPE_TABARD")
+
+-- true = grey or white weapon/armor that is only worth its vendor price (no shirts, tabards, fishing poles)
+function ns.IsPlainGear(quality, classID, subclassID, equipLoc)
+  if quality ~= POOR and quality ~= COMMON then return false end
+  if classID ~= WEAPON and classID ~= ARMOR then return false end
+  if KEEP_SLOTS[equipLoc] then return false end
+  if classID == WEAPON and subclassID == FISHING_POLE then return false end
+  return true
+end
+
+-- true = this class can never wear the item; false otherwise, also for unknown classes and subclasses
+function ns.IsUnusableGear(classFile, classID, subclassID, equipLoc)
+  if equipLoc == "INVTYPE_CLOAK" then return false end
+  if classID == WEAPON and RESTRICTED_WEAPONS[subclassID] then
+    local allowed = WEAPONS[classFile]
+    return allowed ~= nil and not allowed[subclassID]
+  end
+  if classID == ARMOR and RESTRICTED_ARMOR[subclassID] then
+    local allowed = ARMORS[classFile]
+    return allowed ~= nil and not allowed[subclassID]
+  end
+  return false
+end

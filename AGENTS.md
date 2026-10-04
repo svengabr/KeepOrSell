@@ -4,8 +4,9 @@ Hinweise für KI-Agenten (Claude Code, Codex, Cursor …), die an KeepOrSell arb
 
 ## Was das Addon tut
 
-WoW-Addon, das Taschen-Items in drei Gruppen einteilt: **Quest** (behalten), **AuctionHouse**
-(Auktionspreis ≥ Faktor × Händlerpreis) und **Junk** über Scrap (billige Handwerkswaren).
+WoW-Addon, das Taschen-Items in Gruppen einteilt: **Quest** (behalten), **Profession** (Zutaten, die noch
+Skillpunkte geben), **AuctionHouse** (Auktionspreis ≥ Faktor × Händlerpreis) und **Junk** über Scrap
+(billige Handwerkswaren, Ausrüstung, die die Klasse nie tragen kann). Eine Tooltip-Zeile erklärt die Einstufung.
 Es setzt auf die öffentlichen APIs von **Baganator**, **Auctionator** und **Scrap** – alle drei
 sind optional (`OptionalDeps`), jede Anbindung muss ohne das jeweilige Addon still nichts tun.
 
@@ -17,10 +18,15 @@ Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Ta
 |---|---|
 | `Locales.lua` | Texte in `ns.L`; Englisch Standard, `deDE` überschreibt |
 | `Objectives.lua` | Questziele aus dem Questlog lesen (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`) – reine Logik |
-| `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.GetPriceClass` über Auctionator – reine Logik |
+| `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
+| `Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
+| `Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters |
+| `Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
 | `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
 | `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
-| `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` |
+| `Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
+| `Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API |
+| `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
 
 Baganator-Eigenheiten: Items mit Item-Set landen fest in der Equipment-Sets-Kategorie, vor jeder Suche und
 unabhängig von Prioritäten – eigene Suchkategorien auf Set-Namen greifen deshalb nie. Ein API für Quest-Addons
@@ -30,10 +36,18 @@ gibt es nicht. Das Scrap-Schrott-Plugin bringt Baganator selbst mit (`Baganator/
 
 - **Nur öffentliche APIs** der Fremd-Addons nutzen, keine Interna. Vorhandensein immer prüfen
   (`if not (Baganator and Baganator.API ...) then return end`).
-- **Mehrere Clients**: Die TOC listet Retail und Classic-Varianten. API-Unterschiede abfangen
+- **Mehrere Clients**: Die TOC listet Retail und Classic-Varianten; gespielt und getestet wird nur auf
+  WoW: Forever (Interface 16001, Blizzard-UI-Quelle: Gethe/wow-ui-source, Branch `forever`). Forever nutzt die
+  moderne Oberfläche (`Settings`, `C_TradeSkillUI`/`Blizzard_Professions`, `TooltipDataProcessor`).
+  `C_SettingsUtil.OpenSettingsPanel` (hinter `Settings.OpenToCategory`) ist dort für Addons gesperrt. API-Unterschiede abfangen
   (z. B. `C_QuestLog.GetInfo` vs. Classic-Questlog, `C_Item.GetItemInfo` vs. `GetItemInfo`).
-- **Im Zweifel behalten**: Ohne bekannten Auktionspreis oder Item-Namen wird nichts als Schrott
-  markiert. Als Junk gelten nur Handwerkswaren (`classID 7`), nie Ausrüstung, Verbrauchsgüter, Questitems.
+- **Im Zweifel behalten**: Ohne bekannten, aktuellen Auktionspreis oder Item-Namen wird nichts als Schrott
+  markiert. Als Junk gelten nur Handwerkswaren (`classID 7`), graue/weiße Ausrüstung (ohne Hemd, Wappenrock,
+  Angelrute) und Ausrüstung, die die Klasse **nie** tragen kann (auch nicht nach späterem Training), sowie Items mit
+  unerfüllter Klassen-/Rassen-Anforderung (Tooltip-Zeile `UsageRequirement`/`RaceClass`, rot) – nie grüne
+  oder bessere tragbare Ausrüstung, Verbrauchsgüter, Questitems. Tragbare Ausrüstung darf ins Auktionshaus
+  (handelbar und lohnend). Einzige Ausnahme vom „Im Zweifel“: graue/weiße Ausrüstung ohne Auktionspreis gilt als
+  nicht lohnend, sobald der Spieler mit Auctionator im AH war (`KeepOrSellDB.ahVisited`).
 - **Neue Texte** immer in `Locales.lua`, englisch und deutsch.
 - Reine Logik (ohne WoW-Frames) in eigenen Funktionen halten, damit sie testbar bleibt.
 - Code-Kommentare (Lua und Tests) **auf Englisch**. Commit-Messages auf Deutsch, Conventional Commits (`feat:`, `fix:`, `chore:` …).
