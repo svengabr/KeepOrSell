@@ -33,6 +33,17 @@ class TooltipTests(unittest.TestCase):
     def test_auction_house_with_prices(self):
         self.assertIn("Auction house – AH 1000c, vendor 38c", self.show(3))
 
+    def test_tsm_price_named(self):
+        self.rt.execute("""
+          Auctionator = nil
+          TSM_API = {ToItemString = function(link) return link end,
+                     GetCustomPriceValue = function(_, s) return s == "link3" and 1000 or nil end}
+        """)
+        self.assertIn("AH 1000c, vendor 38c (TSM)", self.show(3))
+
+    def test_auctionator_price_not_named_tsm(self):
+        self.assertNotIn("(TSM)", self.show(3))
+
     def test_junk(self):
         self.assertIn("Junk – AH 15c, vendor 13c (below 2x vendor price)", self.show(4))
 

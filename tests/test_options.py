@@ -163,6 +163,13 @@ class OptionsTests(unittest.TestCase):
         for key in ("factor", "minProfit", "maxAge", "setSource", "destroy", "bagValue"):
             self.assertTrue(self.rt.eval("ENABLED")(key), key)
 
+    def test_price_options_work_with_tsm_alone(self):
+        self.rt.execute("LOADED.TradeSkillMaster = true")
+        self.assertTrue(self.rt.eval("ENABLED")("factor"))
+        self.assertTrue(self.rt.eval("ENABLED")("minProfit"))
+        # TSM has no price age
+        self.assertFalse(self.rt.eval("ENABLED")("maxAge"))
+
     def test_questie_needs_matching_database(self):
         self.rt.execute("LOADED.Questie = true")
         self.assertFalse(self.rt.eval("ENABLED")("questie"))
@@ -170,14 +177,15 @@ class OptionsTests(unittest.TestCase):
         self.assertTrue(self.rt.eval("ENABLED")("questie"))
 
     def test_tooltip_names_the_addon(self):
-        self.assertIn("Needs Auctionator.", self.calls.tooltips["factor"])
+        self.assertIn("Needs Auctionator / TradeSkillMaster.", self.calls.tooltips["factor"])
+        self.assertIn("Needs Auctionator.", self.calls.tooltips["maxAge"])
         self.assertIn("Needs Baganator.", self.calls.tooltips["setSource"])
         self.assertNotIn("Needs", self.calls.tooltips["scrap"])
 
     def test_dependency_list(self):
         layout = list(self.calls.layout.values())[4:]
         self.assertEqual(layout[0].header, "Dependencies")
-        self.assertEqual([i.data.name for i in layout[1:]], ["Auctionator", "Baganator", "Scrap", "Questie"])
+        self.assertEqual([i.data.name for i in layout[1:]], ["Auctionator", "TradeSkillMaster", "Baganator", "Scrap", "Questie"])
         self.assertEqual(layout[1].template, "KeepOrSellDependencyTemplate")
 
     def test_without_settings_api(self):
@@ -205,6 +213,18 @@ class DependencyStatusTests(unittest.TestCase):
     def test_questie_without_database(self):
         self.rt.execute("LOADED.Questie = true")
         self.assertEqual(self.ns.GetDependencyStatus("Questie"), "outdated")
+
+    def test_needs_list(self):
+        self.assertEqual(list(self.ns.NeedsList("Scrap").values()), ["Scrap"])
+        both = self.rt.eval("{'Auctionator', 'TradeSkillMaster'}")
+        self.assertEqual(list(self.ns.NeedsList(both).values()), ["Auctionator", "TradeSkillMaster"])
+
+    def test_any_dependency_ready(self):
+        both = self.rt.eval("{'Auctionator', 'TradeSkillMaster'}")
+        self.assertFalse(self.ns.IsAnyDependencyReady(both))
+        self.rt.execute("LOADED.TradeSkillMaster = true")
+        self.assertTrue(self.ns.IsAnyDependencyReady(both))
+        self.assertFalse(self.ns.IsAnyDependencyReady("Auctionator"))
 
     def test_status_text(self):
         self.rt.execute("LOADED.Auctionator = true")

@@ -5,16 +5,23 @@ local L = ns.L
 -- name = addon folder; use = what KeepOrSell needs it for
 ns.DEPENDENCIES = {
   {name = "Auctionator", use = L.DEP_AUCTIONATOR},
+  {name = "TradeSkillMaster", use = L.DEP_TSM},
   {name = "Baganator", use = L.DEP_BAGANATOR},
   {name = "Scrap", use = L.DEP_SCRAP},
   {name = "Questie", use = L.DEP_QUESTIE},
 }
 
--- Options that do nothing without the addon
+-- Options that do nothing without the addon; a list means any of them is enough
 ns.OPTION_NEEDS = {
-  factor = "Auctionator", minProfit = "Auctionator", maxAge = "Auctionator",
+  factor = {"Auctionator", "TradeSkillMaster"}, minProfit = {"Auctionator", "TradeSkillMaster"},
+  maxAge = "Auctionator", -- TSM has no price age
   setSource = "Baganator", destroy = "Baganator", bagValue = "Baganator", questie = "Questie",
 }
+
+-- OPTION_NEEDS value as a list of addon names. Pure.
+function ns.NeedsList(needs)
+  return type(needs) == "table" and needs or {needs}
+end
 
 -- "active" | "outdated" (loaded, but its API doesn't match) | "disabled" (installed, not loaded) | "missing". Pure.
 function ns.DependencyStatus(loaded, exists, compatible)
@@ -36,6 +43,13 @@ end
 
 function ns.IsDependencyReady(name)
   return ns.GetDependencyStatus(name) == "active"
+end
+
+function ns.IsAnyDependencyReady(needs)
+  for _, name in ipairs(ns.NeedsList(needs)) do
+    if ns.IsDependencyReady(name) then return true end
+  end
+  return false
 end
 
 local STATUS = {

@@ -35,6 +35,7 @@ local L = {
   SECTION_KEEP = "Keep",
   SECTION_DISPLAY = "Display",
   DEP_AUCTIONATOR = "auction prices",
+  DEP_TSM = "auction prices when Auctionator has none",
   DEP_BAGANATOR = "groups in your bags",
   DEP_SCRAP = "sells junk",
   DEP_QUESTIE = "upcoming quests",
@@ -93,6 +94,7 @@ local L = {
   TIP_STALE = "auction price older than %d days",
   TIP_SHARED = "(price from %s, %d days old)",
   TIP_SHARED_TODAY = "(price from %s, today)",
+  TIP_TSM = "(TSM)",
 }
 
 if GetLocale and GetLocale() == "deDE" then
@@ -128,6 +130,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.SECTION_KEEP = "Behalten"
   L.SECTION_DISPLAY = "Anzeige"
   L.DEP_AUCTIONATOR = "Auktionspreise"
+  L.DEP_TSM = "Auktionspreise, wenn Auctionator keine hat"
   L.DEP_BAGANATOR = "Gruppen in den Taschen"
   L.DEP_SCRAP = "verkauft Schrott"
   L.DEP_QUESTIE = "kommende Quests"
@@ -185,6 +188,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_STALE = "Auktionspreis älter als %d Tage"
   L.TIP_SHARED = "(Preis von %s, %d Tage alt)"
   L.TIP_SHARED_TODAY = "(Preis von %s, heute)"
+  L.TIP_TSM = "(TSM)"
 end
 
 ns.L = L

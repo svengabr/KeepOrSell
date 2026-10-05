@@ -22,6 +22,7 @@ local function PriceText(prices, verdict, db)
       or L.TIP_SHARED_TODAY:format(prices.from)
     text = text .. " " .. shared
   end
+  if prices.source == "tsm" then text = text .. " " .. L.TIP_TSM end
   -- for junk, name the rule that made the auction house not worth it
   if verdict.kind == "junk" and verdict.priceReason == "factor" then
     text = text .. " " .. L.TIP_BELOW_FACTOR:format(db.factor)
