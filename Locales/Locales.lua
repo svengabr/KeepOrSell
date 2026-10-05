@@ -94,6 +94,7 @@ local L = {
   TIP_STALE = "auction price older than %d days",
   TIP_SHARED = "(price from %s, %d days old)",
   TIP_SHARED_TODAY = "(price from %s, today)",
+  TIP_TSM = "(TSM)",
 }
 
 if GetLocale and GetLocale() == "deDE" then
@@ -187,6 +188,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_STALE = "Auktionspreis älter als %d Tage"
   L.TIP_SHARED = "(Preis von %s, %d Tage alt)"
   L.TIP_SHARED_TODAY = "(Preis von %s, heute)"
+  L.TIP_TSM = "(TSM)"
 end
 
 ns.L = L
