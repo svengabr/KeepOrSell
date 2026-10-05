@@ -18,6 +18,7 @@ read_globals = {
   "Auctionator",
   "Baganator",
   "LibQuestieDB",
+  "TSM_API",
 
   -- WoW API
   "C_AddOns",

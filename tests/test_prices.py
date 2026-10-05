@@ -206,5 +206,98 @@ class SharedPriceTests(unittest.TestCase):
         self.assertIsNone(self.lookup("false").ah)
 
 
+class MergeFallbackTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Prices.lua",))
+
+    def merge(self, prices, fallback):
+        return self.ns.MergeFallback(self.rt.eval(prices), fallback, "tsm")
+
+    def test_own_price_wins(self):
+        p = self.merge("{ah = 200, vendor = 13, age = 1, hasAge = true}", 999)
+        self.assertEqual((p.ah, p.hasAge, p.source), (200, True, None))
+
+    def test_fills_missing_price(self):
+        p = self.merge("{vendor = 13}", 500)
+        self.assertEqual((p.ah, p.vendor, p.hasAge, p.source), (500, 13, False, "tsm"))
+
+    def test_no_fallback_keeps_prices(self):
+        self.assertIsNone(self.merge("{vendor = 13}", None).ah)
+        self.assertIsNone(self.merge("{vendor = 13}", 0).ah)
+
+    def test_stale_own_price_not_replaced(self):
+        p = self.merge("{ah = 200, vendor = 13, age = 15, hasAge = true}", 999)
+        self.assertEqual((p.ah, p.age), (200, 15))
+
+    def test_tsm_price_never_stale(self):
+        p = self.merge("{vendor = 13}", 500)
+        self.assertEqual(self.ns.ClassifyPrices(p, self.rt.eval("{factor = 2, maxAge = 3}")), "ah")
+
+
+TSM_STUB = """
+TSM = {}           -- itemString -> copper
+TSM_CALLS = 0
+TSM_API = {
+  ToItemString = function(link) local id = link:match("%d+") return id and ("i:" .. id) end,
+  GetCustomPriceValue = function(str, itemString)
+    TSM_CALLS = TSM_CALLS + 1
+    assert(str == "first(DBMinBuyout, DBMarket)")
+    if TSM_FAIL then error("bad argument") end
+    return TSM[itemString]
+  end,
+}
+"""
+
+
+class TSMLookupTests(unittest.TestCase):
+    def load(self, extra=""):
+        return load(("Prices.lua", "TSM.lua"), stubs=TSM_STUB + extra)
+
+    def test_only_tsm(self):
+        rt, ns = self.load('Auctionator = nil; TSM["i:4"] = 300')
+        p = ns.GetPrices("link4")
+        self.assertEqual((p.ah, p.vendor, p.hasAge, p.source), (300, 13, False, "tsm"))
+
+    def test_auctionator_wins_without_calling_tsm(self):
+        rt, ns = self.load('AH["link4"] = 200; TSM["i:4"] = 300')
+        self.assertEqual(ns.GetPrices("link4").ah, 200)
+        self.assertEqual(rt.eval("TSM_CALLS"), 0)
+
+    def test_tsm_fills_gap_next_to_auctionator(self):
+        rt, ns = self.load('TSM["i:3"] = 900')
+        self.assertEqual(ns.GetPrices("link3").source, "tsm")
+
+    def test_shared_price_beats_tsm(self):
+        rt, ns = self.load("""
+          TSM["i:3"] = 900
+          function GetServerTime() return %d end
+          KeepOrSellDB.share = true
+          function GetNormalizedRealmName() return "Realm" end
+          function UnitFactionGroup() return "Horde" end
+          KeepOrSellDB.sharedPrices = {["Realm-Horde"] = {[3] = {price = 700, seen = %d, from = "Sven"}}}
+        """ % (NOW, NOW - DAY))
+        p = ns.GetPrices("link3")
+        self.assertEqual((p.ah, p["from"], p.source), (700, "Sven", None))
+        self.assertEqual(rt.eval("TSM_CALLS"), 0)
+
+    def test_tsm_error_gives_no_price(self):
+        rt, ns = self.load('Auctionator = nil; TSM_FAIL = true')
+        self.assertIsNone(ns.GetPrices("link4").ah)
+
+    def test_unparsable_link(self):
+        rt, ns = self.load('Auctionator = nil; TSM_API.ToItemString = function() return nil end')
+        self.assertIsNone(ns.GetTSMPrice("link4"))
+        self.assertEqual(rt.eval("TSM_CALLS"), 0)
+
+    def test_no_data_for_realm(self):
+        rt, ns = self.load("Auctionator = nil")
+        self.assertIsNone(ns.GetPrices("link4").ah)
+
+    def test_without_tsm(self):
+        rt, ns = load(("Prices.lua", "TSM.lua"), stubs="Auctionator = nil")
+        self.assertIsNone(ns.GetTSMPrice("link4"))
+        self.assertIsNone(ns.GetPrices("link4").ah)
+
+
 if __name__ == "__main__":
     unittest.main()

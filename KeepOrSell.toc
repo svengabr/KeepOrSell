@@ -5,13 +5,14 @@
 ## Author: Conoar
 ## Version: @project-version@
 ## SavedVariables: KeepOrSellDB
-## OptionalDeps: Baganator, Auctionator, Scrap, QuestieDB
+## OptionalDeps: Baganator, Auctionator, Scrap, QuestieDB, TradeSkillMaster
 ## X-License: GPL-3.0-or-later
 ## X-Curse-Project-ID: 1725855
 
 Locales\Locales.lua
 Rules\Objectives.lua
 Rules\Prices.lua
+Integrations\TSM.lua
 Rules\Share.lua
 Rules\Gear.lua
 Rules\Professions.lua

@@ -111,8 +111,16 @@ function ns.PickPrice(own, shared, now, lastScan)
   return {ah = shared.price, vendor = own.vendor, age = fresh.days, hasAge = true, from = shared.from}
 end
 
--- {ah, vendor, age, hasAge, from}; age = days since last seen on the AH (nil = never or older than 21 days),
--- from = the group member who shared the price (nil for the own Auctionator price)
+-- Fills a missing auction price from a secondary source (TSM). An own or shared price always wins,
+-- even a stale one. The fallback has no age, so maxAge doesn't apply to it. Pure.
+function ns.MergeFallback(prices, fallbackPrice, source)
+  if (prices.ah and prices.ah > 0) or not fallbackPrice or fallbackPrice <= 0 then return prices end
+  return {ah = fallbackPrice, vendor = prices.vendor, hasAge = false, source = source}
+end
+
+-- {ah, vendor, age, hasAge, from, source}; age = days since last seen on the AH (nil = never or older than
+-- 21 days), from = the group member who shared the price (nil for the own Auctionator price),
+-- source = "tsm" when the price came from TradeSkillMaster
 function ns.GetPrices(itemLink)
   local api = Api()
   local prices = {}
@@ -128,7 +136,11 @@ function ns.GetPrices(itemLink)
   local shared = KeepOrSellDB and KeepOrSellDB.share and ns.SharedPrices()
   local id = shared and C_Item and C_Item.GetItemInfoInstant and C_Item.GetItemInfoInstant(itemLink)
   if id and shared[id] and GetServerTime then
-    return ns.PickPrice(prices, shared[id], GetServerTime(), ns.LastFullScan())
+    prices = ns.PickPrice(prices, shared[id], GetServerTime(), ns.LastFullScan())
+  end
+  -- TSM only fills gaps, so it is never asked for items Auctionator or the group knows
+  if not (prices.ah and prices.ah > 0) and ns.GetTSMPrice then
+    prices = ns.MergeFallback(prices, ns.GetTSMPrice(itemLink), "tsm")
   end
   return prices
 end

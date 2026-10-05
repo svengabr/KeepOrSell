@@ -25,6 +25,7 @@ NOT_IN_DOCS = {
     "Auctionator": "optional dependency, public API",
     "Baganator": "optional dependency, public API",
     "LibQuestieDB": "optional dependency (QuestieDB), public API in src/api.lua",
+    "TSM_API": "optional dependency (TradeSkillMaster), public API",
     "Scrap": "optional dependency, public API",
     # FrameXML (Lua/XML side of the client UI), not C API
     "CreateFrame": "core widget API, used throughout FrameXML",

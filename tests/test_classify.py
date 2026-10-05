@@ -275,5 +275,21 @@ class FactsTests(unittest.TestCase):
         self.assertFalse(ns.ItemFacts(5, "link5", rt.eval("{bound = false}")).bound)
 
 
+class TSMPriceDataTests(unittest.TestCase):
+    TSM_WITHOUT_DATA = """
+    TSM_API = {ToItemString = function(link) return link end, GetCustomPriceValue = function() return nil end}
+    """
+
+    def classify(self, visited):
+        rt, ns = load(stubs=self.TSM_WITHOUT_DATA + "KeepOrSellDB.ahVisited = %s" % visited)
+        ns.items = rt.eval("{}")
+        return ns.Classify(10, "link10").kind
+
+    def test_plain_gear_with_tsm_but_no_scan_stays(self):
+        # TSM without realm data must not stand in for Auctionator's "nobody sells it"
+        self.assertNotEqual(self.classify("false"), "junk")
+        self.assertEqual(self.classify("true"), "junk")
+
+
 if __name__ == "__main__":
     unittest.main()
