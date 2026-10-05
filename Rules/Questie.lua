@@ -4,6 +4,7 @@ local _, ns = ...
 local CONTRACT = 2   -- QuestieDB contract version this file was written against
 local LEVEL_RANGE = 5
 local ITEM_OBJECTIVES = 3 -- objectives = {creature, object, item, reputation, killCredit, spell}
+local ITEM_STARTERS = 3   -- startedBy = {creature, object, item}
 
 local function HasBit(mask, index)
   return math.floor(mask / 2 ^ (index - 1)) % 2 == 1
@@ -62,24 +63,31 @@ function ns.HasQuestieDB()
   return QuestieDB() ~= false
 end
 
--- Calls fn(itemID) for every item the quest needs: item objectives and required source items
+-- Calls fn(itemID, questOnly) for every item the quest needs: item objectives, required source items,
+-- items that start it and the item it hands out. questOnly = the item exists only for this quest
+-- (starter or handed out); an objective like Linen Cloth has other uses.
 local function ForEachNeededItem(Quest, questID, fn)
   local objectives = Quest.objectives(questID)
   for _, objective in ipairs(objectives and objectives[ITEM_OBJECTIVES] or {}) do
     if objective[1] then fn(objective[1]) end
   end
   for _, itemID in ipairs(Quest.requiredSourceItems(questID) or {}) do fn(itemID) end
+  local startedBy = Quest.startedBy and Quest.startedBy(questID)
+  for _, itemID in ipairs(startedBy and startedBy[ITEM_STARTERS] or {}) do fn(itemID, true) end
+  local sourceItem = Quest.sourceItemId and Quest.sourceItemId(questID)
+  if sourceItem and sourceItem ~= 0 then fn(sourceItem, true) end
 end
 
--- Adds ids[first..last] to index (itemID -> {questID, ...}); a quest that fails to read is skipped.
--- Pure apart from the Quest reads.
-function ns.IndexQuestItems(Quest, ids, first, last, index)
+-- Adds ids[first..last] to index (itemID -> {questID, ...}) and items that exist only for a quest to
+-- questOnly (itemID -> true); a quest that fails to read is skipped. Pure apart from the Quest reads.
+function ns.IndexQuestItems(Quest, ids, first, last, index, questOnly)
   for i = first, math.min(last, #ids) do
     local questID = ids[i]
-    pcall(ForEachNeededItem, Quest, questID, function(itemID)
+    pcall(ForEachNeededItem, Quest, questID, function(itemID, only)
       local list = index[itemID]
       if not list then list = {}; index[itemID] = list end
       if list[#list] ~= questID then list[#list + 1] = questID end
+      if only and questOnly then questOnly[itemID] = true end
     end)
   end
 end
@@ -88,6 +96,7 @@ end
 -- a chunk per frame after login so it never stalls the game
 local CHUNK = 250
 local index -- itemID -> {questID, ...}, nil until complete
+local questOnly = {} -- itemID -> true for quest starters and items a quest hands out, filled with index
 
 -- Builds the index in the background; done() runs once it is complete. Without QuestieDB nothing happens.
 function ns.BuildQuestieIndex(done)
@@ -95,12 +104,12 @@ function ns.BuildQuestieIndex(done)
   if not lib or index then return end
   local ok, ids = pcall(lib.Quest.GetAllIds)
   if not (ok and type(ids) == "table") then return end
-  local building, first = {}, 1
+  local building, buildingOnly, first = {}, {}, 1
   local function Step()
-    ns.IndexQuestItems(lib.Quest, ids, first, first + CHUNK - 1, building)
+    ns.IndexQuestItems(lib.Quest, ids, first, first + CHUNK - 1, building, buildingOnly)
     first = first + CHUNK
     if first > #ids then
-      index = building
+      index, questOnly = building, buildingOnly
       if done then done() end
     else
       C_Timer.After(0, Step)
@@ -143,4 +152,9 @@ end
 -- {name, level, done} of the quest a quest-class item belongs to, at any level, or nil
 function ns.GetQuestItemQuest(itemID)
   return Find(itemID, ns.PickQuestItemQuest)
+end
+
+-- true if the item exists only for a quest (it starts one or a quest hands it out), per QuestieDB
+function ns.IsQuestOnlyItem(itemID)
+  return itemID ~= nil and questOnly[itemID] == true
 end
