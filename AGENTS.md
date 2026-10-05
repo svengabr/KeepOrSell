@@ -7,8 +7,8 @@ Notes for AI agents (Claude Code, Codex, Cursor …) working on KeepOrSell.
 WoW addon that sorts bag items into groups: **Quest** (keep), **Profession** (reagents that still give
 skill points), **AuctionHouse** (auction price ≥ factor × vendor price) and **Junk** via Scrap
 (cheap trade goods, gear the class can never wear). A tooltip line explains the decision.
-It relies on the public APIs of **Baganator**, **Auctionator**, **Scrap** and **QuestieDB** (Questie's database
-addon). All four are optional (`OptionalDeps`); every integration must silently do nothing without its addon.
+It relies on the public APIs of **Baganator**, **Auctionator**, **TradeSkillMaster**, **Scrap** and **QuestieDB**
+(Questie's database addon). All five are optional (`OptionalDeps`); every integration must silently do nothing without its addon.
 
 ## Layout
 
@@ -21,7 +21,8 @@ folder and into the TOC; the tests find them by name (`tests/addon.py`, `SOURCE_
 |---|---|
 | `Locales/Locales.lua` | Texts in `ns.L`; English by default, `deDE` overrides |
 | `Rules/Objectives.lua` | Reads quest objectives from the quest log (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`), pure logic |
-| `Rules/Prices.lua` | Price classification `ns.ClassifyPrice` / `ns.ClassifyPrices` (minimum profit, price age), prices via Auctionator (`ns.GetPrices`) |
+| `Rules/Prices.lua` | Price classification `ns.ClassifyPrice` / `ns.ClassifyPrices` (minimum profit, price age), prices via Auctionator (`ns.GetPrices`), TSM only fills gaps (`ns.MergeFallback` pure) |
+| `Integrations/TSM.lua` | `ns.GetTSMPrice`: TSM price `first(DBMinBuyout, DBMarket)` via `TSM_API`; used only when neither Auctionator nor a shared price exists, no age (`maxAge` doesn't apply), never shared, doesn't count as `ahVisited` |
 | `Rules/Share.lua` | Shares auction prices within the group (addon messages): asks for the bag items, whoever has a fresher price answers (`ns.IsFresher` in `Prices.lua`) |
 | `Rules/Gear.lua` | `ns.IsUnusableGear`: weapon/armor types a class can never learn, pure logic |
 | `Rules/Professions.lua` | Remembers reagents of learned, non-grey recipes per character (`KeepOrSellDB.recipes`) when the profession window opens; tells recipes apart as unlearned/known/other profession (`ns.GetRecipeState`) |
@@ -34,7 +35,7 @@ folder and into the TOC; the tests find them by name (`tests/addon.py`, `SOURCE_
 | `Core/Bags.lua` | One pass over the bags (`ns.ScanBags`, once per frame): junk per `Scrap:IsJunk` (without Scrap grey + `ns.ShouldScrap`), vendor value, AH value of the AuctionHouse group |
 | `UI/Destroy.lua` | Destroy button in Baganator's bag window: cheapest junk by vendor price × stack (`ns.PickCheapest` pure, never locked or rare and above), candidates from `ns.ScanBags` (`ns.FindDestroyTarget`); `ns.DestroyTarget` checks slot and cursor before `DeleteCursorItem`; on "inventory full" in the loot window the button glows if the loot is worth more (`ns.LootWorthMore` pure) |
 | `UI/BagValue.lua` | Bag value line in Baganator's bag window (`ns.SumBagValue`, `ns.FormatBagValue` pure) |
-| `Core/Dependencies.lua` | Status of the optional addons (`ns.DependencyStatus` pure, `ns.GetDependencyStatus`), which option needs which addon (`ns.OPTION_NEEDS`), mixin for the row template in `UI/Options.xml` |
+| `Core/Dependencies.lua` | Status of the optional addons (`ns.DependencyStatus` pure, `ns.GetDependencyStatus`), which option needs which addon (`ns.OPTION_NEEDS`, a list means any of them, `ns.IsAnyDependencyReady`), mixin for the row template in `UI/Options.xml` |
 | `UI/Options.lua` | Options under Esc → Options → AddOns via the `Settings` API; options without their addon are greyed out (`AddModifyPredicate`), dependency list at the bottom |
 | `Core/Core.lua` | SavedVariables `KeepOrSellDB`, events, slash command `/kos` (only opens the options) |
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Optional TradeSkillMaster support for advanced users: when Auctionator has no price for an item (and no group member shared one), KeepOrSell uses TSM's lowest buyout, otherwise its market value. The tooltip marks these prices with "(TSM)". TSM prices have no age, so "Maximum price age" doesn't apply to them, and they are not shared with the group. Grey/white gear without a price still needs an auction house visit with Auctionator before it counts as junk.
+
 ## 0.10.0
 
 - Bag value in Baganator's bag window (bottom left), e.g. "Junk 1g 20s · AH 15g": your junk at the vendor and the AuctionHouse group at auction (before fees). Hover it for item counts and the three most valuable auction items. New option "Show bag value" (default on, needs Baganator).
