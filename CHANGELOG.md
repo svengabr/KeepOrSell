@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- With Questie, items that start a quest or that a quest hands you now count as quest items, whatever their item class: they stay in the Quest group (the tooltip names the quest) while the quest is open, and become junk once it is done – e.g. a second library book after turning in the first one, or a leftover quest tool. Items with no known quest still stay.
+
 ## 0.10.0
 
 - Bag value in Baganator's bag window (bottom left), e.g. "Junk 1g 20s · AH 15g": your junk at the vendor and the AuctionHouse group at auction (before fees). Hover it for item counts and the three most valuable auction items. New option "Show bag value" (default on, needs Baganator).

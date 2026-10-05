@@ -29,7 +29,7 @@ Not sure about an item? Then it stays. No auction price means no junk. And green
 - [Baganator](https://www.curseforge.com/wow/addons/baganator): shows the groups in your bags (category view)
 - [Auctionator](https://www.curseforge.com/wow/addons/auctionator): for prices. Scan the auction house once, otherwise there's nothing to compare.
 - [Scrap](https://www.curseforge.com/wow/addons/scrap) (optional): sells your junk automatically
-- [Questie](https://www.curseforge.com/wow/addons/questie) (optional): without it, only quests in your log count. With it, KeepOrSell also keeps items for quests you haven't picked up yet (within 5 levels of you), and quest items from quests you're done with become junk.
+- [Questie](https://www.curseforge.com/wow/addons/questie) (optional): without it, only quests in your log count. With it, KeepOrSell also keeps items for quests you haven't picked up yet (within 5 levels of you), and quest items from quests you're done with become junk. That includes items that start a quest (like the library books in Season of Discovery content) or that a quest hands you, whatever their item class; as long as the quest is open, they stay in the Quest group.
 
 ## Getting started
 
@@ -64,7 +64,7 @@ Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und
 
 **Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items). Sind die Taschen beim Looten voll und die Beute ist mehr wert, leuchtet er. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise.
 
-**Du brauchst:** Baganator und Auctionator (einmal das AH scannen). Scrap und Questie sind optional.
+**Du brauchst:** Baganator und Auctionator (einmal das AH scannen). Scrap und Questie sind optional. Mit Questie werden Quest-Items zu Schrott, sobald alle ihre Quests erledigt sind – auch Items, die eine Quest starten (etwa die Bibliotheksbücher) oder die dir eine Quest gibt. Solange die Quest offen ist, bleiben sie in der Gruppe Quest.
 
 **Loslegen:** installieren, einmal das AH mit Auctionator scannen, jedes Berufsfenster einmal öffnen. Fertig. Einstellungen gibt's unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`.
 
