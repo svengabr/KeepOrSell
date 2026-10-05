@@ -51,11 +51,11 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
   of `README.md`.
 - **Public APIs only** of the other addons, no internals. Always check they exist
   (`if not (Baganator and Baganator.API ...) then return end`).
-- **Several clients**: the TOC lists Retail and Classic flavors; played and tested only on
-  WoW: Forever (Interface 16001, Blizzard UI source: Gethe/wow-ui-source, branch `forever`). Forever uses the
+- **WoW: Forever only**: the TOC lists only Interface 16001, so CurseForge offers the addon for Forever only
+  (Blizzard UI source: Gethe/wow-ui-source, branch `forever`). Don't add other flavors back. Forever uses the
   modern UI (`Settings`, `C_TradeSkillUI`/`Blizzard_Professions`, `TooltipDataProcessor`).
-  `C_SettingsUtil.OpenSettingsPanel` (behind `Settings.OpenToCategory`) is blocked for addons there. Handle API
-  differences (e.g. `C_QuestLog.GetInfo` vs. the Classic quest log, `C_Item.GetItemInfo` vs. `GetItemInfo`).
+  `C_SettingsUtil.OpenSettingsPanel` (behind `Settings.OpenToCategory`) is blocked for addons there. Existing guards for API
+  differences stay (e.g. `C_QuestLog.GetInfo` vs. the Classic quest log, `C_Item.GetItemInfo` vs. `GetItemInfo`).
 - **When in doubt, keep**: without a known, recent auction price or item name nothing is marked as junk.
   TSM prices count as recent: TSM has no age API, and it is only asked when Auctionator and the group have no price.
   Junk is only trade goods (`classID 7`), grey/white gear (except shirts, tabards, fishing poles), gear the class
