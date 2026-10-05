@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1
+
+- KeepOrSell is now published for WoW: Forever only, the only client it is played and tested on. Retail and the other Classic flavors are no longer listed.
+
 ## 0.11.0
 
 - Optional TradeSkillMaster support for advanced users: when Auctionator has no price for an item (and no group member shared one), KeepOrSell uses TSM's lowest buyout, otherwise its market value. The tooltip marks these prices with "(TSM)". TSM prices have no age, so "Maximum price age" doesn't apply to them, and they are not shared with the group. Grey/white gear without a price still needs an auction house visit with Auctionator before it counts as junk.
