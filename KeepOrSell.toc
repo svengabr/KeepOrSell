@@ -9,22 +9,22 @@
 ## X-License: GPL-3.0-or-later
 ## X-Curse-Project-ID: 1725855
 
-Locales.lua
-Objectives.lua
-Prices.lua
-Share.lua
-Gear.lua
-Professions.lua
-Questie.lua
-Classify.lua
-Dependencies.lua
-Options.xml
-Scrap.lua
-Baganator.lua
-Tooltip.lua
-Hints.lua
-Bags.lua
-Destroy.lua
-BagValue.lua
-Options.lua
-Core.lua
+Locales\Locales.lua
+Rules\Objectives.lua
+Rules\Prices.lua
+Rules\Share.lua
+Rules\Gear.lua
+Rules\Professions.lua
+Rules\Questie.lua
+Rules\Classify.lua
+Core\Dependencies.lua
+UI\Options.xml
+Integrations\Scrap.lua
+Integrations\Baganator.lua
+Integrations\Tooltip.lua
+UI\Hints.lua
+Core\Bags.lua
+UI\Destroy.lua
+UI\BagValue.lua
+UI\Options.lua
+Core\Core.lua

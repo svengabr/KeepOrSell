@@ -4,6 +4,14 @@ from pathlib import Path
 from wowapi import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
+SOURCE_DIRS = ("Locales", "Core", "Rules", "Integrations", "UI")
+
+
+def source(name):
+    """Path of an addon file by its name, wherever it lives in the source folders."""
+    hits = [ROOT / d / name for d in SOURCE_DIRS if (ROOT / d / name).exists()]
+    assert len(hits) == 1, f"{name}: expected one source file, found {hits}"
+    return str(hits[0]).replace("\\", "/")
 
 # itemID -> name, classID, subclassID, equipLoc, vendor price, quality
 # 1 wolf flank (objective), 2 letter (quest item), 3 silk (worth auctioning), 4 linen (cheap),
@@ -64,5 +72,5 @@ def load(files=CORE_FILES, stubs="", base=True):
     ns = rt.eval("{}")
     run = rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")
     for f in files:
-        run(str(ROOT / f).replace("\\", "/"), ns)
+        run(source(f), ns)
     return rt, ns

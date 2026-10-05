@@ -12,27 +12,28 @@ von Questie) – alle vier sind optional (`OptionalDeps`), jede Anbindung muss o
 
 ## Aufbau
 
-Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Tabelle `ns`.
+Ordner: `Locales/` Texte, `Rules/` Einstufungslogik (testbar ohne Frames), `Integrations/` Anbindung an Fremd-Addons, `UI/` Knöpfe und Optionen, `Core/` Start, Taschen-Scan, Abhängigkeiten. Neue Dateien in den passenden Ordner und in die TOC; die Tests finden sie über den Namen (`tests/addon.py`, `SOURCE_DIRS`). Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Tabelle `ns`.
 
 | Datei | Inhalt |
 |---|---|
-| `Locales.lua` | Texte in `ns.L`; Englisch Standard, `deDE` überschreibt |
-| `Objectives.lua` | Questziele aus dem Questlog lesen (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`) – reine Logik |
-| `Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
-| `Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
-| `Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters; erkennt Rezepte als ungelernt/bekannt/fremder Beruf (`ns.GetRecipeState`) |
-| `Questie.lua` | Kommende Quests über QuestieDBs öffentliche API (`LibQuestieDB`, Contract 2): `ns.GetQuestieQuest`, reine Auswahl `ns.PickQuestieQuest` (±5 Stufen, Rasse/Klasse, nicht erledigt); für Items der Klasse Quest `ns.GetQuestItemQuest` (jede Stufe, sonst erledigte Quest) für die Tooltip-Zeile. Eigener Item→Quest-Index aus allen Quests, nach dem Login häppchenweise gebaut (`ns.BuildQuestieIndex`) – `Item.relatedQuests` ist auf Forever leer |
-| `Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
-| `Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
-| `Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
-| `Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
-| `Hints.lua` | Hinweise (`ns.CollectHints` rein): Knopf im Baganator-Taschenfenster über `Baganator.API.RegisterRegion`, ohne Baganator einmal im Chat |
-| `Bags.lua` | Ein Durchlauf über die Taschen (`ns.ScanBags`, einmal pro Frame): Schrott laut `Scrap:IsJunk` (ohne Scrap grau + `ns.ShouldScrap`), Händlerwert, AH-Wert der Gruppe Auktionshaus |
-| `Destroy.lua` | Zerstören-Knopf im Baganator-Taschenfenster: billigster Schrott nach Händlerpreis × Stapel (`ns.PickCheapest` rein, nie gesperrt oder ab Selten), Kandidaten aus `ns.ScanBags` (`ns.FindDestroyTarget`); `ns.DestroyTarget` prüft Slot und Cursor vor `DeleteCursorItem`; bei „Inventar voll“ im Lootfenster leuchtet der Knopf, wenn die Beute mehr wert ist (`ns.LootWorthMore` rein) |
-| `BagValue.lua` | Taschenwert-Zeile im Baganator-Taschenfenster (`ns.SumBagValue`, `ns.FormatBagValue` rein) |
-| `Dependencies.lua` | Status der optionalen Addons (`ns.DependencyStatus` rein, `ns.GetDependencyStatus`), welche Option welches Addon braucht (`ns.OPTION_NEEDS`), Mixin für die Zeilen-Vorlage in `Options.xml` |
-| `Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API; Optionen ohne ihr Addon ausgegraut (`AddModifyPredicate`), Abhängigkeitsliste am Ende |
-| `Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
+| `Locales/Locales.lua` | Texte in `ns.L`; Englisch Standard, `deDE` überschreibt |
+| `Rules/Objectives.lua` | Questziele aus dem Questlog lesen (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`) – reine Logik |
+| `Rules/Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
+| `Rules/Share.lua` | Auktionspreise in der Gruppe teilen (Addon-Nachrichten): fragt nach den Items der Tasche, wer einen frischeren Preis hat, antwortet (`ns.IsFresher` in `Prices.lua`) |
+| `Rules/Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
+| `Rules/Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters; erkennt Rezepte als ungelernt/bekannt/fremder Beruf (`ns.GetRecipeState`) |
+| `Rules/Questie.lua` | Kommende Quests über QuestieDBs öffentliche API (`LibQuestieDB`, Contract 2): `ns.GetQuestieQuest`, reine Auswahl `ns.PickQuestieQuest` (±5 Stufen, Rasse/Klasse, nicht erledigt); für Items der Klasse Quest `ns.GetQuestItemQuest` (jede Stufe, sonst erledigte Quest) für die Tooltip-Zeile. Eigener Item→Quest-Index aus allen Quests, nach dem Login häppchenweise gebaut (`ns.BuildQuestieIndex`) – `Item.relatedQuests` ist auf Forever leer |
+| `Rules/Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
+| `Integrations/Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
+| `Integrations/Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
+| `Integrations/Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
+| `UI/Hints.lua` | Hinweise (`ns.CollectHints` rein): Knopf im Baganator-Taschenfenster über `Baganator.API.RegisterRegion`, ohne Baganator einmal im Chat |
+| `Core/Bags.lua` | Ein Durchlauf über die Taschen (`ns.ScanBags`, einmal pro Frame): Schrott laut `Scrap:IsJunk` (ohne Scrap grau + `ns.ShouldScrap`), Händlerwert, AH-Wert der Gruppe Auktionshaus |
+| `UI/Destroy.lua` | Zerstören-Knopf im Baganator-Taschenfenster: billigster Schrott nach Händlerpreis × Stapel (`ns.PickCheapest` rein, nie gesperrt oder ab Selten), Kandidaten aus `ns.ScanBags` (`ns.FindDestroyTarget`); `ns.DestroyTarget` prüft Slot und Cursor vor `DeleteCursorItem`; bei „Inventar voll“ im Lootfenster leuchtet der Knopf, wenn die Beute mehr wert ist (`ns.LootWorthMore` rein) |
+| `UI/BagValue.lua` | Taschenwert-Zeile im Baganator-Taschenfenster (`ns.SumBagValue`, `ns.FormatBagValue` rein) |
+| `Core/Dependencies.lua` | Status der optionalen Addons (`ns.DependencyStatus` rein, `ns.GetDependencyStatus`), welche Option welches Addon braucht (`ns.OPTION_NEEDS`), Mixin für die Zeilen-Vorlage in `UI/Options.xml` |
+| `UI/Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API; Optionen ohne ihr Addon ausgegraut (`AddModifyPredicate`), Abhängigkeitsliste am Ende |
+| `Core/Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
 
 Baganator-Eigenheiten: Items mit Item-Set landen fest in der Equipment-Sets-Kategorie, vor jeder Suche und
 unabhängig von Prioritäten – eigene Suchkategorien auf Set-Namen greifen deshalb nie. Ein API für Quest-Addons

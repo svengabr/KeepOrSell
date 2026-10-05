@@ -1,10 +1,8 @@
 """Tests for the options panel (Options.lua) and /kos (Core.lua) against a stubbed Settings API."""
 import unittest
-from pathlib import Path
 
+from addon import source
 from wowapi import runtime
-
-ROOT = Path(__file__).resolve().parent.parent
 
 STUBS = """
 CALLS = {settings = {}, controls = {}, callbacks = {}, sliders = {}, initializers = {}, tooltips = {}, layout = {}}
@@ -62,7 +60,6 @@ SlashCmdList = {}
 C_Timer = {After = function(_, fn) fn() end}
 """
 
-
 def load():
     rt = runtime()
     rt.execute(STUBS)
@@ -76,9 +73,8 @@ def load():
     end""")(ns)
     for f in ("Locales.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
-            str(ROOT / f).replace("\\", "/"), ns)
+            source(f), ns)
     return rt, ns
-
 
 class OptionsTests(unittest.TestCase):
     def setUp(self):
@@ -190,7 +186,6 @@ class OptionsTests(unittest.TestCase):
         rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
         rt.execute("SlashCmdList.KEEPORSELL('')")  # must not error
 
-
 class DependencyStatusTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load()
@@ -216,7 +211,6 @@ class DependencyStatusTests(unittest.TestCase):
         text = self.ns.DependencyText(self.rt.eval("{name = 'Auctionator', use = 'auction prices'}"))
         self.assertIn("active", text)
         self.assertIn("auction prices", text)
-
 
 if __name__ == "__main__":
     unittest.main()

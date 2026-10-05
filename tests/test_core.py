@@ -1,11 +1,8 @@
 """Unit tests for the pure Lua core functions. Run: python -m unittest discover -s tests -v"""
 import unittest
-from pathlib import Path
 
+from addon import source
 from wowapi import runtime
-
-ROOT = Path(__file__).resolve().parent.parent
-
 
 def load_addon(stubs=""):
     """Loads Objectives.lua like the client does (addonName, ns), after optional API stubs."""
@@ -14,9 +11,8 @@ def load_addon(stubs=""):
         rt.execute(stubs)
     ns = rt.eval("{}")
     rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
-        str(ROOT / "Objectives.lua").replace("\\", "/"), ns)
+        source("Objectives.lua"), ns)
     return rt, ns
-
 
 RETAIL_STUBS = """
 C_QuestLog = {
@@ -48,7 +44,6 @@ GetNumQuestLeaderBoards = function(i) return i == 2 and 1 or 0 end
 GetQuestLogLeaderBoard = function(j, i) return "Magere Wolfflanke: 10/10", "item", true end
 """
 
-
 class ParseTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load_addon()
@@ -65,7 +60,6 @@ class ParseTests(unittest.TestCase):
     def test_invalid(self):
         self.assertIsNone(self.ns.ParseObjectiveName(None))
         self.assertIsNone(self.ns.ParseObjectiveName("   "))
-
 
 class CollectTests(unittest.TestCase):
     def test_retail_api_collects_only_items(self):
@@ -98,7 +92,6 @@ class CollectTests(unittest.TestCase):
         rt, ns = load_addon(RETAIL_STUBS)
         self.assertTrue(ns.Refresh())
         self.assertFalse(ns.Refresh())
-
 
 if __name__ == "__main__":
     unittest.main()

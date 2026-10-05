@@ -10,10 +10,11 @@ from pathlib import Path
 
 import lupa.lua51 as lua51
 
+from addon import SOURCE_DIRS
 from wowapi import api, is_function
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCES = sorted(p for p in ROOT.glob("*.lua"))
+SOURCES = sorted(p for d in SOURCE_DIRS for p in (ROOT / d).glob("*.lua"))
 
 # Globals from .luacheckrc that Blizzard's generated docs don't cover, and why they're fine.
 NOT_IN_DOCS = {
