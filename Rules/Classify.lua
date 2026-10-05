@@ -4,9 +4,11 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, questie, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, recipe, prices, priceData}
+-- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, recipe,
+-- prices, priceData}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
--- questItemFor = {name, level, done} of the quest a quest-class item belongs to, at any level (QuestieDB)
+-- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
+-- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
@@ -18,9 +20,11 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 function ns.Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
   if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
-  -- a quest item stays unless every quest the player could do with it is done
-  local doneQuestItem = facts.classID == QUESTITEM and db.questie and facts.questItemFor and facts.questItemFor.done
-  if facts.classID == QUESTITEM and not doneQuestItem then
+  -- a quest item stays unless every quest the player could do with it is done; besides the quest item
+  -- class, QuestieDB knows quest starters and handed-out items of any class
+  local questItem = facts.classID == QUESTITEM or (db.questie and facts.questOnly)
+  local doneQuestItem = questItem and db.questie and facts.questItemFor and facts.questItemFor.done
+  if questItem and not doneQuestItem then
     return {kind = "quest", reason = "questitem", quest = facts.questItemFor}
   end
   if facts.tool then return {reason = "tool"} end
@@ -118,10 +122,12 @@ end
 function ns.ItemFacts(itemID, itemLink, location)
   local _, _, _, equipLoc, _, classID, subclassID = C_Item.GetItemInfoInstant(itemID)
   local playerClass = UnitClass and select(2, UnitClass("player"))
+  local questOnly = ns.IsQuestOnlyItem(itemID)
   return {
     quest = ns.GetObjectiveState(itemID),
     questie = ns.GetQuestieQuest(itemID),
-    questItemFor = classID == QUESTITEM and ns.GetQuestItemQuest(itemID) or nil,
+    questOnly = questOnly,
+    questItemFor = (classID == QUESTITEM or questOnly) and ns.GetQuestItemQuest(itemID) or nil,
     classID = classID,
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID),

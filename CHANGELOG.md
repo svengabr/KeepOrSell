@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Optional TradeSkillMaster support for advanced users: when Auctionator has no price for an item (and no group member shared one), KeepOrSell uses TSM's lowest buyout, otherwise its market value. The tooltip marks these prices with "(TSM)". TSM prices have no age, so "Maximum price age" doesn't apply to them, and they are not shared with the group. Grey/white gear without a price still needs an auction house visit with Auctionator before it counts as junk.
+- With Questie, items that start a quest or that a quest hands you now count as quest items, whatever their item class: they stay in the Quest group (the tooltip names the quest) while the quest is open, and become junk once it is done – e.g. a second library book after turning in the first one, or a leftover quest tool. Items with no known quest still stay.
 
 ## 0.10.0
 

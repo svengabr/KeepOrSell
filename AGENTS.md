@@ -26,7 +26,7 @@ folder and into the TOC; the tests find them by name (`tests/addon.py`, `SOURCE_
 | `Rules/Share.lua` | Shares auction prices within the group (addon messages): asks for the bag items, whoever has a fresher price answers (`ns.IsFresher` in `Prices.lua`) |
 | `Rules/Gear.lua` | `ns.IsUnusableGear`: weapon/armor types a class can never learn, pure logic |
 | `Rules/Professions.lua` | Remembers reagents of learned, non-grey recipes per character (`KeepOrSellDB.recipes`) when the profession window opens; tells recipes apart as unlearned/known/other profession (`ns.GetRecipeState`) |
-| `Rules/Questie.lua` | Upcoming quests via QuestieDB's public API (`LibQuestieDB`, contract 2): `ns.GetQuestieQuest`, pure selection `ns.PickQuestieQuest` (±5 levels, race/class, not completed); for items of class Quest `ns.GetQuestItemQuest` (any level, otherwise a completed quest) for the tooltip line. Own item→quest index over all quests, built in chunks after login (`ns.BuildQuestieIndex`), because `Item.relatedQuests` is empty on Forever |
+| `Rules/Questie.lua` | Upcoming quests via QuestieDB's public API (`LibQuestieDB`, contract 2): `ns.GetQuestieQuest`, pure selection `ns.PickQuestieQuest` (±5 levels, race/class, not completed); for items of class Quest and quest-only items `ns.GetQuestItemQuest` (any level, otherwise a completed quest) for the tooltip line. Own item→quest index over all quests (objectives, required source items, `startedBy` items, `sourceItemId`), built in chunks after login (`ns.BuildQuestieIndex`), because `Item.relatedQuests` is empty on Forever; `ns.IsQuestOnlyItem` = the item starts a quest or a quest hands it out (objectives like Linen Cloth don't count) |
 | `Rules/Classify.lua` | One decision per item (`ns.Decide` pure, `ns.Classify` with API), used by Baganator, Scrap and the tooltip |
 | `Integrations/Scrap.lua` | Hooks into `Scrap:IsJunk`; Scrap's own list and "not junk" marks take precedence |
 | `Integrations/Baganator.lua` | Corner widget and item set source via `Baganator.API.*` |
@@ -61,8 +61,9 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
   Junk is only trade goods (`classID 7`), grey/white gear (except shirts, tabards, fishing poles), gear the class
   can **never** wear (not even after later training), items with an unmet class/race requirement (tooltip line
   `UsageRequirement`/`RaceClass`, red), recipes that are already known or belong to a profession the character
-  doesn't have (option `recipeJunk`), and quest items (`classID 12`) whose quests are all completed or not doable
-  for the character according to QuestieDB (option `questie`). Never green or better wearable gear, consumables or
+  doesn't have (option `recipeJunk`), and quest items (`classID 12`, or of any class when QuestieDB lists them as
+  quest starter or handed-out item) whose quests are all completed or not doable for the character according to
+  QuestieDB (option `questie`). Never green or better wearable gear, consumables or
   other quest items. Wearable gear may go to the auction house (tradeable and worth it). The only exception to
   "when in doubt": grey/white gear without an auction price counts as not worth it once the player has visited
   the AH with Auctionator (`KeepOrSellDB.ahVisited`).

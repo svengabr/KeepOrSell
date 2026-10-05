@@ -38,7 +38,7 @@ LibQuestieDB = {
   Quest = {GetAllIds = function() return IDS end},
 }
 for _, key in ipairs({"name", "questLevel", "requiredLevel", "requiredRaces", "requiredClasses", "objectives",
-                      "requiredSourceItems", "exclusiveTo"}) do
+                      "requiredSourceItems", "exclusiveTo", "startedBy", "sourceItemId"}) do
   LibQuestieDB.Quest[key] = field(key)
 end
 -- item 12 "Okra" is of the quest item class (12); quest 500 "Westfall Stew" (level 14) wants it
@@ -46,6 +46,16 @@ ITEMS[12] = {"Okra", 12, 0, "", 15}
 QUESTS[500] = {name = "Westfall Stew", questLevel = 14, requiredLevel = 10, requiredRaces = 0, requiredClasses = 0,
                objectives = {nil, nil, {{12}}}}
 IDS[#IDS + 1] = 500
+-- item 20 "Arcanic Systems Manual" (miscellaneous) starts quest 600 (level 35), item 21 "Explorer's Kit"
+-- (miscellaneous) is handed out by quest 700 (level 40); both exist only for their quest
+ITEMS[20] = {"Arcanic Systems Manual", 15, 0, "", 0}
+ITEMS[21] = {"Explorer's Kit", 15, 0, "", 0}
+QUESTS[600] = {name = "Arcanic Systems Manual", questLevel = 35, requiredLevel = 30, requiredRaces = 0,
+               requiredClasses = 0, startedBy = {nil, nil, {20}}}
+QUESTS[700] = {name = "Into the Wilds", questLevel = 40, requiredLevel = 35, requiredRaces = 0,
+               requiredClasses = 0, objectives = {nil, nil, {{4}}}, sourceItemId = 21}
+IDS[#IDS + 1] = 600
+IDS[#IDS + 1] = 700
 KeepOrSellDB.questie = true
 """
 
@@ -155,6 +165,17 @@ class LookupTests(unittest.TestCase):
         self.rt.execute("COMPLETED[500] = true")
         self.assertTrue(self.ns.GetQuestItemQuest(12).done)
 
+    def test_quest_starter_and_handed_out_items_are_quest_only(self):
+        self.assertTrue(self.ns.IsQuestOnlyItem(20))
+        self.assertTrue(self.ns.IsQuestOnlyItem(21))
+        self.assertEqual(self.ns.GetQuestItemQuest(20).name, "Arcanic Systems Manual")
+        self.assertEqual(self.ns.GetQuestItemQuest(21).name, "Into the Wilds")
+
+    def test_objectives_are_not_quest_only(self):
+        self.assertFalse(self.ns.IsQuestOnlyItem(4))
+        self.assertFalse(self.ns.IsQuestOnlyItem(3))
+        self.assertFalse(self.ns.IsQuestOnlyItem(9))
+
     def test_errors_keep_the_item_unprotected_but_quiet(self):
         self.rt.execute("LibQuestieDB.Quest.questLevel = function() error('broken') end")
         self.assertIsNone(self.ns.GetQuestieQuest(4))
@@ -166,6 +187,13 @@ class IndexTests(unittest.TestCase):
 
     def test_nothing_before_the_index_is_built(self):
         self.assertIsNone(self.ns.GetQuestieQuest(4))
+        self.assertFalse(self.ns.IsQuestOnlyItem(20))
+
+    def test_questiedb_without_start_fields(self):
+        self.rt.execute("LibQuestieDB.Quest.startedBy = nil; LibQuestieDB.Quest.sourceItemId = nil")
+        self.ns.BuildQuestieIndex()
+        self.assertEqual(self.ns.GetQuestieQuest(4).name, "Wolf Stew")
+        self.assertFalse(self.ns.IsQuestOnlyItem(20))
 
     def test_built_in_chunks_then_done(self):
         # 600 quests: three chunks, each in its own frame
@@ -246,6 +274,31 @@ class DecideTests(unittest.TestCase):
     def test_done_quest_item_kept_with_questie_off(self):
         self.rt.execute("COMPLETED[500] = true; AH.link12 = 5; KeepOrSellDB.questie = false")
         self.assertEqual(self.ns.Classify(12, "link12").reason, "questitem")
+
+    def test_quest_starter_kept_while_its_quest_is_open(self):
+        verdict = self.ns.Classify(20, "link20")
+        self.assertEqual((verdict.kind, verdict.reason, verdict.quest.name),
+                         ("quest", "questitem", "Arcanic Systems Manual"))
+
+    def test_quest_starter_is_junk_once_its_quest_is_done(self):
+        self.rt.execute("COMPLETED[600] = true; BOUND[20] = true")
+        verdict = self.ns.Classify(20, "link20")
+        self.assertEqual((verdict.kind, verdict.reason, verdict.quest.name),
+                         ("junk", "questitem_done", "Arcanic Systems Manual"))
+
+    def test_handed_out_item_is_junk_once_its_quest_is_done(self):
+        self.rt.execute("COMPLETED[700] = true; BOUND[21] = true")
+        self.assertEqual(self.ns.Classify(21, "link21").reason, "questitem_done")
+
+    def test_quest_starter_left_alone_with_questie_off(self):
+        self.rt.execute("COMPLETED[600] = true; BOUND[20] = true; KeepOrSellDB.questie = false")
+        self.assertIsNone(self.ns.Classify(20, "link20").kind)
+        self.rt.execute("COMPLETED[600] = nil")
+        self.assertIsNone(self.ns.Classify(20, "link20").kind)
+
+    def test_objective_never_junk_for_done_quests(self):
+        self.rt.execute("for _, id in ipairs({100, 200, 300, 700}) do COMPLETED[id] = true end")
+        self.assertNotEqual(self.ns.Classify(4, "link4").reason, "questitem_done")
 
     def test_switch_off(self):
         self.rt.execute("KeepOrSellDB.questie = false; AH.link4 = 15")
