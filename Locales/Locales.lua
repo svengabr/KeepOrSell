@@ -35,6 +35,7 @@ local L = {
   SECTION_KEEP = "Keep",
   SECTION_DISPLAY = "Display",
   DEP_AUCTIONATOR = "auction prices",
+  DEP_TSM = "auction prices when Auctionator has none",
   DEP_BAGANATOR = "groups in your bags",
   DEP_SCRAP = "sells junk",
   DEP_QUESTIE = "upcoming quests",
@@ -128,6 +129,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.SECTION_KEEP = "Behalten"
   L.SECTION_DISPLAY = "Anzeige"
   L.DEP_AUCTIONATOR = "Auktionspreise"
+  L.DEP_TSM = "Auktionspreise, wenn Auctionator keine hat"
   L.DEP_BAGANATOR = "Gruppen in den Taschen"
   L.DEP_SCRAP = "verkauft Schrott"
   L.DEP_QUESTIE = "kommende Quests"

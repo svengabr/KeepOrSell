@@ -19,13 +19,13 @@ function ns.RegisterOptions(db, defaults)
   -- options that do nothing without their addon say so in the tooltip and are greyed out
   local function Tooltip(key, tooltip)
     local needs = ns.OPTION_NEEDS[key]
-    return needs and tooltip .. "\n\n" .. L.OPT_NEEDS:format(needs) or tooltip
+    return needs and tooltip .. "\n\n" .. L.OPT_NEEDS:format(table.concat(ns.NeedsList(needs), " / ")) or tooltip
   end
 
   local function NeedsAddon(key, initializer)
     local needs = ns.OPTION_NEEDS[key]
     if needs and initializer and initializer.AddModifyPredicate then
-      initializer:AddModifyPredicate(function() return ns.IsDependencyReady(needs) end)
+      initializer:AddModifyPredicate(function() return ns.IsAnyDependencyReady(needs) end)
     end
   end
 
