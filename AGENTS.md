@@ -57,6 +57,7 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
   `C_SettingsUtil.OpenSettingsPanel` (behind `Settings.OpenToCategory`) is blocked for addons there. Handle API
   differences (e.g. `C_QuestLog.GetInfo` vs. the Classic quest log, `C_Item.GetItemInfo` vs. `GetItemInfo`).
 - **When in doubt, keep**: without a known, recent auction price or item name nothing is marked as junk.
+  TSM prices count as recent: TSM has no age API, and it is only asked when Auctionator and the group have no price.
   Junk is only trade goods (`classID 7`), grey/white gear (except shirts, tabards, fishing poles), gear the class
   can **never** wear (not even after later training), items with an unmet class/race requirement (tooltip line
   `UsageRequirement`/`RaceClass`, red), recipes that are already known or belong to a profession the character

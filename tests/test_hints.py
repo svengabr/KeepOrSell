@@ -36,6 +36,10 @@ class CollectTests(unittest.TestCase):
     def test_nothing_to_do(self):
         self.assertEqual(self.collect(auctionator=True, ahVisited=True, stale=0), [])
 
+    def test_tsm_alone_needs_no_auctionator_hint(self):
+        # TSM prices already sort items into the auction house group
+        self.assertEqual(self.collect(auctionator=False, tsm=True, ahVisited=False, stale=0), [])
+
     def test_without_auctionator(self):
         hints = self.collect(auctionator=False, ahVisited=False, stale=0)
         self.assertEqual(len(hints), 1)
