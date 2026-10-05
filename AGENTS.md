@@ -1,104 +1,110 @@
 # AGENTS.md
 
-Hinweise für KI-Agenten (Claude Code, Codex, Cursor …), die an KeepOrSell arbeiten.
+Notes for AI agents (Claude Code, Codex, Cursor …) working on KeepOrSell.
 
-## Was das Addon tut
+## What the addon does
 
-WoW-Addon, das Taschen-Items in Gruppen einteilt: **Quest** (behalten), **Profession** (Zutaten, die noch
-Skillpunkte geben), **AuctionHouse** (Auktionspreis ≥ Faktor × Händlerpreis) und **Junk** über Scrap
-(billige Handwerkswaren, Ausrüstung, die die Klasse nie tragen kann). Eine Tooltip-Zeile erklärt die Einstufung.
-Es setzt auf die öffentlichen APIs von **Baganator**, **Auctionator**, **Scrap** und **QuestieDB** (Datenbank-Addon
-von Questie) – alle vier sind optional (`OptionalDeps`), jede Anbindung muss ohne das jeweilige Addon still nichts tun.
+WoW addon that sorts bag items into groups: **Quest** (keep), **Profession** (reagents that still give
+skill points), **AuctionHouse** (auction price ≥ factor × vendor price) and **Junk** via Scrap
+(cheap trade goods, gear the class can never wear). A tooltip line explains the decision.
+It relies on the public APIs of **Baganator**, **Auctionator**, **Scrap** and **QuestieDB** (Questie's database
+addon). All four are optional (`OptionalDeps`); every integration must silently do nothing without its addon.
 
-## Aufbau
+## Layout
 
-Ordner: `Locales/` Texte, `Rules/` Einstufungslogik (testbar ohne Frames), `Integrations/` Anbindung an Fremd-Addons, `UI/` Knöpfe und Optionen, `Core/` Start, Taschen-Scan, Abhängigkeiten. Neue Dateien in den passenden Ordner und in die TOC; die Tests finden sie über den Namen (`tests/addon.py`, `SOURCE_DIRS`). Ladereihenfolge steht in `KeepOrSell.toc`. Alle Dateien teilen sich die Addon-Tabelle `ns`.
+Folders: `Locales/` texts, `Rules/` classification logic (testable without frames), `Integrations/` hooks into
+other addons, `UI/` buttons and options, `Core/` startup, bag scan, dependencies. New files go into the matching
+folder and into the TOC; the tests find them by name (`tests/addon.py`, `SOURCE_DIRS`). Load order is set in
+`KeepOrSell.toc`. All files share the addon table `ns`.
 
-| Datei | Inhalt |
+| File | Content |
 |---|---|
-| `Locales/Locales.lua` | Texte in `ns.L`; Englisch Standard, `deDE` überschreibt |
-| `Rules/Objectives.lua` | Questziele aus dem Questlog lesen (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`) – reine Logik |
-| `Rules/Prices.lua` | Preis-Einstufung `ns.ClassifyPrice` / `ns.ClassifyPrices` (Mindestgewinn, Preisalter), Preise über Auctionator (`ns.GetPrices`) |
-| `Rules/Share.lua` | Auktionspreise in der Gruppe teilen (Addon-Nachrichten): fragt nach den Items der Tasche, wer einen frischeren Preis hat, antwortet (`ns.IsFresher` in `Prices.lua`) |
-| `Rules/Gear.lua` | `ns.IsUnusableGear`: Waffen-/Rüstungsarten, die eine Klasse nie lernen kann – reine Logik |
-| `Rules/Professions.lua` | Merkt sich Zutaten gelernter, nicht grauer Rezepte pro Charakter (`KeepOrSellDB.recipes`) beim Öffnen des Berufsfensters; erkennt Rezepte als ungelernt/bekannt/fremder Beruf (`ns.GetRecipeState`) |
-| `Rules/Questie.lua` | Kommende Quests über QuestieDBs öffentliche API (`LibQuestieDB`, Contract 2): `ns.GetQuestieQuest`, reine Auswahl `ns.PickQuestieQuest` (±5 Stufen, Rasse/Klasse, nicht erledigt); für Items der Klasse Quest `ns.GetQuestItemQuest` (jede Stufe, sonst erledigte Quest) für die Tooltip-Zeile. Eigener Item→Quest-Index aus allen Quests, nach dem Login häppchenweise gebaut (`ns.BuildQuestieIndex`) – `Item.relatedQuests` ist auf Forever leer |
-| `Rules/Classify.lua` | Eine Entscheidung pro Item (`ns.Decide` rein, `ns.Classify` mit API) – genutzt von Baganator, Scrap und Tooltip |
-| `Integrations/Scrap.lua` | Hängt sich in `Scrap:IsJunk`; Scraps eigene Liste und „kein Schrott“-Markierungen haben Vorrang |
-| `Integrations/Baganator.lua` | Eck-Widget und Item-Set-Quelle über `Baganator.API.*` |
-| `Integrations/Tooltip.lua` | Tooltip-Zeile über `TooltipDataProcessor` (Fallback `OnTooltipSetItem`) |
-| `UI/Hints.lua` | Hinweise (`ns.CollectHints` rein): Knopf im Baganator-Taschenfenster über `Baganator.API.RegisterRegion`, ohne Baganator einmal im Chat |
-| `Core/Bags.lua` | Ein Durchlauf über die Taschen (`ns.ScanBags`, einmal pro Frame): Schrott laut `Scrap:IsJunk` (ohne Scrap grau + `ns.ShouldScrap`), Händlerwert, AH-Wert der Gruppe Auktionshaus |
-| `UI/Destroy.lua` | Zerstören-Knopf im Baganator-Taschenfenster: billigster Schrott nach Händlerpreis × Stapel (`ns.PickCheapest` rein, nie gesperrt oder ab Selten), Kandidaten aus `ns.ScanBags` (`ns.FindDestroyTarget`); `ns.DestroyTarget` prüft Slot und Cursor vor `DeleteCursorItem`; bei „Inventar voll“ im Lootfenster leuchtet der Knopf, wenn die Beute mehr wert ist (`ns.LootWorthMore` rein) |
-| `UI/BagValue.lua` | Taschenwert-Zeile im Baganator-Taschenfenster (`ns.SumBagValue`, `ns.FormatBagValue` rein) |
-| `Core/Dependencies.lua` | Status der optionalen Addons (`ns.DependencyStatus` rein, `ns.GetDependencyStatus`), welche Option welches Addon braucht (`ns.OPTION_NEEDS`), Mixin für die Zeilen-Vorlage in `UI/Options.xml` |
-| `UI/Options.lua` | Optionen unter Esc → Optionen → AddOns über die `Settings`-API; Optionen ohne ihr Addon ausgegraut (`AddModifyPredicate`), Abhängigkeitsliste am Ende |
-| `Core/Core.lua` | SavedVariables `KeepOrSellDB`, Events, Slash-Befehl `/kos` (öffnet nur die Optionen) |
+| `Locales/Locales.lua` | Texts in `ns.L`; English by default, `deDE` overrides |
+| `Rules/Objectives.lua` | Reads quest objectives from the quest log (`ns.Refresh`, `ns.GetObjectiveState`, `ns.ParseObjectiveName`), pure logic |
+| `Rules/Prices.lua` | Price classification `ns.ClassifyPrice` / `ns.ClassifyPrices` (minimum profit, price age), prices via Auctionator (`ns.GetPrices`) |
+| `Rules/Share.lua` | Shares auction prices within the group (addon messages): asks for the bag items, whoever has a fresher price answers (`ns.IsFresher` in `Prices.lua`) |
+| `Rules/Gear.lua` | `ns.IsUnusableGear`: weapon/armor types a class can never learn, pure logic |
+| `Rules/Professions.lua` | Remembers reagents of learned, non-grey recipes per character (`KeepOrSellDB.recipes`) when the profession window opens; tells recipes apart as unlearned/known/other profession (`ns.GetRecipeState`) |
+| `Rules/Questie.lua` | Upcoming quests via QuestieDB's public API (`LibQuestieDB`, contract 2): `ns.GetQuestieQuest`, pure selection `ns.PickQuestieQuest` (±5 levels, race/class, not completed); for items of class Quest `ns.GetQuestItemQuest` (any level, otherwise a completed quest) for the tooltip line. Own item→quest index over all quests, built in chunks after login (`ns.BuildQuestieIndex`), because `Item.relatedQuests` is empty on Forever |
+| `Rules/Classify.lua` | One decision per item (`ns.Decide` pure, `ns.Classify` with API), used by Baganator, Scrap and the tooltip |
+| `Integrations/Scrap.lua` | Hooks into `Scrap:IsJunk`; Scrap's own list and "not junk" marks take precedence |
+| `Integrations/Baganator.lua` | Corner widget and item set source via `Baganator.API.*` |
+| `Integrations/Tooltip.lua` | Tooltip line via `TooltipDataProcessor` (fallback `OnTooltipSetItem`) |
+| `UI/Hints.lua` | Hints (`ns.CollectHints` pure): button in Baganator's bag window via `Baganator.API.RegisterRegion`, without Baganator once in chat |
+| `Core/Bags.lua` | One pass over the bags (`ns.ScanBags`, once per frame): junk per `Scrap:IsJunk` (without Scrap grey + `ns.ShouldScrap`), vendor value, AH value of the AuctionHouse group |
+| `UI/Destroy.lua` | Destroy button in Baganator's bag window: cheapest junk by vendor price × stack (`ns.PickCheapest` pure, never locked or rare and above), candidates from `ns.ScanBags` (`ns.FindDestroyTarget`); `ns.DestroyTarget` checks slot and cursor before `DeleteCursorItem`; on "inventory full" in the loot window the button glows if the loot is worth more (`ns.LootWorthMore` pure) |
+| `UI/BagValue.lua` | Bag value line in Baganator's bag window (`ns.SumBagValue`, `ns.FormatBagValue` pure) |
+| `Core/Dependencies.lua` | Status of the optional addons (`ns.DependencyStatus` pure, `ns.GetDependencyStatus`), which option needs which addon (`ns.OPTION_NEEDS`), mixin for the row template in `UI/Options.xml` |
+| `UI/Options.lua` | Options under Esc → Options → AddOns via the `Settings` API; options without their addon are greyed out (`AddModifyPredicate`), dependency list at the bottom |
+| `Core/Core.lua` | SavedVariables `KeepOrSellDB`, events, slash command `/kos` (only opens the options) |
 
-Baganator-Eigenheiten: Items mit Item-Set landen fest in der Equipment-Sets-Kategorie, vor jeder Suche und
-unabhängig von Prioritäten – eigene Suchkategorien auf Set-Namen greifen deshalb nie. Ein API für Quest-Addons
-gibt es nicht. Das Scrap-Schrott-Plugin bringt Baganator selbst mit (`Baganator/API/Junk.lua`).
+Baganator quirks: items with an item set always land in the Equipment Sets category, before any search and
+regardless of priorities, so custom search categories on set names never match. There is no API for quest
+addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
 
-## Regeln
+## Rules
 
-- **Nur öffentliche APIs** der Fremd-Addons nutzen, keine Interna. Vorhandensein immer prüfen
+- **English only in the repo**: the code is open source. Code comments (Lua and tests), commit messages,
+  `AGENTS.md`, `CHANGELOG.md`, workflow files and all other docs are written in English. The only exceptions are
+  player-facing translations: German strings in `Locales.lua`, `## Notes-deDE` in the TOC and the German section
+  of `README.md`.
+- **Public APIs only** of the other addons, no internals. Always check they exist
   (`if not (Baganator and Baganator.API ...) then return end`).
-- **Mehrere Clients**: Die TOC listet Retail und Classic-Varianten; gespielt und getestet wird nur auf
-  WoW: Forever (Interface 16001, Blizzard-UI-Quelle: Gethe/wow-ui-source, Branch `forever`). Forever nutzt die
-  moderne Oberfläche (`Settings`, `C_TradeSkillUI`/`Blizzard_Professions`, `TooltipDataProcessor`).
-  `C_SettingsUtil.OpenSettingsPanel` (hinter `Settings.OpenToCategory`) ist dort für Addons gesperrt. API-Unterschiede abfangen
-  (z. B. `C_QuestLog.GetInfo` vs. Classic-Questlog, `C_Item.GetItemInfo` vs. `GetItemInfo`).
-- **Im Zweifel behalten**: Ohne bekannten, aktuellen Auktionspreis oder Item-Namen wird nichts als Schrott
-  markiert. Als Junk gelten nur Handwerkswaren (`classID 7`), graue/weiße Ausrüstung (ohne Hemd, Wappenrock,
-  Angelrute) und Ausrüstung, die die Klasse **nie** tragen kann (auch nicht nach späterem Training), sowie Items mit
-  unerfüllter Klassen-/Rassen-Anforderung (Tooltip-Zeile `UsageRequirement`/`RaceClass`, rot) sowie
-  Rezepte, die schon bekannt sind oder zu einem Beruf gehören, den der Charakter nicht hat (Option `recipeJunk`), sowie
-  Questgegenstände (`classID 12`), deren Quests laut QuestieDB alle erledigt oder für den Charakter nicht machbar sind
-  (Option `questie`) – nie grüne oder bessere tragbare Ausrüstung, Verbrauchsgüter, andere Questitems. Tragbare Ausrüstung darf ins Auktionshaus
-  (handelbar und lohnend). Einzige Ausnahme vom „Im Zweifel“: graue/weiße Ausrüstung ohne Auktionspreis gilt als
-  nicht lohnend, sobald der Spieler mit Auctionator im AH war (`KeepOrSellDB.ahVisited`).
-- **Neue Texte** immer in `Locales.lua`, englisch und deutsch.
-- Reine Logik (ohne WoW-Frames) in eigenen Funktionen halten, damit sie testbar bleibt.
-- Code-Kommentare (Lua und Tests) **auf Englisch**. Commit-Messages auf Deutsch, Conventional Commits (`feat:`, `fix:`, `chore:` …).
-- `README.md` ist englisch mit deutschem Abschnitt; `CHANGELOG.md` englisch.
-- Die README ist zugleich die **CurseForge-Projektbeschreibung** (Markdown). CurseForge kann sie nicht per API
-  übernehmen – nach README-Änderungen den Maintainer erinnern, sie dort von Hand einzufügen.
+- **Several clients**: the TOC lists Retail and Classic flavors; played and tested only on
+  WoW: Forever (Interface 16001, Blizzard UI source: Gethe/wow-ui-source, branch `forever`). Forever uses the
+  modern UI (`Settings`, `C_TradeSkillUI`/`Blizzard_Professions`, `TooltipDataProcessor`).
+  `C_SettingsUtil.OpenSettingsPanel` (behind `Settings.OpenToCategory`) is blocked for addons there. Handle API
+  differences (e.g. `C_QuestLog.GetInfo` vs. the Classic quest log, `C_Item.GetItemInfo` vs. `GetItemInfo`).
+- **When in doubt, keep**: without a known, recent auction price or item name nothing is marked as junk.
+  Junk is only trade goods (`classID 7`), grey/white gear (except shirts, tabards, fishing poles), gear the class
+  can **never** wear (not even after later training), items with an unmet class/race requirement (tooltip line
+  `UsageRequirement`/`RaceClass`, red), recipes that are already known or belong to a profession the character
+  doesn't have (option `recipeJunk`), and quest items (`classID 12`) whose quests are all completed or not doable
+  for the character according to QuestieDB (option `questie`). Never green or better wearable gear, consumables or
+  other quest items. Wearable gear may go to the auction house (tradeable and worth it). The only exception to
+  "when in doubt": grey/white gear without an auction price counts as not worth it once the player has visited
+  the AH with Auctionator (`KeepOrSellDB.ahVisited`).
+- **New texts** always go into `Locales.lua`, in English and German.
+- Keep pure logic (without WoW frames) in its own functions so it stays testable.
+- Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:` …).
+- `README.md` is English with a German section; `CHANGELOG.md` is English.
+- The README is also the **CurseForge project description** (Markdown). CurseForge can't take it over via API;
+  after README changes, remind the maintainer to paste it there by hand.
 
 ## Tests
 
-Unit-Tests in Python mit [lupa](https://pypi.org/project/lupa/) (Lua 5.1), WoW-APIs werden gestubbt:
+Unit tests in Python with [lupa](https://pypi.org/project/lupa/) (Lua 5.1), WoW APIs are stubbed:
 
 ```bash
 pip install lupa
 python -m unittest discover -s tests -v
 ```
 
-Neue Logik bekommt einen Test; Ingame-Verhalten (Frames, Events, Baganator-Anzeige) lässt sich
-nur im Client prüfen – das ehrlich so benennen.
+New logic gets a test. In-game behavior (frames, events, Baganator display) can only be checked in the client;
+say so honestly.
 
-**Abgleich mit der Forever-API:** `tests/data/forever_api.json` enthält Blizzards generierte API-Doku
-(Funktionen, Events, Enums) aus Gethe/wow-ui-source, Branch `forever`. `tests/test_api.py` prüft den
-Addon-Code dagegen (`C_*`-Aufrufe, `Enum`-Werte, Events, Globals aus `.luacheckrc`), und jeder Test-Stub
-für `C_*`/`Enum` wird beim Laden gegen sie geprüft (`tests/wowapi.py`). Fehlt etwas in der Doku, das es
-trotzdem gibt oder das nur abgesichert genutzt wird: mit Begründung in `UNDOCUMENTED_FUNCTIONS`
-(`wowapi.py`) bzw. `NOT_IN_DOCS` (`test_api.py`) eintragen. Nach einem Client-Patch neu erzeugen:
-`python tests/update_api.py`.
+**Checking against the Forever API:** `tests/data/forever_api.json` holds Blizzard's generated API docs
+(functions, events, enums) from Gethe/wow-ui-source, branch `forever`. `tests/test_api.py` checks the addon
+code against it (`C_*` calls, `Enum` values, events, globals from `.luacheckrc`), and every test stub for
+`C_*`/`Enum` is checked against it on load (`tests/wowapi.py`). If something is missing from the docs but exists
+anyway or is only used behind a guard, add it with a reason to `UNDOCUMENTED_FUNCTIONS` (`wowapi.py`) or
+`NOT_IN_DOCS` (`test_api.py`). Regenerate after a client patch: `python tests/update_api.py`.
 
-**luacheck:** `.luacheckrc` listet jedes Global, das das Addon nutzt – ein neues Global dort eintragen.
-Lokal ohne Lua-Installation über Docker:
+**luacheck:** `.luacheckrc` lists every global the addon uses; add new globals there.
+Locally without a Lua install via Docker:
 `docker run --rm -v "$PWD:/data" -w /data ghcr.io/lunarmodules/luacheck .`
 
-Beides läuft in `.github/workflows/test.yml` bei Push und Pull Request; der Release-Workflow
-startet erst nach grünen Tests.
+Both run in `.github/workflows/test.yml` on push and pull request; the release workflow only starts after green
+tests.
 
 ## Release
 
-Veröffentlicht wird automatisch über `.github/workflows/release.yml` (BigWigsMods/packager) zu
-CurseForge (Projekt-ID in der TOC) und GitHub Releases.
+Publishing is automatic via `.github/workflows/release.yml` (BigWigsMods/packager) to CurseForge (project ID in
+the TOC) and GitHub Releases.
 
-1. `CHANGELOG.md` um die neue Version ergänzen, committen.
-2. Annotiertes Tag `vX.Y.Z` setzen und pushen – das startet den Upload.
+1. Add the new version to `CHANGELOG.md` and commit.
+2. Create an annotated tag `vX.Y.Z` and push it; that starts the upload.
 
-`## Version: @project-version@` nicht von Hand ersetzen, der Packager setzt sie aus dem Tag.
-Neue Dateien oder Ordner, die nicht ins Addon-ZIP gehören, in `.pkgmeta` unter `ignore` eintragen.
-Tags und Pushes nur nach Freigabe durch den Maintainer.
+Don't replace `## Version: @project-version@` by hand, the packager sets it from the tag.
+New files or folders that don't belong in the addon ZIP go into `.pkgmeta` under `ignore`.
+Tags and pushes only after the maintainer approves.
