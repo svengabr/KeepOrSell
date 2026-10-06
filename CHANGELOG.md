@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.13.0
 
-- Tooltip: gear you can wear still stays where it is, but the tooltip now tells you what it would bring once you no longer need it: disenchanting (enchanters), the auction house (tradeable items) or the vendor, best first.
-- Profession: reagents of recipes you haven't learned yet (and that would still give skill points) now always stay in the Profession group, even when they are worth auctioning, e.g. Strange Dust for an enchanter. You'd only buy them back later.
 - Disenchant: enchanters get a new Disenchant group. Green, blue and purple weapons and armor that would be sold or auctioned go there when their materials are worth more, using the Classic disenchant tables and Auctionator prices for the materials. Soulbound items are disenchanted unless the vendor pays more, and items whose materials still give skill points always are. The tooltip shows the average value and the chance of each material. Option "Suggest disenchanting" (on by default).
+- Profession: reagents of recipes you haven't learned yet (and that would still give skill points) now always stay in the Profession group, even when they are worth auctioning, e.g. Strange Dust for an enchanter. You'd only buy them back later.
+- Tooltip: gear you can wear still stays where it is, but the tooltip now tells you what it would bring once you no longer need it: disenchanting (enchanters), the auction house (tradeable items) or the vendor, best first.
 
 ## 0.12.3
 
