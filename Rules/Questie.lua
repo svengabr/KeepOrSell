@@ -14,8 +14,22 @@ local function Allowed(mask, index)
   return not mask or mask == 0 or not index or HasBit(mask, index)
 end
 
+-- Race IDs up to 11 sit at bit raceID - 1 of QuestieDB's race mask; newer races (e.g. 95, High Order Skyborn)
+-- get a high bit there that can't be derived from the ID, so the classic races of the player's faction decide
+local LAST_CLASSIC_RACE = 11
+local FACTION_RACES = {Alliance = {1, 3, 4, 7, 11}, Horde = {2, 5, 6, 8, 10}}
+
+local function RaceAllowed(mask, player)
+  if Allowed(mask, player.race) then return true end
+  if not player.race or player.race <= LAST_CLASSIC_RACE then return false end
+  for _, race in ipairs(FACTION_RACES[player.faction] or {}) do
+    if HasBit(mask, race) then return true end
+  end
+  return false
+end
+
 -- quests: {id, name, level, requiredLevel, races, classes, exclusiveTo}; level -1 scales with the player
--- player: {level, race, class, completed = function(questID)}
+-- player: {level, race, faction, class, completed = function(questID)}
 -- Returns the open quest within range (default LEVEL_RANGE) of the player's level that is closest in level,
 -- or nil. Pure.
 function ns.PickQuestieQuest(quests, player, range)
@@ -27,7 +41,7 @@ function ns.PickQuestieQuest(quests, player, range)
     if not level or level <= 0 then level = q.requiredLevel end
     local distance = level and math.abs(level - player.level)
     local open = distance and distance <= range
-      and Allowed(q.races, player.race) and Allowed(q.classes, player.class)
+      and RaceAllowed(q.races, player) and Allowed(q.classes, player.class)
       and not player.completed(q.id)
     for _, other in ipairs(q.exclusiveTo or {}) do
       if open and player.completed(other) then open = false end
@@ -130,6 +144,7 @@ local function Lookup(lib, itemID, pick)
   local player = {
     level = UnitLevel("player"),
     race = select(3, UnitRace("player")),
+    faction = UnitFactionGroup("player"),
     class = select(3, UnitClass("player")),
     completed = function(id) return C_QuestLog.IsQuestFlaggedCompleted(id) end,
   }

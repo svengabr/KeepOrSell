@@ -12,6 +12,7 @@ FILES = CORE_FILES
 STUBS = """
 function UnitLevel() return PLAYER_LEVEL or 20 end
 function UnitRace() return "Night Elf", "NightElf", 4 end
+function UnitFactionGroup() return "Alliance", "Alliance" end
 function UnitClass() return "Druid", "DRUID", 11 end
 COMPLETED = {}
 C_QuestLog = {
@@ -94,6 +95,16 @@ class PickTests(unittest.TestCase):
         self.assertIsNone(self.pick(quest(self.rt, races=orc)))
         self.assertIsNotNone(self.pick(quest(self.rt, classes=druid)))
         self.assertIsNone(self.pick(quest(self.rt, classes=mage)))
+
+    def test_newer_race_falls_back_to_faction(self):
+        # race 95 (High Order Skyborn) has no bit at 95 - 1; QuestieDB marks it with a high bit (2^32 Alliance,
+        # 2^33 Horde), so the faction's classic races decide
+        self.player = self.rt.eval("{level = 20, race = 95, faction = 'Alliance', class = 8, "
+                                   "completed = function() return false end}")
+        alliance, horde = 2 ** 32 + 77, 2 ** 33 + 178
+        self.assertIsNotNone(self.pick(quest(self.rt, races=alliance)))
+        self.assertIsNone(self.pick(quest(self.rt, races=horde)))
+        self.assertIsNotNone(self.pick(quest(self.rt, races=0)))
 
     def test_completed_quest_ignored(self):
         self.assertIsNone(self.pick(quest(self.rt, id=99)))
