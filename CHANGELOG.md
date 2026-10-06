@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.2
+
+- Profession: reagents that first have to be crafted into another reagent now count too, e.g. Strange Dust that an enchanter turns into Magic Particles for a recipe that still gives skill points. They go to the Profession group instead of the auction house. Open the profession window once after updating.
+
 ## 0.12.1
 
 - Profession: reagents of recipes you haven't learned yet (e.g. Greater Magic Essence for a young enchanter) are no longer junk. KeepOrSell now also remembers the unlearned, non-grey recipes when you open the profession window; such reagents may still go to the auction house if worth it.
