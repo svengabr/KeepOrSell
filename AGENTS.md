@@ -110,6 +110,9 @@ the TOC) and GitHub Releases.
 1. Add the new version to `CHANGELOG.md` and commit.
 2. Create an annotated tag `vX.Y.Z` and push it; that starts the upload.
 
-Don't replace `## Version: @project-version@` by hand, the packager sets it from the tag.
+Don't replace `## Version: @project-version@` by hand, the packager sets it from the tag. It sits in a `#@non-debug@`
+block so a source checkout shows `dev` instead of the raw placeholder; the packager drops the `#@debug@` line and
+uncomments the real one. The addon list icon is `Icon.tga` (64×64, scaled down from `media/logo.png`, whose source
+is `media/logo.svg`).
 New files or folders that don't belong in the addon ZIP go into `.pkgmeta` under `ignore`.
 Tags and pushes only after the maintainer approves.

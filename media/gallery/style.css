@@ -1,0 +1,185 @@
+/* Shared look for the CurseForge gallery images (1920×1080). */
+@font-face {
+  /* Blizzard's font, extracted locally (fonts/ is git-ignored, see README.md) */
+  font-family: "Friz";
+  src: url("fonts/FRIZQT__.TTF");
+}
+
+:root {
+  --bg-1: #262a33;
+  --bg-2: #14161b;
+  --frame: #8a7449;
+  --gold: #ffd200;
+  --text: #e9e6df;
+  --muted: #a39f95;
+  --tip-green: #1eff00;
+  --group-quest: #ffd200;
+  --group-profession: #4fc3f7;
+  --group-ah: #f0a73c;
+  --group-disenchant: #b57cff;
+  --group-junk: #9d9d9d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { width: 1920px; height: 1080px; overflow: hidden; }
+
+body {
+  font-family: "Inter", "Segoe UI", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 70% 80% at 72% 50%, rgba(240, 167, 60, 0.10), transparent 70%),
+    radial-gradient(ellipse at 30% 20%, var(--bg-1), var(--bg-2) 75%);
+}
+
+/* Gold inner frame like the logo */
+.frame {
+  position: absolute; inset: 28px;
+  border: 2px solid var(--frame);
+  border-radius: 28px;
+  box-shadow: inset 0 0 0 6px rgba(0, 0, 0, 0.25), inset 0 0 120px rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+
+.brand {
+  position: absolute; top: 72px; left: 96px;
+  display: flex; align-items: center; gap: 18px;
+  font-family: "Friz", serif; font-size: 34px; color: var(--gold);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+}
+.brand img { width: 64px; height: 64px; }
+
+/* Left text column */
+.copy {
+  position: absolute; left: 96px; top: 0; bottom: 0; width: 680px;
+  display: flex; flex-direction: column; justify-content: center; gap: 28px;
+}
+.chip {
+  align-self: flex-start;
+  font-family: "Friz", serif; font-size: 24px; letter-spacing: 0.04em;
+  padding: 8px 20px; border-radius: 999px;
+  border: 2px solid currentColor; background: rgba(0, 0, 0, 0.35);
+}
+.copy h1 {
+  font-family: "Friz", serif; font-weight: normal;
+  font-size: 68px; line-height: 1.12; color: #fff;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+}
+.copy p { font-size: 30px; line-height: 1.5; color: var(--text); }
+.copy .note { font-size: 22px; color: var(--muted); }
+
+/* Right stage */
+.stage {
+  position: absolute; left: 800px; right: 72px; top: 0; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* WoW-style item slot */
+.slot {
+  position: relative; width: 112px; height: 112px; flex: none;
+  border-radius: 10px; overflow: hidden;
+  box-shadow: 0 0 0 3px #3a3a3a, 0 0 0 5px #111, 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.slot img { width: 100%; height: 100%; display: block; }
+.slot .count {
+  position: absolute; right: 8px; bottom: 2px;
+  font-family: "Friz", serif; font-size: 34px; color: #fff;
+  text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
+}
+
+/* WoW-style tooltip, roughly 2.5× game size */
+.tooltip {
+  font-family: "Friz", serif; font-size: 36px; line-height: 1.32; color: #fff;
+  padding: 22px 30px 26px;
+  background: linear-gradient(180deg, rgba(14, 16, 36, 0.96), rgba(6, 7, 18, 0.96));
+  border: 3px solid #9c9ca4;
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 2px #2b2b33, 0 0 0 2px #111, 0 24px 60px rgba(0, 0, 0, 0.7);
+  text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.85);
+}
+.tooltip .name { font-size: 42px; }
+.m { white-space: nowrap; }
+.tooltip .green { color: var(--tip-green); }
+.tooltip .kos { color: var(--gold); }
+.tooltip .q-common { color: #fff; }
+.tooltip .q-uncommon { color: #1eff00; }
+.tooltip .q-rare { color: #0070dd; }
+.tooltip .q-epic { color: #a335ee; }
+.tooltip .q-poor { color: #9d9d9d; }
+.tooltip .gap { height: 14px; }
+
+/* Coins */
+.c { display: inline-block; width: 0.62em; height: 0.62em; border-radius: 50%;
+  margin: 0 0.12em 0 0.06em; vertical-align: 0.02em;
+  box-shadow: inset -2px -3px 0 rgba(0, 0, 0, 0.35), 0 1px 0 rgba(0, 0, 0, 0.8); }
+.c.g { background: radial-gradient(circle at 35% 30%, #fff3b0, #f2c230 45%, #9a6d0b); }
+.c.s { background: radial-gradient(circle at 35% 30%, #ffffff, #c9cdd3 45%, #6c7178); }
+.c.cu { background: radial-gradient(circle at 35% 30%, #ffd0a8, #d4783a 45%, #7a3a12); }
+
+/* Mouse pointer (gauntlet stand-in) */
+.cursor { position: absolute; width: 46px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.7)); }
+
+/* Tooltip extras */
+.tooltip .row { display: flex; justify-content: space-between; gap: 40px; }
+.tooltip .red { color: #ff2020; }
+.tooltip .grey { color: #aaaaaa; }
+.tooltip .blue { color: #66bbff; }
+.tooltip .detail { color: #aaaaaa; padding-left: 1.1em; }
+.tooltip.small { font-size: 30px; }
+.tooltip.small .name { font-size: 34px; }
+.stack { display: flex; flex-direction: column; gap: 36px; }
+.pair { display: flex; align-items: flex-start; gap: 30px; }
+.pair .slot { margin-top: 8px; width: 96px; height: 96px; }
+
+/* Quality borders on slots, like Baganator */
+.slot.q2 { box-shadow: 0 0 0 3px #1eff00, 0 0 0 5px #111, 0 10px 30px rgba(0, 0, 0, 0.6); }
+.slot.q3 { box-shadow: 0 0 0 3px #0070dd, 0 0 0 5px #111, 0 10px 30px rgba(0, 0, 0, 0.6); }
+.slot.q4 { box-shadow: 0 0 0 3px #a335ee, 0 0 0 5px #111, 0 10px 30px rgba(0, 0, 0, 0.6); }
+.slot.q0 { box-shadow: 0 0 0 3px #6b6b6b, 0 0 0 5px #111, 0 10px 30px rgba(0, 0, 0, 0.6); }
+
+/* Bag window in the style of Baganator's category view */
+.bag {
+  width: 720px; padding: 26px 30px 30px;
+  background: linear-gradient(180deg, rgba(28, 28, 32, 0.97), rgba(14, 14, 18, 0.97));
+  border: 3px solid #5d5a52; border-radius: 12px;
+  box-shadow: inset 0 0 0 2px #1a1a1a, 0 24px 60px rgba(0, 0, 0, 0.7);
+  font-family: "Friz", serif;
+}
+.bag .title { font-size: 30px; color: var(--gold); margin-bottom: 14px; text-shadow: 2px 2px 0 #000; }
+.bag .group { margin-top: 14px; }
+.bag .group h3 { font-weight: normal; font-size: 26px; margin-bottom: 10px; text-shadow: 2px 2px 0 #000; }
+.bag .row { display: flex; flex-wrap: wrap; gap: 12px; }
+.bag .slot { width: 76px; height: 76px; border-radius: 8px; }
+.bag .slot .count { font-size: 26px; right: 5px; bottom: 0; }
+.bag .footer {
+  display: flex; align-items: center; gap: 18px; margin-top: 22px; padding-top: 16px;
+  border-top: 1px solid #3a3833; font-size: 28px; color: #fff; text-shadow: 2px 2px 0 #000;
+}
+.bag .footer .slot { width: 60px; height: 60px; }
+.destroy::after {
+  content: "×"; position: absolute; right: 2px; top: -6px;
+  font: bold 34px/1 "Inter", sans-serif; color: #ff3030; text-shadow: 0 0 4px #000, 0 0 2px #000;
+}
+
+/* Settings panel */
+.settings {
+  width: 860px; padding: 30px 44px 10px;
+  background: linear-gradient(180deg, rgba(22, 22, 26, 0.97), rgba(12, 12, 15, 0.97));
+  border: 3px solid #5d5a52; border-radius: 12px;
+  box-shadow: inset 0 0 0 2px #1a1a1a, 0 24px 60px rgba(0, 0, 0, 0.7);
+  font-family: "Friz", serif; color: #fff; text-shadow: 2px 2px 0 #000;
+  -webkit-mask-image: linear-gradient(180deg, #000 82%, transparent);
+}
+.settings h2 { font-weight: normal; font-size: 38px; padding-bottom: 14px; border-bottom: 2px solid #6b5a35; }
+.settings h3 { font-weight: normal; font-size: 30px; margin: 24px 0 8px; }
+.settings .opt { display: flex; align-items: center; height: 56px; padding-left: 40px; font-size: 26px; color: var(--gold); }
+.settings .opt > span:first-child { width: 380px; }
+.settings .box {
+  width: 38px; height: 38px; border-radius: 6px; background: #111; border: 2px solid #6b5a35;
+  display: grid; place-items: center; color: #ffd200; font: bold 30px/1 "Inter", sans-serif;
+}
+.settings .slider { display: flex; align-items: center; gap: 16px; color: #fff; }
+.settings .track { width: 250px; height: 10px; border-radius: 5px; background: #333; position: relative; }
+.settings .track i { position: absolute; top: -8px; width: 22px; height: 26px; border-radius: 4px; background: #c9a64b; }
+.settings .dep { color: #fff; }
+.settings .dep b { font-weight: normal; color: #1eff00; }

@@ -1,63 +1,77 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
     <radialGradient id="bg" cx="50%" cy="40%" r="70%">
-      <stop offset="0" stop-color="#2b2f3a"/>
-      <stop offset="1" stop-color="#12141a"/>
+      <stop offset="0" stop-color="#2b2f3a"/><stop offset="1" stop-color="#12141a"/>
     </radialGradient>
-    <linearGradient id="bag" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#b9824a"/>
-      <stop offset="1" stop-color="#7a4f26"/>
-    </linearGradient>
+    <radialGradient id="teal" cx="50%" cy="45%" r="55%">
+      <stop offset="0" stop-color="#1a7fa3"/><stop offset=".75" stop-color="#106a8a"/><stop offset="1" stop-color="#083e54"/>
+    </radialGradient>
     <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffe08a"/>
-      <stop offset="1" stop-color="#d79a1e"/>
+      <stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#e0a21c"/>
     </linearGradient>
-    <linearGradient id="green" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6fdc7a"/>
-      <stop offset="1" stop-color="#2e9a45"/>
+    <radialGradient id="glow" r="50%">
+      <stop offset="0" stop-color="#ffd76a" stop-opacity=".55"/><stop offset="1" stop-color="#ffd76a" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e2b56a"/><stop offset=".5" stop-color="#8a5a2b"/><stop offset="1" stop-color="#d9a35a"/>
     </linearGradient>
-    <linearGradient id="grey" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#b8bcc6"/>
-      <stop offset="1" stop-color="#6b707c"/>
+    <linearGradient id="wood" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#d8b07a"/><stop offset="1" stop-color="#9a6a3a"/>
     </linearGradient>
+    <linearGradient id="woodside" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a87a48"/><stop offset="1" stop-color="#6e4824"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fbf3dc"/><stop offset="1" stop-color="#e6d6ae"/>
+    </linearGradient>
+    <clipPath id="disc"><circle cx="256" cy="262" r="172"/></clipPath>
   </defs>
 
   <rect width="512" height="512" rx="72" fill="url(#bg)"/>
   <rect x="10" y="10" width="492" height="492" rx="64" fill="none" stroke="#c9a45c" stroke-opacity=".55" stroke-width="4"/>
-
-  <!-- bag -->
-  <g transform="translate(256 290)">
-    <ellipse cx="0" cy="118" rx="120" ry="16" fill="#000" opacity=".35"/>
-    <path d="M-52 -112 C-30 -98 30 -98 52 -112 L40 -78 C70 -60 128 0 128 56 C128 104 80 124 0 124 C-80 124 -128 104 -128 56 C-128 0 -70 -60 -40 -78 Z"
-          fill="url(#bag)" stroke="#3d2610" stroke-width="6" stroke-linejoin="round"/>
-    <path d="M-44 -80 C-16 -70 16 -70 44 -80" fill="none" stroke="#3d2610" stroke-width="10" stroke-linecap="round"/>
-    <path d="M-44 -80 C-16 -70 16 -70 44 -80" fill="none" stroke="#e0b070" stroke-width="4" stroke-linecap="round"/>
-    <path d="M-60 -116 C-70 -150 -20 -150 -8 -126" fill="none" stroke="#3d2610" stroke-width="8" stroke-linecap="round"/>
-    <path d="M60 -116 C70 -150 20 -150 8 -126" fill="none" stroke="#3d2610" stroke-width="8" stroke-linecap="round"/>
-    <path d="M-90 20 C-70 -20 -40 -40 -20 -50" fill="none" stroke="#e0b070" stroke-opacity=".45" stroke-width="10" stroke-linecap="round"/>
+  <ellipse cx="256" cy="452" rx="150" ry="14" fill="#000" opacity=".35"/>
+  <polygon points="256.0,62.0 364.9,153.1 456.0,262.0 364.9,370.9 256.0,462.0 147.1,370.9 56.0,262.0 147.1,153.1" fill="#c8b48c" stroke="#2a1708" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="256" cy="262" r="170" fill="#c8b48c" stroke="#2a1708" stroke-width="4"/>
+  <circle cx="256" cy="262" r="154" fill="#96805a"/>
+  <circle cx="256" cy="262" r="146" fill="url(#teal)"/>
+  <circle cx="250" cy="255" r="117" fill="url(#glow)"/>
+  <g transform="translate(256 262) scale(0.66) translate(-269 -268)">
+  <g>
+    <rect x="118" y="278" width="118" height="108" rx="6" fill="url(#wood)" stroke="#2a1708" stroke-width="5"/>
+    <rect x="128" y="288" width="98" height="88" rx="3" fill="none" stroke="#5a3a18" stroke-width="5"/>
+    <path d="M132 372 L222 292" stroke="#5a3a18" stroke-width="9" stroke-linecap="round"/>
+    <path d="M130 314.0 L224 314.0" stroke="#8a5c2e" stroke-width="3" opacity=".7"/>
+    <path d="M130 350.0 L224 350.0" stroke="#8a5c2e" stroke-width="3" opacity=".7"/>
+    <path d="M126 284 L228 284" stroke="#f3d9a8" stroke-width="4" stroke-linecap="round" opacity=".7"/>
   </g>
-
-  <!-- keep: green check badge -->
-  <g transform="translate(118 150)">
-    <circle r="62" fill="url(#green)" stroke="#123d1c" stroke-width="7"/>
-    <path d="M-28 2 L-8 24 L30 -22" fill="none" stroke="#fff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <g>
+    <rect x="222" y="300" width="104" height="92" rx="6" fill="url(#wood)" stroke="#2a1708" stroke-width="5"/>
+    <rect x="232" y="310" width="84" height="72" rx="3" fill="none" stroke="#5a3a18" stroke-width="5"/>
+    <path d="M236 378 L312 314" stroke="#5a3a18" stroke-width="9" stroke-linecap="round"/>
+    <path d="M234 330.7 L314 330.7" stroke="#8a5c2e" stroke-width="3" opacity=".7"/>
+    <path d="M234 361.3 L314 361.3" stroke="#8a5c2e" stroke-width="3" opacity=".7"/>
+    <path d="M230 306 L318 306" stroke="#f3d9a8" stroke-width="4" stroke-linecap="round" opacity=".7"/>
   </g>
-
-  <!-- auction house: gold coin -->
-  <g transform="translate(256 104)">
-    <circle r="66" fill="url(#gold)" stroke="#6b4300" stroke-width="7"/>
-    <circle r="46" fill="none" stroke="#a86d06" stroke-width="5"/>
-    <path d="M0 -30 L9 -9 L31 -9 L13 5 L20 27 L0 14 L-20 27 L-13 5 L-31 -9 L-9 -9 Z" fill="#fff6d0" stroke="#a86d06" stroke-width="3" stroke-linejoin="round"/>
+  <g>
+    <rect x="160" y="186" width="104" height="96" rx="6" fill="url(#wood)" stroke="#2a1708" stroke-width="5"/>
+    <rect x="170" y="196" width="84" height="76" rx="3" fill="none" stroke="#5a3a18" stroke-width="5"/>
+    <path d="M174 268 L250 200" stroke="#5a3a18" stroke-width="9" stroke-linecap="round"/>
+    <path d="M172 218.0 L252 218.0" stroke="#8a5c2e" stroke-width="3" opacity=".7"/>
+    <path d="M172 250.0 L252 250.0" stroke="#8a5c2e" stroke-width="3" opacity=".7"/>
+    <path d="M168 192 L256 192" stroke="#f3d9a8" stroke-width="4" stroke-linecap="round" opacity=".7"/>
   </g>
-
-  <!-- vendor: grey coins -->
-  <g transform="translate(394 150)">
-    <circle r="62" fill="url(#grey)" stroke="#2b2e35" stroke-width="7"/>
-    <ellipse cx="0" cy="18" rx="30" ry="10" fill="#4d5160"/>
-    <rect x="-30" y="2" width="60" height="16" fill="#4d5160"/>
-    <ellipse cx="0" cy="2" rx="30" ry="10" fill="#e3e6ec" stroke="#4d5160" stroke-width="4"/>
-    <ellipse cx="0" cy="-12" rx="30" ry="10" fill="#4d5160"/>
-    <rect x="-30" y="-28" width="60" height="16" fill="#4d5160"/>
-    <ellipse cx="0" cy="-28" rx="30" ry="10" fill="#e3e6ec" stroke="#4d5160" stroke-width="4"/>
+  <g transform="translate(336 250) rotate(10)">
+    <rect x="-72" y="-96" width="144" height="192" rx="10" fill="url(#paper)" stroke="#2a1708" stroke-width="6"/>
+    <rect x="-34" y="-110" width="68" height="28" rx="8" fill="url(#gold)" stroke="#5a3400" stroke-width="5"/>
+    <rect x="-52" y="-59" width="30" height="30" rx="5" fill="#fff" stroke="#083e54" stroke-width="5"/>
+    <path d="M-48 -46 L-38 -35 L-18 -62" fill="none" stroke="#106a8a" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-8 -44 L52 -44" stroke="#96805a" stroke-width="9" stroke-linecap="round"/>
+    <rect x="-52" y="-7" width="30" height="30" rx="5" fill="#fff" stroke="#083e54" stroke-width="5"/>
+    <path d="M-48 6 L-38 17 L-18 -10" fill="none" stroke="#106a8a" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M-8 8 L52 8" stroke="#96805a" stroke-width="9" stroke-linecap="round"/>
+    <rect x="-52" y="45" width="30" height="30" rx="5" fill="#fff" stroke="#083e54" stroke-width="5"/>
+    <path d="M-8 60 L52 60" stroke="#96805a" stroke-width="9" stroke-linecap="round"/>
+  </g>
   </g>
 </svg>

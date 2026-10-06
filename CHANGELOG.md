@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.1
+
+- New logo and an icon in the addon list.
+- The addon list shows "dev" instead of the raw version placeholder when running from a source checkout.
+
 ## 0.13.0
 
 - Disenchant: enchanters get a new Disenchant group. Green, blue and purple weapons and armor that would be sold or auctioned go there when their materials are worth more, using the Classic disenchant tables and Auctionator prices for the materials. Soulbound items are disenchanted unless the vendor pays more, and items whose materials still give skill points always are. The tooltip shows the average value and the chance of each material. Option "Suggest disenchanting" (on by default).

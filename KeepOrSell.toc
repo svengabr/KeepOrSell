@@ -3,7 +3,13 @@
 ## Notes: Sorts your bags into keep, auction house and junk for Scrap: quest items, profession reagents, items worth more on the AH. Shows your bag value and destroys the cheapest junk on a click. For Baganator, Auctionator, Scrap and Questie.
 ## Notes-deDE: Sortiert die Taschen in Behalten, Auktionshaus und Schrott für Scrap: Questitems, Berufsmaterial, Items mit AH-Wert. Zeigt den Taschenwert und zerstört per Klick den billigsten Schrott. Für Baganator, Auctionator, Scrap und Questie.
 ## Author: Conoar
-## Version: @project-version@
+#@debug@
+## Version: dev
+#@end-debug@
+#@non-debug@
+# ## Version: @project-version@
+#@end-non-debug@
+## IconTexture: Interface\AddOns\KeepOrSell\Icon
 ## SavedVariables: KeepOrSellDB
 ## OptionalDeps: Baganator, Auctionator, Scrap, QuestieDB, TradeSkillMaster
 ## X-License: GPL-3.0-or-later
