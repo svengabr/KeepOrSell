@@ -11,7 +11,8 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
--- upcoming = a recipe of the player's profession not learned yet needs the item, so it is never junk
+-- upcoming = a recipe of the player's profession not learned yet needs the item: Profession group unless
+-- it is worth auctioning, never junk
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
@@ -75,7 +76,9 @@ function ns.Decide(facts, db)
   if not verdict.kind and priceReason == "stale" and not facts.bound then verdict.needsPrice = true end
 
   -- a recipe the player can still learn needs it: may go to the auction house, but is never junk
-  if verdict.kind == "junk" and db.profession and facts.upcoming then verdict.kind, verdict.reason = nil, "upcoming" end
+  if verdict.kind ~= "ah" and db.profession and facts.upcoming then
+    return {kind = "profession", reason = "upcoming", priceReason = priceReason}
+  end
   -- item name not cached yet: it might be a quest objective
   if verdict.kind == "junk" and facts.quest == nil then verdict.kind = nil end
   return verdict

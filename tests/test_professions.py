@@ -83,10 +83,15 @@ class ProfessionTests(unittest.TestCase):
         self.ns.ScanProfession()
         self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}; AH.link3 = 110")
         verdict = self.ns.Classify(3, "link3")
-        self.assertEqual((verdict.kind, verdict.reason), (None, "upcoming"))
+        self.assertEqual((verdict.kind, verdict.reason), ("profession", "upcoming"))
         self.rt.execute("KeepOrSellDB.profession = false")
         self.ns.ClearCache()
         self.assertEqual(self.ns.Classify(3, "link3").kind, "junk")
+
+    def test_upcoming_reagent_without_price(self):
+        self.ns.ScanProfession()
+        self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}")
+        self.assertEqual(self.ns.Classify(3, "link3").kind, "profession")
 
     def test_upcoming_reagent_still_auctioned(self):
         self.ns.ScanProfession()

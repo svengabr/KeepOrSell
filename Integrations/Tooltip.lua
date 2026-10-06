@@ -59,7 +59,7 @@ function ns.TooltipText(verdict, prices, db)
   elseif kind == "quest" then
     text = reason == "done" and L.TIP_QUEST_DONE or reason == "open" and L.TIP_QUEST_OPEN or L.TIP_QUEST_ITEM
   elseif kind == "profession" then
-    text = reason == "recipe" and L.TIP_RECIPE or L.TIP_PROFESSION
+    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING or L.TIP_PROFESSION
   elseif kind == "ah" then
     text = L.TIP_AH .. " – " .. PriceText(prices, verdict, db)
     if reason == "unusable" then text = text .. ", " .. L.TIP_UNUSABLE end
@@ -79,8 +79,6 @@ function ns.TooltipText(verdict, prices, db)
     end
   elseif reason == "tool" then
     text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
-  elseif reason == "upcoming" then
-    text = L.TIP_KEEP .. " – " .. L.TIP_UPCOMING
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NO_PRICE
   elseif verdict.needsPrice and verdict.priceReason == "stale" then

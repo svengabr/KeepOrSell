@@ -112,8 +112,8 @@ class TooltipTests(unittest.TestCase):
         self.assertIn("profession tool", text)
 
     def test_upcoming_reagent(self):
-        text = self.ns.TooltipText(self.rt.eval("{reason = 'upcoming'}"), self.rt.eval("{ah = 120, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
-        self.assertIn("Keep", text)
+        text = self.ns.TooltipText(self.rt.eval("{kind = 'profession', reason = 'upcoming'}"), None, None)
+        self.assertIn("Profession", text)
         self.assertIn("can still learn", text)
 
     def test_switch_off(self):
