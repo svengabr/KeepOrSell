@@ -71,6 +71,12 @@ Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und
 
 **Loslegen:** installieren, einmal das AH mit Auctionator scannen, jedes Berufsfenster einmal öffnen. Fertig. Einstellungen gibt's unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`.
 
+**Unterstützen:** KeepOrSell ist kostenlos und bleibt es auch. Wenn es dir das Spiel ein bisschen leichter macht, kannst du mir [einen Kaffee ausgeben](https://buymeacoffee.com/conoar).
+
+## Support
+
+KeepOrSell is free and always will be. If it made your game a bit nicer, you can [buy me a coffee](https://buymeacoffee.com/conoar).
+
 ## License
 
 GPL-3.0-or-later · Download: https://www.curseforge.com/wow/addons/keeporsell · Source & issues: https://github.com/svengabr/KeepOrSell
