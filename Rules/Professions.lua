@@ -4,31 +4,34 @@ local _, ns = ...
 
 local TRIVIAL = Enum and Enum.TradeskillRelativeDifficulty and Enum.TradeskillRelativeDifficulty.Trivial or 3
 
--- {[recipeID] = {itemID, ...} | false}; false = learned but grey, no skill points anymore.
--- Recipes not learned are left out. Pure, gets the API as argument.
+local function Reagents(api, recipeID)
+  local reagents = {}
+  local schematic = api.GetRecipeSchematic(recipeID, false)
+  for _, slot in ipairs(schematic and schematic.reagentSlotSchematics or {}) do
+    for _, reagent in ipairs(slot.reagents or {}) do
+      if reagent.itemID then table.insert(reagents, reagent.itemID) end
+    end
+  end
+  return reagents
+end
+
+-- Two tables {[recipeID] = {itemID, ...} | false}; false = grey, no skill points anymore.
+-- recipes holds the learned recipes, upcoming the ones not learned yet (a trainer or recipe teaches them
+-- later; their difficulty may be unknown, which counts as not grey). Pure, gets the API as argument.
 function ns.CollectRecipes(api, recipeIDs)
-  local recipes = {}
+  local recipes, upcoming = {}, {}
   for _, recipeID in ipairs(recipeIDs or {}) do
     local info = api.GetRecipeInfo(recipeID)
     if info and info.learned and info.relativeDifficulty ~= nil then
-      if info.relativeDifficulty == TRIVIAL then
-        recipes[recipeID] = false
-      else
-        local reagents = {}
-        local schematic = api.GetRecipeSchematic(recipeID, false)
-        for _, slot in ipairs(schematic and schematic.reagentSlotSchematics or {}) do
-          for _, reagent in ipairs(slot.reagents or {}) do
-            if reagent.itemID then table.insert(reagents, reagent.itemID) end
-          end
-        end
-        recipes[recipeID] = reagents
-      end
+      recipes[recipeID] = info.relativeDifficulty ~= TRIVIAL and Reagents(api, recipeID)
+    elseif info and info.learned == false then
+      upcoming[recipeID] = info.relativeDifficulty ~= TRIVIAL and Reagents(api, recipeID)
     end
   end
-  return recipes
+  return recipes, upcoming
 end
 
-local index -- {[itemID] = true}, rebuilt after a change
+local index, upcomingIndex -- {[itemID] = true}, rebuilt after a change
 
 local function CharacterKey()
   return (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
@@ -59,14 +62,20 @@ function ns.ScanProfession()
   local profession = api.GetBaseProfessionInfo and api.GetBaseProfessionInfo()
   if profession and profession.professionName then CharacterTable("opened")[profession.professionName] = true end
 
-  local stored = CharacterRecipes()
+  local stored, storedUpcoming = CharacterRecipes(), CharacterTable("upcoming")
+  local recipes, upcoming = ns.CollectRecipes(api, getIDs())
   local changed = false
-  for recipeID, reagents in pairs(ns.CollectRecipes(api, getIDs())) do
-    local old = stored[recipeID]
-    if old == nil or (old == false) ~= (reagents == false) then changed = true end
-    stored[recipeID] = reagents
+  local function Store(target, recipeID, reagents)
+    local old = target[recipeID]
+    if (old == nil) ~= (reagents == nil) or (old == false) ~= (reagents == false) then changed = true end
+    target[recipeID] = reagents
   end
-  if changed then index = nil end
+  for recipeID, reagents in pairs(recipes) do
+    Store(stored, recipeID, reagents)
+    Store(storedUpcoming, recipeID, nil) -- learned now
+  end
+  for recipeID, reagents in pairs(upcoming) do Store(storedUpcoming, recipeID, reagents) end
+  if changed then index, upcomingIndex = nil, nil end
   return changed
 end
 
@@ -80,6 +89,18 @@ function ns.IsSkillUpReagent(itemID)
     end
   end
   return index[itemID] == true
+end
+
+-- true if a recipe of this character's professions not learned yet uses the item (and isn't grey)
+function ns.IsUpcomingReagent(itemID)
+  if not itemID then return false end
+  if not upcomingIndex then
+    upcomingIndex = {}
+    for _, reagents in pairs(CharacterTable("upcoming")) do
+      for _, id in ipairs(reagents or {}) do upcomingIndex[id] = true end
+    end
+  end
+  return upcomingIndex[itemID] == true
 end
 
 local NO_RECIPES = {[356] = true, [794] = true} -- fishing, archaeology

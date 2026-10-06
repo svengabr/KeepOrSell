@@ -4,13 +4,14 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, recipe,
--- prices, priceData}
+-- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, upcoming,
+-- recipe, prices, priceData}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
+-- upcoming = a recipe of the player's profession not learned yet needs the item, so it is never junk
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
@@ -73,6 +74,8 @@ function ns.Decide(facts, db)
   -- an outdated price may hide an auction house item; say so instead of staying silent
   if not verdict.kind and priceReason == "stale" and not facts.bound then verdict.needsPrice = true end
 
+  -- a recipe the player can still learn needs it: may go to the auction house, but is never junk
+  if verdict.kind == "junk" and db.profession and facts.upcoming then verdict.kind, verdict.reason = nil, "upcoming" end
   -- item name not cached yet: it might be a quest objective
   if verdict.kind == "junk" and facts.quest == nil then verdict.kind = nil end
   return verdict
@@ -135,6 +138,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
     reagent = ns.IsSkillUpReagent(itemID),
+    upcoming = ns.IsUpcomingReagent(itemID),
     recipe = ns.GetRecipeState(itemID, classID, subclassID),
     prices = ns.GetPrices(itemLink),
     priceData = ns.HasPriceData(),

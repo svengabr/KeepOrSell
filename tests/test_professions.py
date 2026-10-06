@@ -37,6 +37,42 @@ class ProfessionTests(unittest.TestCase):
         self.assertFalse(self.ns.IsSkillUpReagent(20))  # only grey recipes left
         self.assertFalse(self.ns.IsSkillUpReagent(3))  # recipe not learned
 
+    def test_upcoming_reagents(self):
+        self.ns.ScanProfession()
+        self.assertTrue(self.ns.IsUpcomingReagent(3))  # recipe 12 not learned yet
+        self.assertFalse(self.ns.IsUpcomingReagent(20))
+
+    def test_upcoming_reagent_unknown_difficulty(self):
+        self.rt.execute("RECIPES[12].relativeDifficulty = nil")
+        self.ns.ScanProfession()
+        self.assertTrue(self.ns.IsUpcomingReagent(3))
+
+    def test_upcoming_grey_recipe_ignored(self):
+        self.rt.execute("RECIPES[12].relativeDifficulty = 3")
+        self.ns.ScanProfession()
+        self.assertFalse(self.ns.IsUpcomingReagent(3))
+
+    def test_learning_upcoming_recipe(self):
+        self.ns.ScanProfession()
+        self.rt.execute("RECIPES[12].learned = true")
+        self.assertTrue(self.ns.ScanProfession())
+        self.assertFalse(self.ns.IsUpcomingReagent(3))
+        self.assertTrue(self.ns.IsSkillUpReagent(3))
+
+    def test_upcoming_reagent_never_junk(self):
+        self.ns.ScanProfession()
+        self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}; AH.link3 = 110")
+        verdict = self.ns.Classify(3, "link3")
+        self.assertEqual((verdict.kind, verdict.reason), (None, "upcoming"))
+        self.rt.execute("KeepOrSellDB.profession = false")
+        self.ns.ClearCache()
+        self.assertEqual(self.ns.Classify(3, "link3").kind, "junk")
+
+    def test_upcoming_reagent_still_auctioned(self):
+        self.ns.ScanProfession()
+        self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}; AH.link3 = 50000")
+        self.assertEqual(self.ns.Classify(3, "link3").kind, "ah")
+
     def test_recipe_turning_grey_drops_reagent(self):
         self.ns.ScanProfession()
         self.rt.execute("RECIPES[10].relativeDifficulty = 3; RECIPES[13].relativeDifficulty = 3")

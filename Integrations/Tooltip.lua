@@ -79,6 +79,8 @@ function ns.TooltipText(verdict, prices, db)
     end
   elseif reason == "tool" then
     text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
+  elseif reason == "upcoming" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_UPCOMING
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NO_PRICE
   elseif verdict.needsPrice and verdict.priceReason == "stale" then
