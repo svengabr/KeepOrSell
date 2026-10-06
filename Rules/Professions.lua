@@ -17,18 +17,45 @@ end
 
 -- Two tables {[recipeID] = {itemID, ...} | false}; false = grey, no skill points anymore.
 -- recipes holds the learned recipes, upcoming the ones not learned yet (a trainer or recipe teaches them
--- later; their difficulty may be unknown, which counts as not grey). Pure, gets the API as argument.
+-- later; their difficulty may be unknown, which counts as not grey). The third table holds what learned
+-- recipes make, grey or not: {[recipeID] = {output = itemID, reagents = {itemID, ...}}}, so a reagent that
+-- first has to be turned into another one (dust into particles) is found too. Pure, gets the API as argument.
 function ns.CollectRecipes(api, recipeIDs)
-  local recipes, upcoming = {}, {}
+  local recipes, upcoming, crafts = {}, {}, {}
   for _, recipeID in ipairs(recipeIDs or {}) do
     local info = api.GetRecipeInfo(recipeID)
     if info and info.learned and info.relativeDifficulty ~= nil then
       recipes[recipeID] = info.relativeDifficulty ~= TRIVIAL and Reagents(api, recipeID)
+      local schematic = api.GetRecipeSchematic(recipeID, false)
+      if schematic and schematic.outputItemID then
+        crafts[recipeID] = {output = schematic.outputItemID, reagents = Reagents(api, recipeID)}
+      end
     elseif info and info.learned == false then
       upcoming[recipeID] = info.relativeDifficulty ~= TRIVIAL and Reagents(api, recipeID)
     end
   end
-  return recipes, upcoming
+  return recipes, upcoming, crafts
+end
+
+-- {[itemID] = true} of the reagents in reagentLists ({[recipeID] = {itemID, ...} | false}), plus everything a
+-- learned recipe in crafts turns into one of them, over any number of steps. Pure.
+function ns.ReagentIndex(reagentLists, crafts)
+  local result = {}
+  for _, reagents in pairs(reagentLists or {}) do
+    for _, id in ipairs(reagents or {}) do result[id] = true end
+  end
+  local added = true
+  while added do
+    added = false
+    for _, craft in pairs(crafts or {}) do
+      if result[craft.output] then
+        for _, id in ipairs(craft.reagents or {}) do
+          if not result[id] then result[id], added = true, true end
+        end
+      end
+    end
+  end
+  return result
 end
 
 local index, upcomingIndex -- {[itemID] = true}, rebuilt after a change
@@ -62,8 +89,8 @@ function ns.ScanProfession()
   local profession = api.GetBaseProfessionInfo and api.GetBaseProfessionInfo()
   if profession and profession.professionName then CharacterTable("opened")[profession.professionName] = true end
 
-  local stored, storedUpcoming = CharacterRecipes(), CharacterTable("upcoming")
-  local recipes, upcoming = ns.CollectRecipes(api, getIDs())
+  local stored, storedUpcoming, storedCrafts = CharacterRecipes(), CharacterTable("upcoming"), CharacterTable("crafts")
+  local recipes, upcoming, crafts = ns.CollectRecipes(api, getIDs())
   local changed = false
   local function Store(target, recipeID, reagents)
     local old = target[recipeID]
@@ -75,31 +102,26 @@ function ns.ScanProfession()
     Store(storedUpcoming, recipeID, nil) -- learned now
   end
   for recipeID, reagents in pairs(upcoming) do Store(storedUpcoming, recipeID, reagents) end
+  for recipeID, craft in pairs(crafts) do
+    if not storedCrafts[recipeID] then changed = true end
+    storedCrafts[recipeID] = craft
+  end
   if changed then index, upcomingIndex = nil, nil end
   return changed
 end
 
--- true if a known recipe of this character still gains skill from the item
+-- true if a known recipe of this character still gains skill from the item, directly or after crafting it
+-- into another reagent
 function ns.IsSkillUpReagent(itemID)
   if not itemID then return false end
-  if not index then
-    index = {}
-    for _, reagents in pairs(CharacterRecipes()) do
-      for _, id in ipairs(reagents or {}) do index[id] = true end
-    end
-  end
+  if not index then index = ns.ReagentIndex(CharacterRecipes(), CharacterTable("crafts")) end
   return index[itemID] == true
 end
 
 -- true if a recipe of this character's professions not learned yet uses the item (and isn't grey)
 function ns.IsUpcomingReagent(itemID)
   if not itemID then return false end
-  if not upcomingIndex then
-    upcomingIndex = {}
-    for _, reagents in pairs(CharacterTable("upcoming")) do
-      for _, id in ipairs(reagents or {}) do upcomingIndex[id] = true end
-    end
-  end
+  if not upcomingIndex then upcomingIndex = ns.ReagentIndex(CharacterTable("upcoming"), CharacterTable("crafts")) end
   return upcomingIndex[itemID] == true
 end
 

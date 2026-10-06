@@ -3,19 +3,23 @@ import unittest
 
 from addon import load
 
-# recipe 10 orange (linen 4), 11 grey (wool 20), 12 not learned (silk 3), 13 green (linen 4 + thread 21)
+# recipe 10 orange (linen 4), 11 grey (wool 20), 12 not learned (silk 3), 13 green (linen 4 + thread 21),
+# 14 grey: dust 40 into particles 41, 15 orange (particles 41), 16 grey: shard 42 into dust 40
 STUBS = """
 RECIPES = {
   [10] = {learned = true, relativeDifficulty = 0, reagents = {4}},
   [11] = {learned = true, relativeDifficulty = 3, reagents = {20}},
   [12] = {learned = false, relativeDifficulty = 0, reagents = {3}},
   [13] = {learned = true, relativeDifficulty = 2, reagents = {4, 21}},
+  [14] = {learned = true, relativeDifficulty = 3, reagents = {40}, output = 41},
+  [15] = {learned = true, relativeDifficulty = 0, reagents = {41}},
+  [16] = {learned = true, relativeDifficulty = 3, reagents = {42}, output = 40},
 }
-SHOWN = {10, 11, 12, 13}
+SHOWN = {10, 11, 12, 13, 14, 15, 16}
 local function Schematic(id)
   local slots = {}
   for _, itemID in ipairs(RECIPES[id].reagents) do table.insert(slots, {reagents = {{itemID = itemID}}}) end
-  return {reagentSlotSchematics = slots}
+  return {reagentSlotSchematics = slots, outputItemID = RECIPES[id].output}
 end
 C_TradeSkillUI = {
   GetFilteredRecipeIDs = function() return SHOWN end,
@@ -36,6 +40,22 @@ class ProfessionTests(unittest.TestCase):
         self.assertTrue(self.ns.IsSkillUpReagent(21))
         self.assertFalse(self.ns.IsSkillUpReagent(20))  # only grey recipes left
         self.assertFalse(self.ns.IsSkillUpReagent(3))  # recipe not learned
+
+    def test_reagent_crafted_into_skill_up_reagent(self):
+        self.ns.ScanProfession()
+        self.assertTrue(self.ns.IsSkillUpReagent(40))  # dust -> particles
+        self.assertTrue(self.ns.IsSkillUpReagent(42))  # shard -> dust -> particles
+
+    def test_crafted_chain_ends_when_recipe_turns_grey(self):
+        self.ns.ScanProfession()
+        self.rt.execute("RECIPES[15].relativeDifficulty = 3")
+        self.assertTrue(self.ns.ScanProfession())
+        self.assertFalse(self.ns.IsSkillUpReagent(40))
+
+    def test_crafted_reagent_kept_from_auction_house(self):
+        self.ns.ScanProfession()
+        self.rt.execute("ITEMS[40] = {'Strange Dust', 7, 12, '', 1}; AH.link40 = 175")
+        self.assertEqual(self.ns.Classify(40, "link40").kind, "profession")
 
     def test_upcoming_reagents(self):
         self.ns.ScanProfession()
