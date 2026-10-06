@@ -17,6 +17,7 @@ Rules\Share.lua
 Rules\Gear.lua
 Rules\Professions.lua
 Rules\Questie.lua
+Rules\Disenchant.lua
 Rules\Classify.lua
 Core\Dependencies.lua
 UI\Options.xml

@@ -102,8 +102,11 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("AGE.link4 = 30")
         self.assertIn("older than 7 days", self.show(4))
 
-    def test_nothing_for_wearable_gear_or_plain_items(self):
-        self.assertIsNone(self.show(7))
+    def test_wearable_gear_names_what_it_would_bring(self):
+        self.assertIn("Keep – wearable", self.show(7))
+        self.assertIn("If you no longer need it: vendor 100c", self.show(7))
+
+    def test_nothing_for_plain_items(self):
         self.assertIsNone(self.show(9))
 
     def test_profession_tool(self):

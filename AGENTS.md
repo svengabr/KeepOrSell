@@ -5,7 +5,7 @@ Notes for AI agents (Claude Code, Codex, Cursor …) working on KeepOrSell.
 ## What the addon does
 
 WoW addon that sorts bag items into groups: **Quest** (keep), **Profession** (reagents that still give
-skill points), **AuctionHouse** (auction price ≥ factor × vendor price) and **Junk** via Scrap
+skill points), **AuctionHouse** (auction price ≥ factor × vendor price), **Disenchant** (enchanters only) and **Junk** via Scrap
 (cheap trade goods, gear the class can never wear). A tooltip line explains the decision.
 It relies on the public APIs of **Baganator**, **Auctionator**, **TradeSkillMaster**, **Scrap** and **QuestieDB**
 (Questie's database addon). All five are optional (`OptionalDeps`); every integration must silently do nothing without its addon.
@@ -25,12 +25,13 @@ folder and into the TOC; the tests find them by name (`tests/addon.py`, `SOURCE_
 | `Integrations/TSM.lua` | `ns.GetTSMPrice`: TSM price `first(DBMinBuyout, DBMarket)` via `TSM_API`; used only when neither Auctionator nor a shared price exists, no age (`maxAge` doesn't apply), never shared, doesn't count as `ahVisited` |
 | `Rules/Share.lua` | Shares auction prices within the group (addon messages): asks for the bag items, whoever has a fresher price answers (`ns.IsFresher` in `Prices.lua`) |
 | `Rules/Gear.lua` | `ns.IsUnusableGear`: weapon/armor types a class can never learn, pure logic |
-| `Rules/Professions.lua` | Remembers reagents of learned, non-grey recipes per character (`KeepOrSellDB.recipes`) when the profession window opens; follows learned recipes that craft one reagent into another (`KeepOrSellDB.crafts`, `ns.ReagentIndex` pure: dust → particles → skill-up recipe); also reagents of not-yet-learned, non-grey recipes (`KeepOrSellDB.upcoming`, `ns.IsUpcomingReagent`: Profession group unless worth auctioning, never junk); tells recipes apart as unlearned/known/other profession (`ns.GetRecipeState`) |
+| `Rules/Professions.lua` | Remembers reagents of learned, non-grey recipes per character (`KeepOrSellDB.recipes`) when the profession window opens; follows learned recipes that craft one reagent into another (`KeepOrSellDB.crafts`, `ns.ReagentIndex` pure: dust → particles → skill-up recipe); also reagents of not-yet-learned, non-grey recipes (`KeepOrSellDB.upcoming`, `ns.IsUpcomingReagent`: Profession group even when worth auctioning, never junk); tells recipes apart as unlearned/known/other profession (`ns.GetRecipeState`) |
 | `Rules/Questie.lua` | Upcoming quests via QuestieDB's public API (`LibQuestieDB`, contract 2): `ns.GetQuestieQuest`, pure selection `ns.PickQuestieQuest` (±5 levels, race/class, not completed); for items of class Quest and quest-only items `ns.GetQuestItemQuest` (any level, otherwise a completed quest) for the tooltip line. Own item→quest index over all quests (objectives, required source items, `startedBy` items, `sourceItemId`), built in chunks after login (`ns.BuildQuestieIndex`), because `Item.relatedQuests` is empty on Forever; `ns.IsQuestOnlyItem` = the item starts a quest or a quest hands it out (objectives like Linen Cloth don't count) |
+| `Rules/Disenchant.lua` | Classic disenchant tables by item level (`ns.DisenchantOutcomes` pure), average value from Auctionator material prices (`ns.DisenchantValue`, `ns.GetPricesByID`; a missing price below 10% chance counts as 0, otherwise the value is unknown), `ns.DisenchantWins` pure: for enchanters (`ns.IsEnchanter`, option `disenchant`) junk/AH items go to the Disenchant group when worth more; bound items unless the vendor pays more; always when a material is a skill-up reagent |
 | `Rules/Classify.lua` | One decision per item (`ns.Decide` pure, `ns.Classify` with API), used by Baganator, Scrap and the tooltip |
 | `Integrations/Scrap.lua` | Hooks into `Scrap:IsJunk`; Scrap's own list and "not junk" marks take precedence |
 | `Integrations/Baganator.lua` | Corner widget and item set source via `Baganator.API.*` |
-| `Integrations/Tooltip.lua` | Tooltip line via `TooltipDataProcessor` (fallback `OnTooltipSetItem`) |
+| `Integrations/Tooltip.lua` | Tooltip line via `TooltipDataProcessor` (fallback `OnTooltipSetItem`); kept wearable gear gets an "if you no longer need it" hint (best of disenchant / AH after cut / vendor) |
 | `UI/Hints.lua` | Hints (`ns.CollectHints` pure): button in Baganator's bag window via `Baganator.API.RegisterRegion`, without Baganator once in chat |
 | `Core/Bags.lua` | One pass over the bags (`ns.ScanBags`, once per frame): junk per `Scrap:IsJunk` (without Scrap grey + `ns.ShouldScrap`), vendor value, AH value of the AuctionHouse group |
 | `UI/Destroy.lua` | Destroy button in Baganator's bag window: cheapest junk by vendor price × stack (`ns.PickCheapest` pure, never locked or rare and above), candidates from `ns.ScanBags` (`ns.FindDestroyTarget`); `ns.DestroyTarget` checks slot and cursor before `DeleteCursorItem`; on "inventory full" in the loot window the button glows if the loot is worth more (`ns.LootWorthMore` pure) |
@@ -64,7 +65,8 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
   doesn't have (option `recipeJunk`), and quest items (`classID 12`, or of any class when QuestieDB lists them as
   quest starter or handed-out item) whose quests are all completed or not doable for the character according to
   QuestieDB (option `questie`). Never green or better wearable gear, consumables or
-  other quest items. Wearable gear may go to the auction house (tradeable and worth it). The only exception to
+  other quest items. Wearable gear may go to the auction house (tradeable and worth it). For enchanters, green or better gear that would be junk or AuctionHouse goes to
+  the Disenchant group instead when disenchanting is worth more (never junk). The only exception to
   "when in doubt": grey/white gear without an auction price counts as not worth it once the player has visited
   the AH with Auctionator (`KeepOrSellDB.ahVisited`).
 - **New texts** always go into `Locales.lua`, in English and German.

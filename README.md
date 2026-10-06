@@ -6,14 +6,15 @@ Good for new players, and for everyone who's tired of hovering over every single
 
 ## What it does
 
-Your bag items end up in four groups:
+Your bag items end up in these groups:
 
 - **Quest**: stuff a quest still needs. Keep it.
-- **Profession**: materials for your recipes that still give skill points, plus recipes you can still learn. Keep it.
+- **Profession**: materials for recipes that still give skill points, whether you know them already or can still learn them, plus those recipes themselves. Keep it, even if the AH pays well.
 - **AuctionHouse**: sells for at least twice the vendor price on the AH. Put it up for sale.
 - **Junk**: grey items, cheap trade goods nobody needs, gear your class can't ever wear, recipes you already know. Scrap sells it at the next vendor.
+- **Disenchant** (enchanters only): green, blue and purple gear you'd otherwise sell, when its materials are worth more than the vendor or the AH pays. Soulbound gear you can't auction lands here too. The tooltip shows the average value and what you'll likely get, e.g. "80% Lesser Magic Essence ×1–2".
 
-Hover over any item and the tooltip tells you which group it's in and why, for example "Auction house: AH 1g 20s, vendor 15s".
+Hover over any item and the tooltip tells you which group it's in and why, for example "Auction house: AH 1g 20s, vendor 15s". For gear you can wear it also says what it would bring once you no longer need it: disenchanting, the auction house or the vendor, whichever pays most.
 
 Not sure about an item? Then it stays. No auction price means no junk. And green or better gear you could wear never counts as junk.
 
@@ -44,7 +45,7 @@ That's it. The groups show up in Baganator inside the equipment sets category. W
 
 Esc → Options → AddOns → **KeepOrSell**, or just type `/kos`.
 
-You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials, Questie, tooltip, hints, destroy button, bag value, price sharing. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
+You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials, disenchanting, Questie, tooltip, hints, destroy button, bag value, price sharing. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
 
 If you mark something as "not junk" in Scrap, KeepOrSell won't argue.
 
@@ -54,14 +55,15 @@ If you mark something as "not junk" in Scrap, KeepOrSell won't argue.
 
 Schon mal beim Händler gestanden und dich gefragt, ob das komische Item in der Tasche was wert ist? KeepOrSell sortiert deine Taschen für dich: was du behältst, was ins Auktionshaus kann und was einfach Schrott ist.
 
-**Die vier Gruppen:**
+**Die Gruppen:**
 
 - **Quest**: brauchst du noch für eine Quest. Behalten.
-- **Beruf**: Material für Rezepte, die noch Skillpunkte geben, und Rezepte, die du noch lernen kannst. Behalten.
+- **Beruf**: Material für Rezepte, die noch Skillpunkte geben, egal ob du sie schon kannst oder noch lernen kannst, und diese Rezepte selbst. Behalten, auch wenn das AH gut zahlt.
 - **Auktionshaus**: bringt im AH mindestens das Doppelte vom Händlerpreis. Reinstellen.
 - **Schrott**: graues Zeug, billige Handwerkswaren, Ausrüstung, die deine Klasse nie tragen kann, Rezepte, die du schon kennst. Scrap verkauft das beim nächsten Händler.
+- **Entzaubern** (nur für Verzauberer): grüne, blaue und lila Ausrüstung, die du sonst verkaufen würdest, wenn ihre Materialien mehr bringen als Händler oder AH. Auch seelengebundene Ausrüstung, die nicht ins AH darf. Der Tooltip zeigt den Durchschnittswert und was wahrscheinlich rauskommt.
 
-Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie.
+Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Bei Ausrüstung, die du tragen kannst, steht dazu, was sie dir bringt, falls du sie nicht mehr brauchst: Entzaubern, Auktionshaus oder Händler, je nachdem, was am meisten bringt. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie.
 
 **Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items). Sind die Taschen beim Looten voll und die Beute ist mehr wert, leuchtet er. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise.
 

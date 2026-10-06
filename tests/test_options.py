@@ -88,7 +88,7 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy", "checkbox:bagValue", "checkbox:setSource"])
+            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:disenchant", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy", "checkbox:bagValue", "checkbox:setSource"])
 
     def test_sections(self):
         headers = [i.header for i in self.calls.layout.values() if i.header]

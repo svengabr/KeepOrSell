@@ -93,10 +93,10 @@ class ProfessionTests(unittest.TestCase):
         self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}")
         self.assertEqual(self.ns.Classify(3, "link3").kind, "profession")
 
-    def test_upcoming_reagent_still_auctioned(self):
+    def test_upcoming_reagent_kept_even_when_worth_auctioning(self):
         self.ns.ScanProfession()
         self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}; AH.link3 = 50000")
-        self.assertEqual(self.ns.Classify(3, "link3").kind, "ah")
+        self.assertEqual(self.ns.Classify(3, "link3").kind, "profession")
 
     def test_recipe_turning_grey_drops_reagent(self):
         self.ns.ScanProfession()

@@ -32,6 +32,58 @@ local function PriceText(prices, verdict, db)
   return text
 end
 
+-- "80% Strange Dust ×1–2"; names not cached yet are requested and show up next time
+local function OutcomeText(o)
+  local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(o.itemID)
+  if not name and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(o.itemID) end
+  local text = ("%g%%"):format(math.floor(o.chance * 1000 + 0.5) / 10)
+  if name then text = text .. " " .. name end
+  if o.max > 1 then text = text .. (o.min == o.max and " ×%d" or " ×%d–%d"):format(o.min, o.max) end
+  if o.skillUp then text = text .. " – " .. L.TIP_DISENCHANT_SKILL end
+  return text
+end
+
+local DETAIL = "\n    |cffaaaaaa%s|r"
+
+-- headline with the value, then one grey line per material (naming those that still give skill points)
+-- and one comparing with selling
+local function DisenchantText(verdict, prices)
+  local de = verdict.disenchant
+  local text = verdict.forSkill and L.TIP_DISENCHANT_FOR_SKILL:format(Money(de.value))
+    or de.value and L.TIP_DISENCHANT_VALUE:format(Money(de.value)) or L.TIP_DISENCHANT
+  for _, o in ipairs(de.outcomes or {}) do text = text .. DETAIL:format(OutcomeText(o)) end
+  local compare = verdict.bound and L.TIP_BOUND .. ", " .. L.TIP_VENDOR:format(Money(prices.vendor))
+    or L.TIP_PRICES:format(Money(prices.ah), Money(prices.vendor))
+  return text .. DETAIL:format(compare)
+end
+
+local AH_CUT = 0.05
+
+-- kept gear: the best way to get rid of it once the player no longer needs it, the others for comparison;
+-- the auction price counts after the AH cut. nil when nothing is known.
+local function WearableText(verdict, prices)
+  local options = {}
+  local de = verdict.disenchant
+  if de and de.value and de.value > 0 then
+    table.insert(options, {de.value, L.TIP_DISENCHANT_VALUE:format(Money(de.value))})
+  end
+  if not verdict.bound and verdict.ahTrusted and prices.ah and prices.ah > 0 then
+    table.insert(options, {prices.ah * (1 - AH_CUT), L.TIP_AH_PRICE:format(Money(prices.ah))})
+  end
+  if prices.vendor and prices.vendor > 0 then
+    table.insert(options, {prices.vendor, L.TIP_VENDOR:format(Money(prices.vendor))})
+  end
+  if #options == 0 then return nil end
+  table.sort(options, function(a, b) return a[1] > b[1] end)
+  local best = options[1][2]
+  if #options > 1 then
+    local others = {}
+    for i = 2, #options do table.insert(others, options[i][2]) end
+    best = best .. " (" .. table.concat(others, ", ") .. ")"
+  end
+  return L.TIP_KEEP .. " – " .. L.TIP_WEARABLE .. DETAIL:format(L.TIP_IF_UNNEEDED:format(best))
+end
+
 local RECIPE_TEXT = {recipe_known = "TIP_RECIPE_KNOWN", recipe_other = "TIP_RECIPE_OTHER"}
 
 -- why an item nobody needs any more is useless: a recipe or a quest item of a done quest
@@ -77,6 +129,10 @@ function ns.TooltipText(verdict, prices, db)
     else
       text = L.TIP_JUNK .. " – " .. PriceText(prices, verdict, db)
     end
+  elseif kind == "disenchant" then
+    text = DisenchantText(verdict, prices)
+  elseif reason == "wearable" and not verdict.needsPrice then
+    text = WearableText(verdict, prices)
   elseif reason == "tool" then
     text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then

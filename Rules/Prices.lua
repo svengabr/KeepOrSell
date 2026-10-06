@@ -22,15 +22,18 @@ function ns.ClassifyPrice(ahPrice, vendorPrice, factor, minProfit)
   return "ah"
 end
 
+-- true if the auction price is older than the player accepts (db.maxAge); prices without an age (TSM) never are
+function ns.IsStale(prices, db)
+  return db.maxAge ~= nil and db.maxAge < MAX_AUCTIONATOR_AGE and prices.hasAge == true
+    and (prices.age == nil or prices.age > db.maxAge)
+end
+
 -- prices = {ah, vendor, age}; db = {factor, minProfit (silver), maxAge (days)}
 -- Returns the class and a reason: "noprice" or "stale" when the auction price is not trusted,
 -- "factor" or "minprofit" when it is not worth auctioning
 function ns.ClassifyPrices(prices, db)
   if not prices.ah or prices.ah <= 0 then return nil, "noprice" end
-  if db.maxAge and db.maxAge < MAX_AUCTIONATOR_AGE and prices.hasAge
-    and (prices.age == nil or prices.age > db.maxAge) then
-    return nil, "stale"
-  end
+  if ns.IsStale(prices, db) then return nil, "stale" end
   local factor = math.max(db.factor or ns.MIN_FACTOR, ns.MIN_FACTOR)
   return ns.ClassifyPrice(prices.ah, prices.vendor, factor, (db.minProfit or 0) * 100)
 end
@@ -118,6 +121,28 @@ function ns.MergeFallback(prices, fallbackPrice, source)
   return {ah = fallbackPrice, vendor = prices.vendor, hasAge = false, source = source}
 end
 
+-- a price shared by a group member wins when the own one is missing or older
+local function WithShared(prices, id)
+  local shared = id and KeepOrSellDB and KeepOrSellDB.share and ns.SharedPrices()
+  if shared and shared[id] and GetServerTime then
+    return ns.PickPrice(prices, shared[id], GetServerTime(), ns.LastFullScan())
+  end
+  return prices
+end
+
+-- {ah, age, hasAge, from} of an item known only by its ID (disenchanting materials): Auctionator and shared
+-- group prices, no TSM and no vendor price
+function ns.GetPricesByID(itemID)
+  local api = Api()
+  local prices = {}
+  if api and api.GetAuctionPriceByItemID then prices.ah = api.GetAuctionPriceByItemID(addonName, itemID) end
+  if prices.ah and api.GetAuctionAgeByItemID then
+    prices.hasAge = true
+    prices.age = api.GetAuctionAgeByItemID(addonName, itemID)
+  end
+  return WithShared(prices, itemID)
+end
+
 -- {ah, vendor, age, hasAge, from, source}; age = days since last seen on the AH (nil = never or older than
 -- 21 days), from = the group member who shared the price (nil for the own Auctionator price),
 -- source = "tsm" when the price came from TradeSkillMaster
@@ -133,11 +158,8 @@ function ns.GetPrices(itemLink)
     prices.age = api.GetAuctionAgeByItemLink(addonName, itemLink)
   end
   prices.vendor = VendorPrice(itemLink)
-  local shared = KeepOrSellDB and KeepOrSellDB.share and ns.SharedPrices()
-  local id = shared and C_Item and C_Item.GetItemInfoInstant and C_Item.GetItemInfoInstant(itemLink)
-  if id and shared[id] and GetServerTime then
-    prices = ns.PickPrice(prices, shared[id], GetServerTime(), ns.LastFullScan())
-  end
+  local id = C_Item and C_Item.GetItemInfoInstant and C_Item.GetItemInfoInstant(itemLink)
+  prices = WithShared(prices, id)
   -- TSM only fills gaps, so it is never asked for items Auctionator or the group knows
   if not (prices.ah and prices.ah > 0) and ns.GetTSMPrice then
     prices = ns.MergeFallback(prices, ns.GetTSMPrice(itemLink), "tsm")

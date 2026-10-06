@@ -155,6 +155,13 @@ local function HasProfession(skillLine)
   return false
 end
 
+local ENCHANTING = 333
+
+-- true if the character has learned Enchanting
+function ns.IsEnchanter()
+  return HasProfession(ENCHANTING) == true
+end
+
 local RED_TEXT = 0.5
 
 -- Tooltip requirement lines the player doesn't meet are red (1, 0.125, 0.125)

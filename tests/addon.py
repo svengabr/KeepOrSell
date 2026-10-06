@@ -13,7 +13,7 @@ def source(name):
     assert len(hits) == 1, f"{name}: expected one source file, found {hits}"
     return str(hits[0]).replace("\\", "/")
 
-# itemID -> name, classID, subclassID, equipLoc, vendor price, quality
+# itemID -> name, classID, subclassID, equipLoc, vendor price, quality, item level
 # 1 wolf flank (objective), 2 letter (quest item), 3 silk (worth auctioning), 4 linen (cheap),
 # 5 mail chest, 6 sword, 7 leather chest, 8 mail cloak, 9 potion, 10 white staff, 11 white shirt
 BASE_STUBS = """
@@ -49,7 +49,7 @@ C_Item = {
     local id = type(link) == "string" and tonumber(link:match("%d+")) or link
     local i = ITEMS[id]
     if not i then return nil end
-    return i[1], "link" .. id, i[6] or 1, nil, nil, nil, nil, nil, nil, nil, i[5], nil, nil, BOUND[id] and 1 or 2
+    return i[1], "link" .. id, i[6] or 1, i[7], nil, nil, nil, nil, nil, nil, i[5], nil, nil, BOUND[id] and 1 or 2
   end,
 }
 Auctionator = {API = {v1 = {

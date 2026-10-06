@@ -5,19 +5,22 @@ local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
 -- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, upcoming,
--- recipe, prices, priceData}
+-- recipe, prices, priceData, disenchant}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
--- upcoming = a recipe of the player's profession not learned yet needs the item: Profession group unless
--- it is worth auctioning, never junk
+-- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
+-- group like a reagent of a known recipe, even when worth auctioning
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
--- Returns {kind = "quest" | "profession" | "ah" | "junk" | nil, reason, priceReason, needsPrice}.
+-- disenchant = {outcomes, value, skillUp} when the player is an enchanter and can disenchant the item
+-- Returns {kind = "quest" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
+-- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
+-- Kept wearable gear also gets {disenchant, bound, ahTrusted} for the "if you no longer need it" hint.
 -- needsPrice = the item stays only because its auction price is missing or too old. Pure.
 function ns.Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
@@ -31,6 +34,7 @@ function ns.Decide(facts, db)
   end
   if facts.tool then return {reason = "tool"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
+  if db.profession and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
 
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
@@ -75,10 +79,24 @@ function ns.Decide(facts, db)
   -- an outdated price may hide an auction house item; say so instead of staying silent
   if not verdict.kind and priceReason == "stale" and not facts.bound then verdict.needsPrice = true end
 
-  -- a recipe the player can still learn needs it: may go to the auction house, but is never junk
-  if verdict.kind ~= "ah" and db.profession and facts.upcoming then
-    return {kind = "profession", reason = "upcoming", priceReason = priceReason}
+  -- an enchanter may get more out of an item that would be sold, auctioned or kept only for a missing price
+  local disenchant = db.disenchant and facts.disenchant
+  local disposable = verdict.kind == "junk" or verdict.kind == "ah"
+    or (verdict.needsPrice and verdict.reason == "unusable")
+  local ahTrusted = priceReason ~= "noprice" and priceReason ~= "stale"
+  if not verdict.kind and verdict.reason == "wearable" and not verdict.needsPrice then
+    -- kept gear: the tooltip names what it would bring once the player no longer needs it
+    verdict.bound, verdict.ahTrusted, verdict.disenchant = facts.bound, ahTrusted, disenchant or nil
+  elseif disenchant and disposable then
+    if ns.DisenchantWins(disenchant, facts.prices or {}, ahTrusted, facts.bound) then
+      verdict.kind, verdict.disenchant, verdict.bound, verdict.needsPrice = "disenchant", disenchant, facts.bound, nil
+      -- only the skill points speak for it: selling is known to pay more
+      local byValue = {value = disenchant.value}
+      verdict.forSkill = disenchant.skillUp and disenchant.value ~= nil
+        and not ns.DisenchantWins(byValue, facts.prices or {}, ahTrusted, facts.bound) or nil
+    end
   end
+
   -- item name not cached yet: it might be a quest objective
   if verdict.kind == "junk" and facts.quest == nil then verdict.kind = nil end
   return verdict
@@ -115,6 +133,27 @@ local function Quality(itemID, itemLink)
   return C_Item.GetItemQualityByID and C_Item.GetItemQualityByID(itemID)
 end
 
+local function ItemLevel(itemLink)
+  return itemLink and select(4, (C_Item.GetItemInfo or GetItemInfo)(itemLink))
+end
+
+-- trusted auction price of a disenchanting material, nil when missing or too old
+local function MaterialPrice(itemID)
+  local prices = ns.GetPricesByID(itemID)
+  if prices.ah and prices.ah > 0 and not ns.IsStale(prices, KeepOrSellDB) then return prices.ah end
+end
+
+local function DisenchantFacts(itemID, itemLink, classID)
+  if not (KeepOrSellDB.disenchant and ns.IsEnchanter()) then return nil end
+  local outcomes = ns.DisenchantOutcomes(Quality(itemID, itemLink), ItemLevel(itemLink), classID)
+  if not outcomes then return nil end
+  return {
+    outcomes = outcomes,
+    value = ns.DisenchantValue(outcomes, MaterialPrice),
+    skillUp = ns.DisenchantSkillUp(outcomes),
+  }
+end
+
 local function IsBound(itemLink, location)
   if location and C_Item.IsBound and (not location.IsBagAndSlot or location:IsBagAndSlot()) and (not location.IsValid or location:IsValid()) then
     return C_Item.IsBound(location)
@@ -145,6 +184,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     recipe = ns.GetRecipeState(itemID, classID, subclassID),
     prices = ns.GetPrices(itemLink),
     priceData = ns.HasPriceData(),
+    disenchant = DisenchantFacts(itemID, itemLink, classID),
   }
 end
 
