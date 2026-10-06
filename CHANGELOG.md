@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.0
+
+- Questie: newer races such as the High Order Skyborn now get the upcoming quests of their faction. QuestieDB marks these races with a bit that can't be derived from the race ID, so before, every race-restricted quest was ignored for them and its items (e.g. Murloc Eyes for "Westfall Stew") could end up as junk.
+
 ## 0.11.1
 
 - KeepOrSell is now published for WoW: Forever only, the only client it is played and tested on. Retail and the other Classic flavors are no longer listed.
