@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.15.0
 
 - New Open group: clams, boxes and other items with "Right Click to Open" (not locked) go there instead of staying in the bags waiting for an auction price. Each one takes its own bag slot even when Baganator shows them as one stack; the tooltip says how many slots they use and the hints button reminds you to open them. Option "Items to open" (on by default).
 
