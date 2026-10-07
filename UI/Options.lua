@@ -49,6 +49,10 @@ function ns.RegisterOptions(db, defaults)
     end
   end
 
+  if layout and CreateSettingsButtonInitializer then
+    layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_SETUP, L.OPT_SETUP_BUTTON, function() ns.ShowSetup() end, L.OPT_SETUP_TIP, true))
+  end
+
   -- grouped by purpose; the header names the addon a group depends on
   Header(L.SECTION_AH)
   Slider("factor", L.OPT_FACTOR, L.OPT_FACTOR_TIP, ns.MIN_FACTOR, 10, 0.1, function(v) return ("%gx"):format(v) end)

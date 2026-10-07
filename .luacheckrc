@@ -27,6 +27,7 @@ read_globals = {
   "C_Container",
   "C_Item",
   "C_QuestLog",
+  "C_Texture",
   "C_Timer",
   "C_TooltipInfo",
   "C_TradeSkillUI",
@@ -66,6 +67,11 @@ read_globals = {
   "UnitRace",
 
   -- FrameXML
+  "BackdropTemplateMixin",
+  "ButtonFrameTemplate_HideButtonBar",
+  "ButtonFrameTemplate_HidePortrait",
+  "CreateSettingsButtonInitializer",
+  "UISpecialFrames",
   "GameTooltip",
   "ItemRefTooltip",
   "MinimalSliderWithSteppersMixin",
