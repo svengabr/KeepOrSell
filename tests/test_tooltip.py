@@ -20,7 +20,7 @@ AH = {link3 = 1000, link4 = 15, link5 = 120}
 
 class TooltipTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Tooltip.lua",), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Tooltip.lua"), STUBS)
         self.ns.items = self.rt.eval("{['Lean Wolf Flank'] = 'done'}")
         self.ns.HookTooltip()
 
@@ -56,6 +56,16 @@ class TooltipTests(unittest.TestCase):
         db = self.rt.eval("KeepOrSellDB")
         self.assertIn("Open (right-click) – 10 in your bags", self.ns.TooltipText(verdict, None, db, 10))
         self.assertIn("Open (right-click) – frees", self.ns.TooltipText(verdict, None, db, 1))
+
+    def test_unstacked(self):
+        db = self.rt.eval("KeepOrSellDB")
+        ah = self.ns.TooltipText(self.rt.eval('{kind = "ah"}'), self.rt.eval("{ah = 100, vendor = 15}"), db, 5, True)
+        self.assertIn("doesn't stack, takes 5 bag slots", ah)
+        alone = self.ns.TooltipText(self.rt.eval("{}"), None, db, 5, True)
+        self.assertIn("Doesn't stack – takes 5 bag slots", alone)
+        self.assertIsNone(self.ns.TooltipText(self.rt.eval("{}"), None, db, 1, True))
+        opened = self.ns.TooltipText(self.rt.eval('{kind = "open"}'), None, db, 5, True)
+        self.assertNotIn("stack", opened)
 
     def test_quest_done(self):
         self.assertIn("objective done", self.show(1))

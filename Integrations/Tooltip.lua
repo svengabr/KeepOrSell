@@ -92,9 +92,9 @@ local function UselessText(verdict)
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
--- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying; slots = bag slots the item takes
--- (only for items to open). Pure apart from money formatting.
-function ns.TooltipText(verdict, prices, db, slots)
+-- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying; slots = bag slots the item takes,
+-- unstacked = it never stacks, so each copy takes its own slot. Pure apart from money formatting.
+function ns.TooltipText(verdict, prices, db, slots, unstacked)
   prices = prices or {}
   local kind, reason = verdict.kind, verdict.reason
   local text
@@ -145,6 +145,10 @@ function ns.TooltipText(verdict, prices, db, slots)
   elseif verdict.needsPrice and verdict.priceReason == "stale" then
     text = L.TIP_KEEP .. " – " .. L.TIP_STALE:format(db.maxAge)
   end
+  -- Baganator may show copies as one stack; say how many slots they really take
+  if unstacked and kind ~= "open" and (slots or 0) > 1 then
+    text = text and text .. ", " .. L.TIP_UNSTACKED:format(slots) or L.TIP_UNSTACKED_ALONE:format(slots)
+  end
   return text and PREFIX .. text
 end
 
@@ -165,8 +169,9 @@ local function AddLine(tooltip, data)
   if location and not (location.IsBagAndSlot and location:IsBagAndSlot()) then location = nil end
   local facts = ns.ItemFacts(id, link, location)
   local verdict = ns.Decide(facts, KeepOrSellDB)
-  local slots = verdict.kind == "open" and ns.CountSlots(id) or nil
-  local text = ns.TooltipText(verdict, facts.prices, KeepOrSellDB, slots)
+  local unstacked = ns.IsUnstackable(id)
+  local slots = (verdict.kind == "open" or unstacked) and ns.CountSlots(id) or nil
+  local text = ns.TooltipText(verdict, facts.prices, KeepOrSellDB, slots, unstacked)
   if text then
     tooltip:AddLine(text, 1, 1, 1, true)
     tooltip:Show()

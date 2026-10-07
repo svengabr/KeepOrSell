@@ -24,7 +24,7 @@ end
 
 class CollectTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Hints.lua",), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Hints.lua"), STUBS)
         self.db = self.rt.eval("KeepOrSellDB")
 
     def collect(self, **state):
@@ -67,6 +67,47 @@ class CollectTests(unittest.TestCase):
         self.assertIn("takes up a bag slot", self.collect(auctionator=True, ahVisited=True, stale=0, open=1)[0])
 
 
+    def test_unstacked_items(self):
+        table = self.rt.eval("""{auctionator = true, ahVisited = true, stale = 0, unopened = {},
+          unstacked = {{name = "Scroll: CWAL", slots = 5}, {name = "Rusty Sword", slots = 2}}}""")
+        hints = list(self.ns.CollectHints(table, self.db).values())
+        self.assertEqual(len(hints), 1)
+        self.assertIn("5× Scroll: CWAL, 2× Rusty Sword", hints[0])
+
+    def test_unstacked_list_keeps_duplicates_only(self):
+        counts = self.rt.eval("""{[1] = {name = "A", slots = 1}, [2] = {name = "B", slots = 3},
+          [3] = {name = "C", slots = 2}}""")
+        result = [(e.name, e.slots) for e in self.ns.UnstackedList(counts).values()]
+        self.assertEqual(result, [("B", 3), ("C", 2)])
+
+
+class UnstackedStateTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Hints.lua"), STUBS + """
+        ITEMS[30] = {"Scroll: CWAL", 0, 8, "", 15}
+        ITEMS[20] = {"Small Barnacled Clam", 7, 0, "", 15}
+        BAG = {[1] = 30, [2] = 30, [3] = 20}
+        C_Container.GetContainerNumSlots = function(bag) return 4 end
+        BAG[4] = 20
+        C_Item.GetItemMaxStackSizeByID = function(id) return (id == 30 or id == 20) and 1 or 20 end
+        ITEM_OPENABLE = "<Right Click to Open>"
+        C_TooltipInfo = {GetItemByID = function(id)
+          return {lines = id == 20 and {{leftText = ITEM_OPENABLE}} or {{leftText = "x"}}} end}
+        """)
+
+    def test_unstacked_hint_skips_items_to_open(self):
+        hints = list(self.ns.GetHints().values())
+        unstacked = [h for h in hints if "Don't stack" in h]
+        self.assertEqual(len(unstacked), 1, hints)
+        self.assertIn("2× Scroll: CWAL", unstacked[0])
+        self.assertNotIn("Clam", unstacked[0])
+        self.assertTrue(any("2 bag slots" in h for h in hints), hints)
+
+    def test_unstackable(self):
+        self.assertTrue(self.ns.IsUnstackable(30))
+        self.assertFalse(self.ns.IsUnstackable(9))
+
+
 class OpenStateTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Hints.lua"), STUBS + """
@@ -85,7 +126,7 @@ class OpenStateTests(unittest.TestCase):
 
 class StateTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(CORE_FILES + ("Hints.lua",), STUBS)
+        self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Hints.lua"), STUBS)
 
     def test_hints_from_bags_and_professions(self):
         hints = list(self.ns.GetHints().values())

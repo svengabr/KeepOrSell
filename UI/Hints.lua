@@ -5,7 +5,8 @@ local L = ns.L
 
 local PREFIX = "|cffffd200KeepOrSell:|r "
 
--- state: {auctionator, tsm, ahVisited, stale, open, unopened = {names}}; open = bag slots of items to open. Returns a list of texts. Pure.
+-- state: {auctionator, tsm, ahVisited, stale, open, unstacked, unopened = {names}}; open = bag slots of items to open,
+-- unstacked = {{name, slots}} of items that don't stack (ns.UnstackedList). Returns a list of texts. Pure.
 -- A missing price after a scan is no hint: nobody sells the item on the auction house.
 function ns.CollectHints(state, db)
   local hints = {}
@@ -22,18 +23,37 @@ function ns.CollectHints(state, db)
   elseif (state.open or 0) > 1 then
     table.insert(hints, L.HINT_OPEN:format(state.open))
   end
+  if state.unstacked and #state.unstacked > 0 then
+    local names = {}
+    for _, entry in ipairs(state.unstacked) do table.insert(names, L.HINT_UNSTACKED_ITEM:format(entry.slots, entry.name)) end
+    table.insert(hints, L.HINT_UNSTACKED:format(table.concat(names, ", ")))
+  end
   if db.profession and #state.unopened > 0 then
     table.insert(hints, L.HINT_PROFESSIONS:format(table.concat(state.unopened, ", ")))
   end
   return hints
 end
 
+-- counts = {[itemID] = {name, slots}}; returns the items in more than one slot, most slots first. Pure.
+function ns.UnstackedList(counts)
+  local list = {}
+  for _, entry in pairs(counts) do
+    if entry.slots > 1 then table.insert(list, entry) end
+  end
+  table.sort(list, function(a, b)
+    if a.slots ~= b.slots then return a.slots > b.slots end
+    return (a.name or "") < (b.name or "")
+  end)
+  return list
+end
+
 local BAGS = NUM_BAG_SLOTS or 4
 
--- Counts bag items that stay only because their auction price is too old, and items to open
+-- Counts bag items that stay only because their auction price is too old, items to open and slots of items
+-- that don't stack (items to open have their own hint)
 local function CountBags()
-  local stale, open = 0, 0
-  if not (C_Container and C_Container.GetContainerItemInfo) then return stale, open end
+  local stale, open, unstacked = 0, 0, {}
+  if not (C_Container and C_Container.GetContainerItemInfo) then return stale, open, unstacked end
   for bag = 0, BAGS do
     for slot = 1, C_Container.GetContainerNumSlots(bag) do
       local info = C_Container.GetContainerItemInfo(bag, slot)
@@ -41,21 +61,32 @@ local function CountBags()
         local location = ItemLocation and ItemLocation:CreateFromBagAndSlot(bag, slot)
         local verdict = ns.Classify(info.itemID, info.hyperlink, location)
         if verdict.needsPrice and verdict.priceReason == "stale" then stale = stale + 1 end
-        if verdict.kind == "open" then open = open + 1 end
+        if verdict.kind == "open" then
+          open = open + 1
+        elseif ns.IsUnstackable(info.itemID) then
+          local entry = unstacked[info.itemID]
+          if not entry then
+            local name = info.itemName or (C_Item.GetItemNameByID and C_Item.GetItemNameByID(info.itemID))
+            entry = {name = name or "?", slots = 0}
+            unstacked[info.itemID] = entry
+          end
+          entry.slots = entry.slots + 1
+        end
       end
     end
   end
-  return stale, open
+  return stale, open, ns.UnstackedList(unstacked)
 end
 
 function ns.GetHints()
-  local stale, open = CountBags()
+  local stale, open, unstacked = CountBags()
   return ns.CollectHints({
     auctionator = Auctionator and Auctionator.API and Auctionator.API.v1 and true or false,
     tsm = TSM_API and TSM_API.GetCustomPriceValue and true or false,
     ahVisited = KeepOrSellDB.ahVisited == true,
     stale = stale,
     open = open,
+    unstacked = unstacked,
     unopened = ns.UnopenedProfessions(),
   }, KeepOrSellDB)
 end

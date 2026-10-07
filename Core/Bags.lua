@@ -18,6 +18,12 @@ local function Location(bag, slot)
   return ItemLocation and ItemLocation.CreateFromBagAndSlot and ItemLocation:CreateFromBagAndSlot(bag, slot)
 end
 
+-- true if the item never stacks (scrolls, clams, gear): Baganator may still show copies as one stack
+function ns.IsUnstackable(itemID)
+  local size = itemID and C_Item.GetItemMaxStackSizeByID and C_Item.GetItemMaxStackSizeByID(itemID)
+  return size == 1
+end
+
 -- Number of bag slots holding the item; each clam or box takes its own even when Baganator stacks them
 function ns.CountSlots(itemID)
   local slots = 0

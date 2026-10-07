@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Items that don't stack (scrolls, clams, duplicate gear) take one bag slot each, even when Baganator shows them as one stack. The tooltip now says so ("doesn't stack, takes 5 bag slots") and the hints button lists them ("Don't stack, each takes its own bag slot: 5× Scroll: CWAL").
+
 ## 0.15.0
 
 - New Open group: clams, boxes and other items with "Right Click to Open" (not locked) go there instead of staying in the bags waiting for an auction price. Each one takes its own bag slot even when Baganator shows them as one stack; the tooltip says how many slots they use and the hints button reminds you to open them. Option "Items to open" (on by default).
