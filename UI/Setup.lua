@@ -5,7 +5,9 @@ local L = ns.L
 
 -- Baganator profile with category groups; Baganator fills in its defaults for everything else.
 -- Imported as its own profile, so the player's old profile stays and can be picked again.
-local PROFILE = '{"addon":"Baganator","version":3,"kind":"profile","bag_view_type":"category","bank_view_type":"category"}'
+-- seen_welcome: without it Baganator shows its welcome window after the next login, and that window
+-- leaves the view on a single bag when it is closed.
+local PROFILE = '{"addon":"Baganator","version":3,"kind":"profile","bag_view_type":"category","bank_view_type":"category","seen_welcome":1}'
 local PROFILE_NAME = "KeepOrSell"
 
 -- state: {baganator, baganatorSetup, auctionator, tsm, ahVisited, scrap, questie}, all booleans.

@@ -176,6 +176,8 @@ class ImportTests(unittest.TestCase):
         self.assertEqual(profile["kind"], "profile")
         self.assertEqual(profile["bag_view_type"], "category")
         self.assertEqual(profile["bank_view_type"], "category")
+        # otherwise Baganator shows its welcome window after the next login, which switches back to a single bag
+        self.assertEqual(profile["seen_welcome"], 1)
         self.assertTrue(self.ns.GetSetupState().baganatorSetup)
 
     def test_failed_import_is_not_marked(self):
