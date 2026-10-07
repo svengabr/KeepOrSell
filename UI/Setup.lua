@@ -368,6 +368,9 @@ local function CreateSetupFrame()
   -- our logo in the round portrait, like Blizzard's own windows
   if frame.SetPortraitToAsset then
     frame:SetPortraitToAsset(LOGO)
+    -- cut the square icon down to the round emblem (media/logo.svg: centre 256/262, outer ring r 170 of 512),
+    -- so it fills the portrait ring and sits in its middle
+    if frame.SetPortraitTexCoord then frame:SetPortraitTexCoord(86 / 512, 426 / 512, 92 / 512, 432 / 512) end
   elseif ButtonFrameTemplate_HidePortrait then
     ButtonFrameTemplate_HidePortrait(frame)
   end
