@@ -17,7 +17,11 @@ function ns.CollectHints(state, db)
   elseif state.stale > 0 then
     table.insert(hints, L.HINT_STALE:format(db.maxAge, state.stale))
   end
-  if (state.open or 0) > 0 then table.insert(hints, L.HINT_OPEN:format(state.open)) end
+  if state.open == 1 then
+    table.insert(hints, L.HINT_OPEN_ONE)
+  elseif (state.open or 0) > 1 then
+    table.insert(hints, L.HINT_OPEN:format(state.open))
+  end
   if db.profession and #state.unopened > 0 then
     table.insert(hints, L.HINT_PROFESSIONS:format(table.concat(state.unopened, ", ")))
   end

@@ -63,7 +63,8 @@ class CollectTests(unittest.TestCase):
     def test_items_to_open(self):
         hints = self.collect(auctionator=True, ahVisited=True, stale=0, open=10)
         self.assertEqual(len(hints), 1)
-        self.assertIn("10 bag slot(s)", hints[0])
+        self.assertIn("10 bag slots", hints[0])
+        self.assertIn("takes up a bag slot", self.collect(auctionator=True, ahVisited=True, stale=0, open=1)[0])
 
 
 class OpenStateTests(unittest.TestCase):
@@ -78,7 +79,7 @@ class OpenStateTests(unittest.TestCase):
 
     def test_counts_slots_of_items_to_open(self):
         hints = list(self.ns.GetHints().values())
-        self.assertTrue(any("2 bag slot(s)" in h for h in hints), hints)
+        self.assertTrue(any("2 bag slots" in h for h in hints), hints)
         self.assertEqual(self.ns.CountSlots(20), 2)
 
 
