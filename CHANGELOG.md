@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.14.0
 
 - Setup window for new players: after login it shows what KeepOrSell still needs (Baganator, its category groups, Auctionator, a first price scan; Scrap and Questie optional) until everything is done or you tick "Don't show again". One click switches Baganator to category groups by importing a Baganator profile "KeepOrSell"; your old profile stays. The scan is explained step by step. Open it any time with `/kos setup`, the button in the options or the hints button in your bags.
 
