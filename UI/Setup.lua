@@ -117,8 +117,8 @@ local QUALITY = {[0] = {0.3, 0.3, 0.3}, [2] = {0.12, 1, 0}, [3] = {0, 0.44, 0.87
 local ICON_DONE = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local ICON_OPEN = "Interface\\RaidFrame\\ReadyCheck-Waiting"
 
-local WIDTH, HEIGHT = 760, 470
-local LEFT_W, RIGHT_W, PANEL_H = 278, 452, 394
+local WIDTH, HEIGHT = 760, 486
+local LEFT_W, RIGHT_W, PANEL_H = 278, 452, 410
 local INNER = RIGHT_W - 24
 
 local frame
@@ -240,29 +240,28 @@ local function ScanSteps(tile)
 end
 
 local function BuildLeft(panel)
-  local logo = panel:CreateTexture(nil, "ARTWORK")
-  logo:SetSize(54, 54)
-  logo:SetPoint("TOPLEFT", 14, -14)
-  logo:SetTexture(LOGO)
+  -- the logo already sits in the portrait, so the name leads here
   local name = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalHuge")
   name:SetFont(HEADER_FONT, 26, "")
   name:SetTextColor(1, 0.82, 0)
-  name:SetPoint("TOPLEFT", 76, -16)
+  name:SetPoint("TOPLEFT", 14, -16)
   name:SetText("KeepOrSell")
   local tagline = panel:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   tagline:SetFont(HEADER_FONT, 13, "")
   tagline:SetTextColor(unpack(PARCHMENT))
   tagline:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
+  tagline:SetWidth(LEFT_W - 28) -- the German tagline needs two lines
+  tagline:SetJustifyH("LEFT")
   tagline:SetText(L.SETUP_TAGLINE)
   local about = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-  about:SetPoint("TOPLEFT", 14, -78)
+  about:SetPoint("TOPLEFT", tagline, "BOTTOMLEFT", 0, -8)
   about:SetWidth(LEFT_W - 28)
   about:SetJustifyH("LEFT")
   about:SetText(L.SETUP_ABOUT)
 
   local bag = Box(panel, 0.04, 0.5)
   bag:SetSize(LEFT_W - 24, 5 * 28 + 12)
-  bag:SetPoint("TOPLEFT", 12, -116)
+  bag:SetPoint("TOPLEFT", 12, -126)
   for row, group in ipairs(SAMPLE) do
     local key, color, items = unpack(group)
     local y = -8 - (row - 1) * 28
@@ -275,19 +274,19 @@ local function BuildLeft(panel)
     end
   end
 
-  Heading(panel, L.SETUP_PROGRESS, 15, -278)
+  Heading(panel, L.SETUP_PROGRESS, 15, -292)
   frame.ProgressText = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-  frame.ProgressText:SetPoint("TOPLEFT", 16, -310)
+  frame.ProgressText:SetPoint("TOPLEFT", 16, -326)
   frame.Progress = CreateFrame("StatusBar", nil, panel)
   frame.Progress:SetSize(LEFT_W - 32, 12)
-  frame.Progress:SetPoint("TOPLEFT", 16, -330)
+  frame.Progress:SetPoint("TOPLEFT", 16, -346)
   frame.Progress:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
   frame.Progress:SetStatusBarColor(unpack(GOLD))
   local track = frame.Progress:CreateTexture(nil, "BACKGROUND")
   track:SetAllPoints()
   track:SetColorTexture(0, 0, 0, 0.6)
   frame.Done = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-  frame.Done:SetPoint("TOPLEFT", 16, -350)
+  frame.Done:SetPoint("TOPLEFT", 16, -366)
   frame.Done:SetWidth(LEFT_W - 32)
   frame.Done:SetJustifyH("LEFT")
 end
@@ -295,11 +294,11 @@ end
 local function BuildRight(panel)
   Heading(panel, L.SETUP_HEADER, 20, -10)
   local half = (INNER - 8) / 2
-  Tile(panel, "baganator", half, 56):SetPoint("TOPLEFT", 12, -46)
-  Tile(panel, "auctionator", half, 56):SetPoint("TOPRIGHT", -12, -46)
+  Tile(panel, "baganator", half, 66):SetPoint("TOPLEFT", 12, -46)
+  Tile(panel, "auctionator", half, 66):SetPoint("TOPRIGHT", -12, -46)
 
   local view = Tile(panel, "view", INNER, 84)
-  view:SetPoint("TOPLEFT", 12, -110)
+  view:SetPoint("TOPLEFT", 12, -120)
   view.SetUp = Button(view, L.SETUP_VIEW_BUTTON, function()
     manualView = not ns.SetupBaganator()
     ns.RefreshBaganator()
@@ -314,12 +313,12 @@ local function BuildRight(panel)
   view.Already:SetPoint("LEFT", view.SetUp, "RIGHT", 8, 0)
 
   local scan = Tile(panel, "scan", INNER, 92)
-  scan:SetPoint("TOPLEFT", 12, -202)
+  scan:SetPoint("TOPLEFT", 12, -212)
   ScanSteps(scan)
 
-  Heading(panel, L.SETUP_OPTIONAL, 14, -304)
-  Tile(panel, "scrap", half, 46):SetPoint("TOPLEFT", 12, -334)
-  Tile(panel, "questie", half, 46):SetPoint("TOPRIGHT", -12, -334)
+  Heading(panel, L.SETUP_OPTIONAL, 14, -316)
+  Tile(panel, "scrap", half, 46):SetPoint("TOPLEFT", 12, -346)
+  Tile(panel, "questie", half, 46):SetPoint("TOPRIGHT", -12, -346)
 end
 
 local function Refresh()
