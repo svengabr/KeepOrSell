@@ -1,8 +1,12 @@
 # KeepOrSell
 
+<img src="https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/logo.png" alt="KeepOrSell logo" width="128">
+
 Ever stood at a vendor wondering if that weird item in your bag is worth something? KeepOrSell sorts your bags for you. It tells you what to keep, what to put on the auction house and what's just junk.
 
 Good for new players, and for everyone who's tired of hovering over every single item.
+
+![KeepOrSell](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/01-overview.jpg)
 
 ## What it does
 
@@ -20,12 +24,24 @@ Hover over any item and the tooltip tells you which group it's in and why, for e
 
 Not sure about an item? Then it stays. No auction price means no junk. And green or better gear you could wear never counts as junk.
 
+![Auction house](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/02-auction-house.jpg)
+
+![Profession materials](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/03-profession.jpg)
+
+![Quest items](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/04-quest.jpg)
+
+![Junk](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/05-junk.jpg)
+
+![Disenchant](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/06-disenchant.jpg)
+
 ## A few extras
 
 - **Destroy button**: bags full and no vendor around? Click it and the cheapest junk in your bags is gone. Hover it to see what's next. It never touches rare or better items. If your bags are full while looting and the loot is worth more, the button lights up.
 - **Bag value**: a small line shows what your junk and your auction items are worth, e.g. "Junk 1g 20s · AH 15g".
 - **Hints**: if KeepOrSell needs something from you (like a fresh AH scan), a little button shows up in your bag window.
 - **Price sharing**: in a group, everyone with KeepOrSell keeps each other's auction prices fresh. Whoever has the newer price shares it.
+
+![Bag tools](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/07-bag-tools.jpg)
 
 ## What you need
 
@@ -53,6 +69,8 @@ You can change how much more the AH price has to be (default 2×), set a minimum
 If you mark something as "not junk" in Scrap, KeepOrSell won't argue.
 
 ---
+
+![Options](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/08-options.jpg)
 
 ## Deutsch
 
