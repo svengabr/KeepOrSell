@@ -7,6 +7,7 @@ local L = {
   SET_AH = "AuctionHouse",
   SET_DISENCHANT = "Disenchant",
   SET_OPEN = "Open",
+  SET_UNSTACKED = "Unstacked",
   OFF = "off",
   SILVER = "%d s",
   DAYS = "%d days",
@@ -165,6 +166,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.SET_AH = "Auktionshaus"
   L.SET_DISENCHANT = "Entzaubern"
   L.SET_OPEN = "Öffnen"
+  L.SET_UNSTACKED = "Stapelt nicht"
   L.OFF = "aus"
   L.SILVER = "%d s"
   L.DAYS = "%d Tage"

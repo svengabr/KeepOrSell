@@ -24,17 +24,24 @@ function ns.IsUnstackable(itemID)
   return size == 1
 end
 
+-- Baganator asks for every item on a refresh; count all bags once per frame
+local counts, countedAt
+
 -- Number of bag slots holding the item; each clam or box takes its own even when Baganator stacks them
 function ns.CountSlots(itemID)
-  local slots = 0
-  if not (itemID and C_Container and C_Container.GetContainerItemInfo) then return slots end
-  for bag = 0, BAGS do
-    for slot = 1, C_Container.GetContainerNumSlots(bag) do
-      local info = C_Container.GetContainerItemInfo(bag, slot)
-      if info and info.itemID == itemID then slots = slots + 1 end
+  if not (itemID and C_Container and C_Container.GetContainerItemInfo) then return 0 end
+  local now = GetTime and GetTime()
+  if not (now and countedAt == now) then
+    counts = {}
+    for bag = 0, BAGS do
+      for slot = 1, C_Container.GetContainerNumSlots(bag) do
+        local info = C_Container.GetContainerItemInfo(bag, slot)
+        if info and info.itemID then counts[info.itemID] = (counts[info.itemID] or 0) + 1 end
+      end
     end
+    countedAt = now
   end
-  return slots
+  return counts[itemID] or 0
 end
 
 -- Both buttons update on the same events; one scan per frame is enough

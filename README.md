@@ -10,6 +10,7 @@ Your bag items end up in these groups:
 
 - **Quest**: stuff a quest still needs. Keep it.
 - **Open**: clams, boxes and everything else with "Right Click to Open". Each one takes its own bag slot, even when Baganator shows ten of them as one stack. Open them to free the space.
+- **Unstacked**: several copies of something that doesn't stack (scrolls, for example). Baganator would show them as one stack; here you see every slot they take.
 - **Profession**: materials for recipes that still give skill points, whether you know them already or can still learn them, plus those recipes themselves. Keep it, even if the AH pays well.
 - **AuctionHouse**: sells for at least twice the vendor price on the AH. Put it up for sale.
 - **Junk**: grey items, cheap trade goods nobody needs, gear your class can't ever wear, recipes you already know. Scrap sells it at the next vendor.
@@ -61,6 +62,7 @@ Schon mal beim Händler gestanden und dich gefragt, ob das komische Item in der 
 
 - **Quest**: brauchst du noch für eine Quest. Behalten.
 - **Öffnen**: Muscheln, Kisten und alles mit „Zum Öffnen rechtsklicken“. Jedes Stück belegt einen eigenen Taschenplatz, auch wenn Baganator zehn davon als einen Stapel zeigt. Aufmachen, dann ist wieder Platz.
+- **Stapelt nicht**: mehrere Exemplare von etwas, das nicht stapelt (zum Beispiel Schriftrollen). Baganator würde sie als einen Stapel zeigen, hier siehst du jeden Platz, den sie belegen.
 - **Beruf**: Material für Rezepte, die noch Skillpunkte geben, egal ob du sie schon kannst oder noch lernen kannst, und diese Rezepte selbst. Behalten, auch wenn das AH gut zahlt.
 - **Auktionshaus**: bringt im AH mindestens das Doppelte vom Händlerpreis. Reinstellen.
 - **Schrott**: graues Zeug, billige Handwerkswaren, Ausrüstung, die deine Klasse nie tragen kann, Rezepte, die du schon kennst. Scrap verkauft das beim nächsten Händler.
