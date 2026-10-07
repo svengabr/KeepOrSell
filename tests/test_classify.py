@@ -208,6 +208,18 @@ class DecideTests(unittest.TestCase):
         self.assertIsNone(verdict.kind)
         self.assertTrue(verdict.needsPrice)
 
+    def test_openable_goes_to_open_group(self):
+        self.assertEqual(self.kind(classID=15, openable=True, prices={"vendor": 15}), "open")
+        self.assertEqual(self.kind(classID=15, openable=True, prices=self.FRESH_AH), "open")
+
+    def test_openable_quest_item_stays_quest(self):
+        self.assertEqual(self.kind(classID=12, openable=True), "quest")
+
+    def test_openable_follows_option(self):
+        self.db.openable = False
+        verdict = self.decide(classID=15, openable=True, prices={"vendor": 15})
+        self.assertIsNone(verdict.kind)
+
     def test_stale_price(self):
         verdict = self.decide(classID=7, prices={"ah": 120, "vendor": 100, "age": 9, "hasAge": True})
         self.assertIsNone(verdict.kind)
@@ -256,6 +268,58 @@ class ClassRestrictionTests(unittest.TestCase):
         self.ns.ItemFacts(15, "link15")
         self.ns.ItemFacts(15, "link15")
         self.assertEqual(self.rt.eval("CALLS"), 2)
+
+
+class OpenableTests(unittest.TestCase):
+    STUBS = """
+    ITEM_OPENABLE, LOCKED = "<Right Click to Open>", "Locked"
+    LINES = {
+      [20] = {{leftText = "Small Barnacled Clam"}, {leftText = "<Right Click to Open>"}},
+      [21] = {{leftText = "Battered Junkbox"}, {leftText = "Locked"}, {leftText = "<Right Click to Open>"}},
+      [22] = {{leftText = "Healing Potion"}},
+    }
+    ITEMS[20] = {"Small Barnacled Clam", 15, 0, "", 15}
+    ITEMS[21] = {"Battered Junkbox", 15, 0, "", 0}
+    ITEMS[22] = {"Healing Potion", 0, 1, "", 40}
+    C_TooltipInfo = {GetItemByID = function(id) CALLS = (CALLS or 0) + 1; return {lines = LINES[id] or {}} end}
+    """
+
+    def setUp(self):
+        self.rt, self.ns = load(stubs=self.STUBS)
+
+    def test_right_click_to_open(self):
+        self.assertTrue(self.ns.ItemFacts(20, "link20").openable)
+        self.assertEqual(self.ns.Classify(20, "link20").kind, "open")
+
+    def test_locked_box_not_openable(self):
+        self.assertFalse(self.ns.ItemFacts(21, "link21").openable)
+
+    def test_other_items_not_openable(self):
+        self.assertFalse(self.ns.ItemFacts(22, "link22").openable)
+
+    def test_colored_line(self):
+        self.rt.execute('LINES[20][2].leftText = "|cff00ff00<Right Click to Open>|r"')
+        self.assertTrue(self.ns.ItemFacts(20, "link20").openable)
+
+    def test_bag_slot_with_loot(self):
+        self.rt.execute("""
+          LINES[23] = {{leftText = "Kleine rankenfuessige Muschel"}}
+          ITEMS[23] = {"Clam", 7, 0, "", 15}
+          C_Container = {GetContainerItemInfo = function(bag, slot) return {itemID = 23, hasLoot = slot == 1} end}
+          function SLOT(n) return {IsBagAndSlot = function() return true end,
+            GetBagAndSlot = function() return 0, n end, IsValid = function() return true end} end
+        """)
+        self.assertTrue(self.ns.ItemFacts(23, "link23", self.rt.eval("SLOT(1)")).openable)
+        self.assertFalse(self.ns.ItemFacts(23, "link23", self.rt.eval("SLOT(2)")).openable)
+        self.assertFalse(self.ns.ItemFacts(23, "link23").openable)
+
+    def test_locked_box_with_loot_not_openable(self):
+        self.assertFalse(self.ns.IsOpenable(self.rt.eval('{{leftText = "Locked"}}'), "<Right Click to Open>", "Locked", True))
+
+    def test_one_tooltip_read_per_item(self):
+        self.ns.ItemFacts(20, "link20")
+        self.ns.ItemFacts(20, "link20")
+        self.assertEqual(self.rt.eval("CALLS"), 1)
 
 
 class CacheTests(unittest.TestCase):

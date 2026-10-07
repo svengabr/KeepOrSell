@@ -35,7 +35,7 @@ function ns.RegisterBaganator()
     return tex
   end, {default_position = "top_left", priority = 1})
 
-  -- Report quest items, profession reagents, items worth auctioning and items to disenchant as item sets. Baganator shows each set as its
+  -- Report quest items, items to open, profession reagents, items worth auctioning and items to disenchant as item sets. Baganator shows each set as its
   -- own group in its equipment sets category, without any setup by the player.
   -- Cheap items are handled by Scrap (Scrap.lua).
   if KeepOrSellDB.setSource and api.RegisterItemSetSource then
@@ -44,13 +44,14 @@ function ns.RegisterBaganator()
       local location = guid and C_Item.GetItemLocation and C_Item.GetItemLocation(guid)
       return ns.ItemSets(ItemIDFromGUID(guid), link, location)
     end, function()
-      return {ns.L.SET_QUEST, ns.L.SET_PROFESSION, ns.L.SET_AH, ns.L.SET_DISENCHANT}
+      return {ns.L.SET_QUEST, ns.L.SET_OPEN, ns.L.SET_PROFESSION, ns.L.SET_AH, ns.L.SET_DISENCHANT}
     end)
   end
 end
 
 local INFO = {
   quest = {name = ns.L.SET_QUEST, iconTexture = ICON},
+  open = {name = ns.L.SET_OPEN, iconTexture = "Interface\\Icons\\INV_Box_01"},
   profession = {name = ns.L.SET_PROFESSION, iconTexture = "Interface\\Icons\\INV_Misc_Note_01"},
   ah = {name = ns.L.SET_AH, iconTexture = "Interface\\Icons\\INV_Misc_Coin_01"},
   disenchant = {name = ns.L.SET_DISENCHANT, iconTexture = "Interface\\Icons\\INV_Enchant_Disenchant"},

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- New Open group: clams, boxes and other items with "Right Click to Open" (not locked) go there instead of staying in the bags waiting for an auction price. Each one takes its own bag slot even when Baganator shows them as one stack; the tooltip says how many slots they use and the hints button reminds you to open them. Option "Items to open" (on by default).
+
 ## 0.14.0
 
 - Setup window for new players: after login it shows what KeepOrSell still needs (Baganator, its category groups, Auctionator, a first price scan; Scrap and Questie optional) until everything is done or you tick "Don't show again". One click switches Baganator to category groups by importing a Baganator profile "KeepOrSell"; your old profile stays. The scan is explained step by step. Open it any time with `/kos setup`, the button in the options or the hints button in your bags.

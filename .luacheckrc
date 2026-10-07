@@ -83,6 +83,8 @@ read_globals = {
 
   -- Constants
   "ERR_INV_FULL",
+  "ITEM_OPENABLE",
   "ITEM_SPELL_KNOWN",
+  "LOCKED",
   "NUM_BAG_SLOTS",
 }

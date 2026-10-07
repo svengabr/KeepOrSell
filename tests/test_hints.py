@@ -60,6 +60,28 @@ class CollectTests(unittest.TestCase):
         self.assertEqual(self.collect(auctionator=True, ahVisited=True, stale=0, unopened=["Tailoring"]), [])
 
 
+    def test_items_to_open(self):
+        hints = self.collect(auctionator=True, ahVisited=True, stale=0, open=10)
+        self.assertEqual(len(hints), 1)
+        self.assertIn("10 bag slot(s)", hints[0])
+
+
+class OpenStateTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Hints.lua"), STUBS + """
+        ITEM_OPENABLE = "<Right Click to Open>"
+        ITEMS[20] = {"Small Barnacled Clam", 15, 0, "", 15}
+        BAG = {[1] = 20, [2] = 20, [3] = 9}
+        C_TooltipInfo = {GetItemByID = function(id)
+          return {lines = id == 20 and {{leftText = ITEM_OPENABLE}} or {{leftText = "x"}}} end}
+        """)
+
+    def test_counts_slots_of_items_to_open(self):
+        hints = list(self.ns.GetHints().values())
+        self.assertTrue(any("2 bag slot(s)" in h for h in hints), hints)
+        self.assertEqual(self.ns.CountSlots(20), 2)
+
+
 class StateTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(CORE_FILES + ("Hints.lua",), STUBS)

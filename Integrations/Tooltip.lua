@@ -92,8 +92,9 @@ local function UselessText(verdict)
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
--- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying. Pure apart from money formatting.
-function ns.TooltipText(verdict, prices, db)
+-- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying; slots = bag slots the item takes
+-- (only for items to open). Pure apart from money formatting.
+function ns.TooltipText(verdict, prices, db, slots)
   prices = prices or {}
   local kind, reason = verdict.kind, verdict.reason
   local text
@@ -110,6 +111,8 @@ function ns.TooltipText(verdict, prices, db)
     end
   elseif kind == "quest" then
     text = reason == "done" and L.TIP_QUEST_DONE or reason == "open" and L.TIP_QUEST_OPEN or L.TIP_QUEST_ITEM
+  elseif kind == "open" then
+    text = (slots or 0) > 1 and L.TIP_OPEN_SLOTS:format(slots) or L.TIP_OPEN
   elseif kind == "profession" then
     text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING or L.TIP_PROFESSION
   elseif kind == "ah" then
@@ -161,7 +164,9 @@ local function AddLine(tooltip, data)
   -- buyback/merchant items have a GUID but an empty location, which IsValid() rejects with an error
   if location and not (location.IsBagAndSlot and location:IsBagAndSlot()) then location = nil end
   local facts = ns.ItemFacts(id, link, location)
-  local text = ns.TooltipText(ns.Decide(facts, KeepOrSellDB), facts.prices, KeepOrSellDB)
+  local verdict = ns.Decide(facts, KeepOrSellDB)
+  local slots = verdict.kind == "open" and ns.CountSlots(id) or nil
+  local text = ns.TooltipText(verdict, facts.prices, KeepOrSellDB, slots)
   if text then
     tooltip:AddLine(text, 1, 1, 1, true)
     tooltip:Show()

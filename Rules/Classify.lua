@@ -5,7 +5,7 @@ local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
 -- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, classItem, unusable, plain, bound, reagent, upcoming,
--- recipe, prices, priceData, disenchant}
+-- recipe, prices, priceData, disenchant, openable}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
@@ -20,7 +20,10 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
 -- disenchant = {outcomes, value, skillUp} when the player is an enchanter and can disenchant the item
--- Returns {kind = "quest" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
+-- openable = the bag slot has loot or the tooltip says "<Right Click to Open>", and the tooltip doesn't
+-- say "Locked" (clams, boxes): each takes its own bag slot even when
+-- Baganator shows them stacked, so they go to the Open group to be opened
+-- Returns {kind = "quest" | "open" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
 -- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
 -- Kept wearable gear also gets {disenchant, bound, ahTrusted} for the "if you no longer need it" hint.
 -- needsPrice = the item stays only because its auction price is missing or too old. Pure.
@@ -34,6 +37,7 @@ function ns.Decide(facts, db)
   if questItem and not doneQuestItem then
     return {kind = "quest", reason = "questitem", quest = facts.questItemFor}
   end
+  if db.openable and facts.openable then return {kind = "open"} end
   if facts.tool then return {reason = "tool"} end
   if facts.classItem then return {reason = "classitem"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
@@ -115,17 +119,46 @@ function ns.HasUnmetClassRequirement(lines, lineType, raceClassType)
   return false
 end
 
-local restricted = {} -- itemID -> bool; a class restriction never changes during a session
+local function Uncolored(text)
+  return type(text) == "string" and (text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")) or nil
+end
 
-local function ForOtherClass(itemID)
-  if restricted[itemID] ~= nil then return restricted[itemID] end
+-- true if the item can be opened and isn't locked: hasLoot from the bag slot, or the tooltip line
+-- "<Right Click to Open>"; a "Locked" line always wins. Pure.
+function ns.IsOpenable(lines, openText, lockedText, hasLoot)
+  local openable = hasLoot and true or false
+  for _, line in ipairs(lines or {}) do
+    local text = Uncolored(line.leftText)
+    if lockedText and text == lockedText then return false end
+    if openText and text == openText then openable = true end
+  end
+  return openable
+end
+
+-- itemID -> {forOtherClass, lines}; neither changes during a session
+local tooltipFacts = {}
+
+local function TooltipFacts(itemID)
+  if tooltipFacts[itemID] then return tooltipFacts[itemID] end
+  if not (C_TooltipInfo and C_TooltipInfo.GetItemByID) then return {} end
+  local data = C_TooltipInfo.GetItemByID(itemID)
+  if not (data and data.lines and #data.lines > 0) then return {} end -- not loaded yet, ask again later
   local lineType = Enum and Enum.TooltipDataLineType and Enum.TooltipDataLineType.UsageRequirement
   local raceClass = Enum and Enum.TooltipDataUsageRequirementType and Enum.TooltipDataUsageRequirementType.RaceClass
-  if not (lineType and raceClass and C_TooltipInfo and C_TooltipInfo.GetItemByID) then return false end
-  local data = C_TooltipInfo.GetItemByID(itemID)
-  if not (data and data.lines and #data.lines > 0) then return false end -- not loaded yet, ask again later
-  restricted[itemID] = ns.HasUnmetClassRequirement(data.lines, lineType, raceClass)
-  return restricted[itemID]
+  tooltipFacts[itemID] = {
+    forOtherClass = lineType and raceClass and ns.HasUnmetClassRequirement(data.lines, lineType, raceClass) or false,
+    lines = data.lines,
+  }
+  return tooltipFacts[itemID]
+end
+
+-- the bag slot says the item has loot (clams, boxes); works in every client language
+local function HasLoot(location)
+  if not (location and location.IsBagAndSlot and location:IsBagAndSlot() and location.GetBagAndSlot) then return false end
+  if location.IsValid and not location:IsValid() then return false end
+  if not (C_Container and C_Container.GetContainerItemInfo) then return false end
+  local info = C_Container.GetContainerItemInfo(location:GetBagAndSlot())
+  return info and info.hasLoot or false
 end
 
 local function Quality(itemID, itemLink)
@@ -171,6 +204,7 @@ function ns.ItemFacts(itemID, itemLink, location)
   local _, _, _, equipLoc, _, classID, subclassID = C_Item.GetItemInfoInstant(itemID)
   local playerClass = UnitClass and select(2, UnitClass("player"))
   local questOnly = ns.IsQuestOnlyItem(itemID)
+  local fromTooltip = TooltipFacts(itemID)
   return {
     quest = ns.GetObjectiveState(itemID),
     questie = ns.GetQuestieQuest(itemID),
@@ -180,7 +214,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID),
     classItem = ns.IsClassItem(playerClass, itemID),
-    unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or ForOtherClass(itemID),
+    unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass or false,
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
     reagent = ns.IsSkillUpReagent(itemID),
@@ -189,6 +223,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     prices = ns.GetPrices(itemLink),
     priceData = ns.HasPriceData(),
     disenchant = DisenchantFacts(itemID, itemLink, classID),
+    openable = ns.IsOpenable(fromTooltip.lines, ITEM_OPENABLE, LOCKED, HasLoot(location)),
   }
 end
 

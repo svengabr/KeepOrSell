@@ -57,7 +57,7 @@ Auctionator = {API = {v1 = {
   GetAuctionAgeByItemLink = function(caller, link) return AGE[link] or 0 end,
 }}}
 KeepOrSellDB = {factor = 2, minProfit = 0, maxAge = 7, scrap = true, gear = true, plainGear = true,
-  recipeJunk = true, profession = true, tooltip = true, hints = true, ahVisited = true}
+  recipeJunk = true, profession = true, tooltip = true, hints = true, ahVisited = true, openable = true}
 """
 
 CORE_FILES = ("Locales.lua", "Objectives.lua", "Prices.lua", "TSM.lua", "Gear.lua", "Professions.lua", "Questie.lua", "Classify.lua")

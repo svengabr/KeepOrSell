@@ -18,6 +18,19 @@ local function Location(bag, slot)
   return ItemLocation and ItemLocation.CreateFromBagAndSlot and ItemLocation:CreateFromBagAndSlot(bag, slot)
 end
 
+-- Number of bag slots holding the item; each clam or box takes its own even when Baganator stacks them
+function ns.CountSlots(itemID)
+  local slots = 0
+  if not (itemID and C_Container and C_Container.GetContainerItemInfo) then return slots end
+  for bag = 0, BAGS do
+    for slot = 1, C_Container.GetContainerNumSlots(bag) do
+      local info = C_Container.GetContainerItemInfo(bag, slot)
+      if info and info.itemID == itemID then slots = slots + 1 end
+    end
+  end
+  return slots
+end
+
 -- Both buttons update on the same events; one scan per frame is enough
 local scanned, scannedAt
 

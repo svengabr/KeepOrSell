@@ -51,6 +51,12 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("AH.link4 = 40; KeepOrSellDB.minProfit = 1")
         self.assertIn("(less than 100c profit)", self.show(4))
 
+    def test_open(self):
+        verdict = self.rt.eval('{kind = "open"}')
+        db = self.rt.eval("KeepOrSellDB")
+        self.assertIn("Open (right-click) – 10 in your bags", self.ns.TooltipText(verdict, None, db, 10))
+        self.assertIn("Open (right-click) – frees", self.ns.TooltipText(verdict, None, db, 1))
+
     def test_quest_done(self):
         self.assertIn("objective done", self.show(1))
 
