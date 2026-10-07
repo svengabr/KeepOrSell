@@ -135,6 +135,8 @@ function ns.TooltipText(verdict, prices, db)
     text = WearableText(verdict, prices)
   elseif reason == "tool" then
     text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
+  elseif reason == "classitem" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_CLASS_ITEM
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NO_PRICE
   elseif verdict.needsPrice and verdict.priceReason == "stale" then

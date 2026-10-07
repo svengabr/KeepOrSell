@@ -99,6 +99,7 @@ local L = {
   TIP_BELOW_PROFIT = "(less than %s profit)",
   TIP_PLAIN = "plain gear",
   TIP_TOOL = "profession tool",
+  TIP_CLASS_ITEM = "your class needs it",
   TIP_UPCOMING = "Profession – reagent for a recipe of your profession you can still learn",
   TIP_RECIPE_KNOWN = "recipe already known",
   TIP_RECIPE_OTHER = "recipe for a profession you don't have",
@@ -205,6 +206,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_BELOW_PROFIT = "(weniger als %s Gewinn)"
   L.TIP_PLAIN = "einfache Ausrüstung"
   L.TIP_TOOL = "Berufswerkzeug"
+  L.TIP_CLASS_ITEM = "braucht deine Klasse"
   L.TIP_UPCOMING = "Beruf – Zutat für ein Rezept deines Berufs, das du noch lernen kannst"
   L.TIP_RECIPE_KNOWN = "Rezept bereits bekannt"
   L.TIP_RECIPE_OTHER = "Rezept für einen Beruf, den du nicht hast"

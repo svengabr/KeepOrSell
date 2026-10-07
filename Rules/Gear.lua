@@ -75,6 +75,32 @@ function ns.IsProfessionTool(itemID)
   return itemID ~= nil and PROFESSION_TOOLS[itemID] == true
 end
 
+-- Spell reagents and class tools by class. Some come from class quests, so QuestieDB sees them as
+-- handed-out quest items; others drop or are worth auctioning, but the class needs them all the same.
+local CLASS_ITEMS = {
+  DRUID = Set(17021, 17026, 17034, 17035, 17036, 17037, 17038), -- Wild Berries, Wild Thornroot, Rebirth seeds
+  MAGE = Set(17020, 17031, 17032, 17056), -- Arcane Powder, Rune of Teleportation, Rune of Portals, Light Feather
+  PALADIN = Set(17033, 21177), -- Symbol of Divinity, Symbol of Kings
+  PRIEST = Set(17028, 17029, 17056), -- Holy Candle, Sacred Candle, Light Feather
+  ROGUE = Set(
+    5060, 5140, 5530, -- Thieves' Tools, Flash Powder, Blinding Powder
+    6947, 6949, 6950, 8926, 8927, 8928, -- Instant Poison I-VI
+    2892, 2893, 8984, 8985, 20844, -- Deadly Poison I-V
+    3775, 3776, 5237, 6951, 9186, -- Crippling Poison I-II, Mind-numbing Poison I-III
+    10918, 10920, 10921, 10922, -- Wound Poison I-IV
+    2928, 2930, 5173, 8923, 8924, -- poison reagents: Dust of Decay, Essence of Pain, Deathweed, Essence of Agony,
+    3371, 3372, 8925 -- Dust of Deterioration, and the Empty, Leaded and Crystal Vials
+  ),
+  SHAMAN = Set(5175, 5176, 5177, 5178, 17030), -- Earth, Fire, Water and Air Totem, Ankh
+  WARLOCK = Set(6265, 5565, 16583), -- Soul Shard, Infernal Stone, Demonic Figurine
+}
+
+-- true = the player's class needs the item for its spells or abilities; it must never be sold
+function ns.IsClassItem(classFile, itemID)
+  local items = classFile and CLASS_ITEMS[classFile]
+  return items ~= nil and itemID ~= nil and items[itemID] == true
+end
+
 -- true = this class can never wear the item; false otherwise, also for unknown classes and subclasses
 function ns.IsUnusableGear(classFile, classID, subclassID, equipLoc)
   if equipLoc == "INVTYPE_CLOAK" then return false end
