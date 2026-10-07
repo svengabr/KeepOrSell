@@ -355,6 +355,8 @@ local function Refresh()
   local baganator = ns.IsDependencyReady("Baganator")
   view.SetUp:SetEnabled(baganator)
   view.Already:SetEnabled(baganator)
+  -- "Set up" stays to import the profile again (e.g. after picking another one in Baganator)
+  view.Already:SetShown(not ns.GetSetupState().baganatorSetup)
 
   local done, total = ns.SetupProgress(steps)
   frame.ProgressText:SetText(L.SETUP_PROGRESS_TEXT:format(done, total))
