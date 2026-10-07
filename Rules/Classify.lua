@@ -4,7 +4,7 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, unusable, plain, bound, reagent, upcoming,
+-- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, classItem, unusable, plain, bound, reagent, upcoming,
 -- recipe, prices, priceData, disenchant}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
@@ -14,6 +14,8 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
 -- group like a reagent of a known recipe, even when worth auctioning
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
+-- classItem = a spell reagent or tool of the player's class (Thieves' Tools, Light Feather ...), kept no matter
+-- what, even when the class quest that handed it out is done
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
@@ -33,6 +35,7 @@ function ns.Decide(facts, db)
     return {kind = "quest", reason = "questitem", quest = facts.questItemFor}
   end
   if facts.tool then return {reason = "tool"} end
+  if facts.classItem then return {reason = "classitem"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
   if db.profession and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
@@ -176,6 +179,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     classID = classID,
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID),
+    classItem = ns.IsClassItem(playerClass, itemID),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or ForOtherClass(itemID),
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),

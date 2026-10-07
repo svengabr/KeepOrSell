@@ -72,6 +72,18 @@ class PlainGearTests(unittest.TestCase):
         self.assertFalse(self.ns.IsProfessionTool(25))  # Worn Shortsword
         self.assertFalse(self.ns.IsProfessionTool(None))
 
+    def test_class_items_belong_to_their_class(self):
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 5060))  # Thieves' Tools
+        self.assertTrue(self.ns.IsClassItem("SHAMAN", 5175))  # Earth Totem
+        self.assertTrue(self.ns.IsClassItem("DRUID", 17034))  # Maple Seed
+        self.assertTrue(self.ns.IsClassItem("PALADIN", 21177))  # Symbol of Kings
+        self.assertTrue(self.ns.IsClassItem("MAGE", 17056))  # Light Feather
+        self.assertTrue(self.ns.IsClassItem("PRIEST", 17056))
+        self.assertFalse(self.ns.IsClassItem("WARRIOR", 5060))
+        self.assertFalse(self.ns.IsClassItem("ROGUE", 25))
+        self.assertFalse(self.ns.IsClassItem(None, 5060))
+        self.assertFalse(self.ns.IsClassItem("ROGUE", None))
+
 
 class DecideTests(unittest.TestCase):
     def setUp(self):
@@ -164,6 +176,23 @@ class DecideTests(unittest.TestCase):
             self.assertEqual(verdict.reason, "tool")
         self.assertIsNone(self.kind(prices=self.FRESH_AH, plain=True, **tool))
         self.assertEqual(self.kind(quest="open", prices=self.CHEAP, **tool), "quest")
+
+    def test_class_item_never_junk(self):
+        # Thieves' Tools: QuestieDB lists them as handed out by a class quest the rogue has done
+        self.db.questie = True
+        done = self.rt.eval("{name = 'X', level = 15, done = true}")
+        tools = {"classID": 15, "classItem": True, "questOnly": True, "bound": True, "questItemFor": done}
+        verdict = self.decide(prices=self.CHEAP, **tools)
+        self.assertIsNone(verdict.kind)
+        self.assertEqual(verdict.reason, "classitem")
+        tools["classItem"] = False
+        self.assertEqual(self.kind(prices=self.CHEAP, **tools), "junk")
+        # a reagent worth auctioning stays with the class that casts with it
+        self.assertIsNone(self.kind(classID=5, classItem=True, prices=self.FRESH_AH))
+        self.assertEqual(self.kind(classID=5, prices=self.FRESH_AH), "ah")
+        # an open quest still shows it in the quest group
+        open_quest = self.rt.eval("{name = 'X', level = 15}")
+        self.assertEqual(self.kind(classItem=True, questOnly=True, questItemFor=open_quest), "quest")
 
     def test_unusable_gear_switch_off(self):
         self.db.gear = False
