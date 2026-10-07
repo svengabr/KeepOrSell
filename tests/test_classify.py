@@ -74,6 +74,8 @@ class PlainGearTests(unittest.TestCase):
 
     def test_class_items_belong_to_their_class(self):
         self.assertTrue(self.ns.IsClassItem("ROGUE", 5060))  # Thieves' Tools
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 6947))  # Instant Poison
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 5173))  # Deathweed
         self.assertTrue(self.ns.IsClassItem("SHAMAN", 5175))  # Earth Totem
         self.assertTrue(self.ns.IsClassItem("DRUID", 17034))  # Maple Seed
         self.assertTrue(self.ns.IsClassItem("PALADIN", 21177))  # Symbol of Kings

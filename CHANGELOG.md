@@ -2,7 +2,7 @@
 
 ## 0.13.2
 
-- Class items are never junk: spell reagents and class tools of your class (Thieves' Tools, shaman totems, Light Feather, Rebirth seeds, candles and symbols for the group buffs, Soul Shards …) stay in your bags, even when the class quest that handed them out is done or they would be worth auctioning ([#1](https://github.com/svengabr/KeepOrSell/issues/1)).
+- Class items are never junk: spell reagents and class tools of your class (Thieves' Tools, poisons and their reagents, shaman totems, Light Feather, Rebirth seeds, candles and symbols for the group buffs, Soul Shards …) stay in your bags, even when the class quest that handed them out is done or they would be worth auctioning ([#1](https://github.com/svengabr/KeepOrSell/issues/1)).
 
 ## 0.13.1
 
