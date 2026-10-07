@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.15.1
 
 - Items that don't stack (scrolls, clams, duplicate gear) take one bag slot each, even when Baganator shows them as one stack. The tooltip now says so ("doesn't stack, takes 5 bag slots") and the hints button lists them ("Don't stack, each takes its own bag slot: 5× Scroll: CWAL").
 - New Unstacked group: copies of an item that doesn't stack and has no other group (e.g. mage scrolls) show one slot each in Baganator instead of a single stack. Gear stays with the gear, junk with the junk.
