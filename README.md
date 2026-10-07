@@ -36,8 +36,9 @@ Not sure about an item? Then it stays. No auction price means no junk. And green
 ## Getting started
 
 1. Install it via the [CurseForge](https://www.curseforge.com/wow/addons/keeporsell) app or drop it into `Interface/AddOns`.
-2. Scan the auction house once with Auctionator.
-3. Open each of your profession windows once, so KeepOrSell knows your recipes.
+2. Log in: a setup window shows what's still missing. One click there switches Baganator to category groups (as its own Baganator profile "KeepOrSell", your old one stays), and it explains how to scan with Auctionator. Open it again any time with `/kos setup`.
+3. Scan the auction house once with Auctionator.
+4. Open each of your profession windows once, so KeepOrSell knows your recipes.
 
 That's it. The groups show up in Baganator inside the equipment sets category. Want them somewhere else? Move that category in Baganator (Bags → cog → Categories).
 
@@ -71,7 +72,7 @@ Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und
 
 **Optional für Fortgeschrittene:** TradeSkillMaster. Hat Auctionator keinen Preis, nimmt KeepOrSell den von TSM.
 
-**Loslegen:** installieren, einmal das AH mit Auctionator scannen, jedes Berufsfenster einmal öffnen. Fertig. Einstellungen gibt's unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`.
+**Loslegen:** installieren und einloggen. Ein Einrichtungsfenster zeigt, was noch fehlt, schaltet Baganator mit einem Klick auf Kategorie-Gruppen um (als eigenes Baganator-Profil „KeepOrSell“, dein altes bleibt) und erklärt den Scan mit Auctionator. Wieder öffnen mit `/kos setup`. Dann einmal das AH mit Auctionator scannen und jedes Berufsfenster einmal öffnen. Fertig. Einstellungen gibt's unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`.
 
 **Unterstützen:** KeepOrSell ist kostenlos und bleibt es auch. Wenn es dir das Spiel ein bisschen leichter macht, kannst du mir [einen Kaffee ausgeben](https://buymeacoffee.com/conoar).
 
