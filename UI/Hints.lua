@@ -58,7 +58,7 @@ local function ShowTooltip(self)
   GameTooltip:SetOwner(self, "ANCHOR_TOP")
   GameTooltip:SetText("KeepOrSell")
   for _, hint in ipairs(self.hints or {}) do GameTooltip:AddLine(hint, 1, 1, 1, true) end
-  GameTooltip:AddLine(L.HINT_CLICK, 0.6, 0.6, 0.6, true)
+  GameTooltip:AddLine(ns.IsSetupComplete() and L.HINT_CLICK or L.HINT_CLICK_SETUP, 0.6, 0.6, 0.6, true)
   GameTooltip:Show()
 end
 
@@ -73,7 +73,10 @@ local function CreateButton()
   frame.Text:SetPoint("LEFT", frame.Icon, "RIGHT", 2, 0)
   frame:SetScript("OnEnter", ShowTooltip)
   frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  frame:SetScript("OnClick", function() ns.OpenOptions() end)
+  -- leads to the setup while required steps are open, otherwise to the options
+  frame:SetScript("OnClick", function()
+    if ns.IsSetupComplete() then ns.OpenOptions() else ns.ShowSetup() end
+  end)
   frame:Hide()
   return frame
 end

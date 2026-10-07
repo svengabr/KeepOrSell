@@ -70,6 +70,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.RegisterDestroy()
     ns.RegisterBagValue()
     C_Timer.After(HINT_DELAY, inBags and ScheduleHints or ns.PrintHints)
+    C_Timer.After(HINT_DELAY, ns.MaybeShowSetup)
     frame:RegisterEvent("QUEST_LOG_UPDATE")
     frame:RegisterEvent("TRADE_SKILL_SHOW")
     frame:RegisterEvent("TRADE_SKILL_LIST_UPDATE")
@@ -108,6 +109,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
   elseif event == "AUCTION_HOUSE_SHOW" then
     KeepOrSellDB.ahVisited = true
     ns.ShareAuctionHouseShown()
+    ns.UpdateSetup()
   elseif event == "AUCTION_HOUSE_CLOSED" then
     -- an Auctionator scan brings new prices
     ns.RefreshBaganator()
@@ -125,4 +127,7 @@ frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
 if C_AuctionHouse and C_AuctionHouse.ReplicateItems then frame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE") end
 
 SLASH_KEEPORSELL1 = "/kos"
-SlashCmdList.KEEPORSELL = function() ns.OpenOptions() end
+-- /kos opens the options, /kos setup the setup window
+SlashCmdList.KEEPORSELL = function(msg)
+  if msg and msg:lower():match("^%s*setup%s*$") then ns.ShowSetup() else ns.OpenOptions() end
+end

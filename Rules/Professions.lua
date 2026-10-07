@@ -60,13 +60,14 @@ end
 
 local index, upcomingIndex -- {[itemID] = true}, rebuilt after a change
 
-local function CharacterKey()
+-- "Name-Realm", for data KeepOrSell keeps per character
+function ns.CharacterKey()
   return (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
 end
 
 local function CharacterTable(name)
   KeepOrSellDB[name] = KeepOrSellDB[name] or {}
-  local key = CharacterKey()
+  local key = ns.CharacterKey()
   KeepOrSellDB[name][key] = KeepOrSellDB[name][key] or {}
   return KeepOrSellDB[name][key]
 end
