@@ -150,12 +150,13 @@ local function SetAtlasOr(texture, atlas, r, g, b)
   end
 end
 
--- Heading in the quest book font with an ornamental divider below
-local function Heading(parent, text, size, y)
+-- Heading in the quest book font with an ornamental divider below; y counts from the top of the
+-- parent, or from the bottom of below when given
+local function Heading(parent, text, size, y, below)
   local label = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   label:SetFont(HEADER_FONT, size, "")
   label:SetTextColor(unpack(PARCHMENT))
-  label:SetPoint("TOP", 0, y)
+  if below then label:SetPoint("TOP", below, "BOTTOM", 0, y) else label:SetPoint("TOP", 0, y) end
   label:SetText(text)
   local divider = parent:CreateTexture(nil, "ARTWORK")
   SetAtlasOr(divider, "Campaign-QuestLog-LoreDivider", unpack(GOLD))
@@ -261,7 +262,8 @@ local function BuildLeft(panel)
 
   local bag = Box(panel, 0.04, 0.5)
   bag:SetSize(LEFT_W - 24, 5 * 28 + 12)
-  bag:SetPoint("TOPLEFT", 12, -126)
+  -- the texts above take one or two lines depending on the language, so everything below follows them
+  bag:SetPoint("TOPLEFT", about, "BOTTOMLEFT", -2, -14)
   for row, group in ipairs(SAMPLE) do
     local key, color, items = unpack(group)
     local y = -8 - (row - 1) * 28
@@ -274,21 +276,29 @@ local function BuildLeft(panel)
     end
   end
 
-  Heading(panel, L.SETUP_PROGRESS, 15, -292)
+  local heading = Heading(panel, L.SETUP_PROGRESS, 15, -16, bag)
   frame.ProgressText = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-  frame.ProgressText:SetPoint("TOPLEFT", 16, -326)
+  frame.ProgressText:SetPoint("TOP", heading, "BOTTOM", 0, -18)
+  frame.ProgressText:SetPoint("LEFT", 16, 0)
   frame.Progress = CreateFrame("StatusBar", nil, panel)
   frame.Progress:SetSize(LEFT_W - 32, 12)
-  frame.Progress:SetPoint("TOPLEFT", 16, -346)
+  frame.Progress:SetPoint("TOPLEFT", frame.ProgressText, "BOTTOMLEFT", 0, -8)
   frame.Progress:SetStatusBarTexture("Interface\\TargetingFrame\\UI-StatusBar")
   frame.Progress:SetStatusBarColor(unpack(GOLD))
   local track = frame.Progress:CreateTexture(nil, "BACKGROUND")
   track:SetAllPoints()
   track:SetColorTexture(0, 0, 0, 0.6)
   frame.Done = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
-  frame.Done:SetPoint("TOPLEFT", 16, -366)
+  frame.Done:SetPoint("TOPLEFT", frame.Progress, "BOTTOMLEFT", 0, -8)
   frame.Done:SetWidth(LEFT_W - 32)
   frame.Done:SetJustifyH("LEFT")
+
+  -- new players don't expect tooltips on the tiles
+  local hover = panel:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  hover:SetPoint("BOTTOMLEFT", 16, 14)
+  hover:SetWidth(LEFT_W - 32)
+  hover:SetJustifyH("LEFT")
+  hover:SetText(L.SETUP_HOVER_HINT)
 end
 
 local function BuildRight(panel)

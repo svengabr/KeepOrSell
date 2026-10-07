@@ -76,6 +76,7 @@ local L = {
   SETUP_HEADER = "Setup",
   SETUP_PROGRESS = "Progress",
   SETUP_PROGRESS_TEXT = "%d / %d steps done",
+  SETUP_HOVER_HINT = "Tip: hover over a tile to learn more.",
   SETUP_BAGANATOR_SHORT = "Shows the groups in your bags",
   SETUP_AUCTIONATOR_SHORT = "Knows the auction prices",
   SETUP_VIEW_SHORT = "Creates a Baganator profile \"KeepOrSell\" with category groups. Your old profile stays.",
@@ -220,6 +221,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.SETUP_HEADER = "Einrichtung"
   L.SETUP_PROGRESS = "Fortschritt"
   L.SETUP_PROGRESS_TEXT = "%d / %d Schritte erledigt"
+  L.SETUP_HOVER_HINT = "Tipp: Fahr mit der Maus über eine Kachel, um mehr zu erfahren."
   L.SETUP_BAGANATOR_SHORT = "Zeigt die Gruppen in deinen Taschen"
   L.SETUP_AUCTIONATOR_SHORT = "Kennt die Auktionspreise"
   L.SETUP_VIEW_SHORT = "Legt ein Baganator-Profil „KeepOrSell“ mit Kategorie-Gruppen an. Dein altes Profil bleibt."
