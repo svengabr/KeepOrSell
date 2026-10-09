@@ -40,6 +40,9 @@ function ns.SettingsChanged()
   ScheduleHints()
 end
 
+-- Last known state of the legacy talent "Reagent Economy"; each character learns it on its own
+local reagentEconomy
+
 frame:SetScript("OnEvent", function(_, event, arg1, ...)
   if event == "ADDON_LOADED" and arg1 == addonName then
     KeepOrSellDB = KeepOrSellDB or {}
@@ -83,6 +86,8 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     frame:RegisterEvent("LOOT_OPENED")
     frame:RegisterEvent("LOOT_CLOSED")
     frame:RegisterEvent("UI_ERROR_MESSAGE")
+    reagentEconomy = ns.HasReagentEconomy()
+    frame:RegisterEvent("SPELLS_CHANGED")
   elseif event == "QUEST_LOG_UPDATE" then
     ScheduleQuests()
   elseif event == "TRADE_SKILL_SHOW" or event == "TRADE_SKILL_LIST_UPDATE" then
@@ -91,6 +96,13 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
   elseif event == "BAG_UPDATE_DELAYED" then
     ScheduleHints()
     ns.ScheduleShareQuery()
+  elseif event == "SPELLS_CHANGED" then
+    -- fires often; only a change of the talent sorts the vendor reagents again
+    local known = ns.HasReagentEconomy()
+    if known ~= reagentEconomy then
+      reagentEconomy = known
+      ns.SettingsChanged()
+    end
   elseif event == "SKILL_LINES_CHANGED" then
     ScheduleHints()
   elseif event == "GROUP_ROSTER_UPDATE" then
