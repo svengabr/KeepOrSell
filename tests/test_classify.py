@@ -86,6 +86,30 @@ class PlainGearTests(unittest.TestCase):
         self.assertFalse(self.ns.IsClassItem(None, 5060))
         self.assertFalse(self.ns.IsClassItem("ROGUE", None))
 
+    def test_reagent_economy_frees_vendor_reagents(self):
+        # The legacy talent "Reagent Economy" drops vendor reagents from class spells
+        self.assertFalse(self.ns.IsClassItem("DRUID", 17021, True))  # Wild Berries
+        self.assertFalse(self.ns.IsClassItem("MAGE", 17020, True))  # Arcane Powder
+        self.assertFalse(self.ns.IsClassItem("PRIEST", 17029, True))  # Sacred Candle
+        self.assertFalse(self.ns.IsClassItem("SHAMAN", 17030, True))  # Ankh
+        self.assertFalse(self.ns.IsClassItem("ROGUE", 5140, True))  # Flash Powder
+        # Tools, crafted and dropped items stay needed
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 5060, True))  # Thieves' Tools
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 6947, True))  # Instant Poison
+        self.assertTrue(self.ns.IsClassItem("SHAMAN", 5175, True))  # Earth Totem
+        self.assertTrue(self.ns.IsClassItem("WARLOCK", 6265, True))  # Soul Shard
+        # Rebirth still asks for its seed with the talent (checked in game)
+        self.assertTrue(self.ns.IsClassItem("DRUID", 17034, True))  # Maple Seed
+        self.assertTrue(self.ns.IsClassItem("MAGE", 17056, True))  # Light Feather, Slow Fall still needs it
+        self.assertFalse(self.ns.IsClassItem("MAGE", 17031, True))  # Rune of Teleportation
+        self.assertTrue(self.ns.IsClassItem("DRUID", 17021, False))
+
+    def test_reagent_economy_detected_by_spell(self):
+        self.assertFalse(self.ns.HasReagentEconomy())  # no C_SpellBook
+        self.rt.execute("C_SpellBook = {IsSpellKnown = function(id) return id == 1225503 end}")
+        self.assertTrue(self.ns.HasReagentEconomy())
+        self.rt.execute("C_SpellBook = nil")
+
 
 class DecideTests(unittest.TestCase):
     def setUp(self):

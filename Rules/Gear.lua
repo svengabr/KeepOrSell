@@ -95,10 +95,30 @@ local CLASS_ITEMS = {
   WARLOCK = Set(6265, 5565, 16583), -- Soul Shard, Infernal Stone, Demonic Figurine
 }
 
--- true = the player's class needs the item for its spells or abilities; it must never be sold
-function ns.IsClassItem(classFile, itemID)
+-- Vendor reagents that class spells no longer need with the legacy talent "Reagent Economy" (Forever).
+-- Left out (checked in game): Rebirth still asks for its seed, Slow Fall still for the Light Feather.
+local VENDOR_REAGENTS = Set(
+  17021, 17026, -- Wild Berries, Wild Thornroot
+  17020, 17031, 17032, -- Arcane Powder, Rune of Teleportation, Rune of Portals
+  17033, 21177, 17028, 17029, -- Symbol of Divinity, Symbol of Kings, Holy Candle, Sacred Candle
+  5140, 17030, 5565, 16583 -- Flash Powder, Ankh, Infernal Stone, Demonic Figurine
+)
+
+-- Spell ID of the legacy talent "Reagent Economy"
+ns.REAGENT_ECONOMY_SPELL = 1225503
+
+-- true = the player's class needs the item for its spells or abilities; it must never be sold.
+-- reagentFree = the player has "Reagent Economy", so vendor reagents are no longer needed
+function ns.IsClassItem(classFile, itemID, reagentFree)
   local items = classFile and CLASS_ITEMS[classFile]
-  return items ~= nil and itemID ~= nil and items[itemID] == true
+  if items == nil or itemID == nil or items[itemID] ~= true then return false end
+  return not (reagentFree and VENDOR_REAGENTS[itemID])
+end
+
+-- true = the player has learned "Reagent Economy"
+function ns.HasReagentEconomy()
+  return C_SpellBook ~= nil and C_SpellBook.IsSpellKnown ~= nil
+    and C_SpellBook.IsSpellKnown(ns.REAGENT_ECONOMY_SPELL) == true
 end
 
 -- true = this class can never wear the item; false otherwise, also for unknown classes and subclasses

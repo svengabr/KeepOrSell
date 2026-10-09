@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- With the legacy talent "Reagent Economy" learned, vendor reagents of your class (Wild Berries, Arcane Powder, candles, symbols, Ankh, Flash Powder …) are no longer kept no matter what; they are sorted like any other item. Rebirth seeds and the Light Feather stay protected, since Rebirth and Slow Fall still ask for them with the talent. Tools, poisons and Soul Shards are always kept.
+
 ## 0.15.1
 
 - Items that don't stack (scrolls, clams, duplicate gear) take one bag slot each, even when Baganator shows them as one stack. The tooltip now says so ("doesn't stack, takes 5 bag slots") and the hints button lists them ("Don't stack, each takes its own bag slot: 5× Scroll: CWAL").

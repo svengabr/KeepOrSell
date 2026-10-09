@@ -213,7 +213,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     classID = classID,
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID),
-    classItem = ns.IsClassItem(playerClass, itemID),
+    classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass or false,
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
