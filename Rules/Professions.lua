@@ -163,6 +163,15 @@ function ns.IsEnchanter()
   return HasProfession(ENCHANTING) == true
 end
 
+-- skill rank and its cap of Enchanting; nil when not learned or the client can't tell
+function ns.GetEnchantingSkill()
+  if not (GetProfessions and GetProfessionInfo) then return nil end
+  for _, profIndex in pairs({GetProfessions()}) do
+    local _, _, rank, maxRank, _, _, skillLine = GetProfessionInfo(profIndex)
+    if skillLine == ENCHANTING then return rank, maxRank end
+  end
+end
+
 local RED_TEXT = 0.5
 
 -- Tooltip requirement lines the player doesn't meet are red (1, 0.125, 0.125)

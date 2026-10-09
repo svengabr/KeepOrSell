@@ -80,10 +80,18 @@ class ValueTests(unittest.TestCase):
         # 20% x 2.5 x 100 + 75% x 1.5 x 200, the 5% shard has no price
         self.assertEqual(self.value(UNCOMMON, 16, WEAPON, {STRANGE_DUST: 100, GREATER_MAGIC: 200}), 275)
 
-    def test_skill_up_material(self):
-        self.ns.IsSkillUpReagent = self.rt.eval("function(id) return id == %d end" % GREATER_MAGIC)
-        self.assertTrue(self.ns.DisenchantSkillUp(self.ns.DisenchantOutcomes(UNCOMMON, 16, WEAPON)))
-        self.assertFalse(self.ns.DisenchantSkillUp(self.ns.DisenchantOutcomes(UNCOMMON, 10, WEAPON)))
+    def test_disenchanting_gives_skill_below_60(self):
+        self.assertTrue(self.ns.DisenchantGivesSkill(1, 75))
+        self.assertTrue(self.ns.DisenchantGivesSkill(59, 150))
+        self.assertFalse(self.ns.DisenchantGivesSkill(60, 150))
+        self.assertFalse(self.ns.DisenchantGivesSkill(150, 150))
+
+    def test_no_skill_at_the_rank_cap(self):
+        # Apprentice tops out at 75, but that is above 60 anyway; a lower cap still blocks it
+        self.assertFalse(self.ns.DisenchantGivesSkill(50, 50))
+
+    def test_skill_unknown(self):
+        self.assertFalse(self.ns.DisenchantGivesSkill(None, None))
 
 
 class DecideTests(unittest.TestCase):
@@ -183,7 +191,8 @@ ITEMS[21] = {"Linen Cloak", 4, 1, "INVTYPE_CLOAK", 67, 2, 12}
 BOUND[21] = true
 PROFESSIONS = {333}
 function GetProfessions() return 1 end
-function GetProfessionInfo(i) return "Enchanting", 0, 40, 75, 0, 0, PROFESSIONS[i] end
+SKILL = {40, 75}
+function GetProfessionInfo(i) return "Enchanting", 0, SKILL[1], SKILL[2], 0, 0, PROFESSIONS[i] end
 OWN = {}
 Auctionator.API.v1.GetAuctionPriceByItemID = function(_, id) return OWN[id] end
 Auctionator.API.v1.GetAuctionAgeByItemID = function() return 1 end
@@ -208,6 +217,17 @@ class FactsTests(unittest.TestCase):
         self.rt.execute("Auctionator.API.v1.GetAuctionAgeByItemID = function() return 15 end")
         self.assertIsNone(self.ns.ItemFacts(20, "link20").disenchant.value)
 
+    def test_skill_up_below_60(self):
+        self.assertTrue(self.ns.ItemFacts(20, "link20").disenchant.skillUp)
+
+    def test_no_skill_up_at_the_rank_cap(self):
+        # the screenshot: Enchanting 150/150, the materials sell for less than the vendor pays
+        self.rt.execute("SKILL = {150, 150}; OWN[10940] = 100; OWN[10938] = 200")
+        facts = self.ns.ItemFacts(20, "link20")
+        self.assertFalse(facts.disenchant.skillUp)
+        self.assertEqual(facts.disenchant.value, 270)
+        self.assertNotEqual(self.ns.Decide(facts, self.db).kind, "disenchant")
+
     def test_not_an_enchanter(self):
         self.rt.execute("PROFESSIONS = {197}")
         self.assertIsNone(self.ns.ItemFacts(20, "link20").disenchant)
@@ -228,18 +248,9 @@ class FactsTests(unittest.TestCase):
         text = self.ns.TooltipText(self.ns.Decide(facts, self.db), facts.prices, self.db)
         self.assertIn("Disenchant\n    |cffaaaaaa80% Lesser Magic Essence", text)
 
-    def test_tooltip_names_the_skill_up_material(self):
-        self.rt.execute("function ns_skill(id) return id == 10940 end")
-        self.ns.IsSkillUpReagent = self.rt.eval("ns_skill")
-        facts = self.ns.ItemFacts(20, "link20")
-        text = self.ns.TooltipText(self.ns.Decide(facts, self.db), facts.prices, self.db)
-        self.assertIn("20% Strange Dust ×1–2 – still gives skill points|r", text)
-        self.assertNotIn("Essence ×1–2 – still", text)
-
     def test_tooltip_for_skill_headline(self):
         # materials worth 30c on average, the vendor pays 612c
         self.rt.execute("OWN[10940] = 20; OWN[10938] = 20")
-        self.ns.IsSkillUpReagent = self.rt.eval("function(id) return id == 10938 end")
         facts = self.ns.ItemFacts(20, "link20")
         text = self.ns.TooltipText(self.ns.Decide(facts, self.db), facts.prices, self.db)
         self.assertIn("Disenchant for skill points (selling pays more)\n", text)

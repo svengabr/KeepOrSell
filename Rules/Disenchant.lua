@@ -1,5 +1,4 @@
--- What an enchanter gets from disenchanting an item and whether that beats selling it. Pure logic apart from
--- ns.IsSkillUpReagent.
+-- What an enchanter gets from disenchanting an item and whether that beats selling it. Pure logic.
 local _, ns = ...
 
 local WEAPON, ARMOR = 2, 4 -- Enum.ItemClass
@@ -109,14 +108,13 @@ function ns.DisenchantValue(outcomes, priceOf)
   return math.floor(value + 0.5)
 end
 
--- true if a known recipe still gains skill from one of the materials; marks those outcomes (o.skillUp)
-function ns.DisenchantSkillUp(outcomes)
-  local any = false
-  for _, o in ipairs(outcomes or {}) do
-    o.skillUp = ns.IsSkillUpReagent(o.itemID) or nil
-    any = any or o.skillUp == true
-  end
-  return any
+-- Disenchanting itself gives Enchanting skill until it turns grey at 60 (yellow from 20, green from 40), the
+-- same for every item; nothing at the skill cap of the current rank (75, 150 …) until the next trainer.
+local DISENCHANT_GREY = 60
+
+-- true if disenchanting can still raise the skill; rank and maxRank from GetProfessionInfo. Pure.
+function ns.DisenchantGivesSkill(rank, maxRank)
+  return rank ~= nil and maxRank ~= nil and rank < DISENCHANT_GREY and rank < maxRank
 end
 
 -- Whether disenchanting beats the verdict, for an item the verdict would get rid of.

@@ -19,7 +19,8 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
 -- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
 -- price means nobody sells the item there
--- disenchant = {outcomes, value, skillUp} when the player is an enchanter and can disenchant the item
+-- disenchant = {outcomes, value, skillUp} when the player is an enchanter and can disenchant the item;
+-- skillUp = disenchanting itself still raises Enchanting
 -- openable = the bag slot has loot or the tooltip says "<Right Click to Open>", and the tooltip doesn't
 -- say "Locked" (clams, boxes): each takes its own bag slot even when
 -- Baganator shows them stacked, so they go to the Open group to be opened
@@ -197,7 +198,7 @@ local function DisenchantFacts(itemID, itemLink, classID)
   return {
     outcomes = outcomes,
     value = ns.DisenchantValue(outcomes, MaterialPrice),
-    skillUp = ns.DisenchantSkillUp(outcomes),
+    skillUp = ns.DisenchantGivesSkill(ns.GetEnchantingSkill()),
   }
 end
 
