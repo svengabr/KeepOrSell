@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.16.1
+
+- Fix: "Disenchant for skill points" no longer shows at Enchanting 60 or higher, or at the skill cap of your rank (e.g. 150/150). Disenchanting itself only gives skill points below 60; above that an item is disenchanted only when its materials are worth more than selling it to a vendor or on the auction house.
+- Items KeepOrSell keeps for no particular reason (consumables …) now also show the best way to get rid of them in the tooltip ("Otherwise: Auction house").
+
 ## 0.16.0
 
 - Clearer tooltip: an empty line sets KeepOrSell apart from other addons, and below the verdict each way to get rid of the item gets its own line with the amount on the right (disenchant, auction house, vendor). The group's own way comes first in color; items KeepOrSell keeps show the best one as "Otherwise: Auction house 4s", so you see at a glance what to do once you no longer need them.
