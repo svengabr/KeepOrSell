@@ -14,25 +14,34 @@ local function Money(copper)
   return text
 end
 
-local function PriceText(prices, verdict, db)
-  local text = L.TIP_PRICES:format(Money(prices.ah), Money(prices.vendor))
+-- what else to know about the prices: who shared the auction price, TSM as its source, and for junk the rule
+-- that made the auction house not worth it; nil when there is nothing
+local function PriceNote(prices, verdict, db)
+  local notes = {}
   -- a price shared by a group member names who saw it and when
   if prices.from then
-    local shared = (prices.age or 0) > 0 and L.TIP_SHARED:format(prices.from, prices.age)
-      or L.TIP_SHARED_TODAY:format(prices.from)
-    text = text .. " " .. shared
+    table.insert(notes, (prices.age or 0) > 0 and L.TIP_SHARED:format(prices.from, prices.age)
+      or L.TIP_SHARED_TODAY:format(prices.from))
   end
-  if prices.source == "tsm" then text = text .. " " .. L.TIP_TSM end
-  -- for junk, name the rule that made the auction house not worth it
+  if prices.source == "tsm" then table.insert(notes, L.TIP_TSM) end
   if verdict.kind == "junk" and verdict.priceReason == "factor" then
-    text = text .. " " .. L.TIP_BELOW_FACTOR:format(db.factor)
+    table.insert(notes, L.TIP_BELOW_FACTOR:format(db.factor))
   elseif verdict.kind == "junk" and verdict.priceReason == "minprofit" then
-    text = text .. " " .. L.TIP_BELOW_PROFIT:format(Money(db.minProfit * 100))
+    table.insert(notes, L.TIP_BELOW_PROFIT:format(Money(db.minProfit * 100)))
   end
-  return text
+  return #notes > 0 and table.concat(notes, " ") or nil
 end
 
--- "80% Strange Dust ×1–2"; names not cached yet are requested and show up next time
+-- "Junk – plain gear, soulbound": the group, then every reason given, skipping nils
+local function Headline(group, ...)
+  local reasons = {}
+  for i = 1, select("#", ...) do
+    local reason = select(i, ...)
+    if reason then table.insert(reasons, reason) end
+  end
+  return #reasons > 0 and group .. " – " .. table.concat(reasons, ", ") or group
+end
+
 local function OutcomeText(o)
   local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(o.itemID)
   if not name and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(o.itemID) end
@@ -45,43 +54,56 @@ end
 
 local DETAIL = "\n    |cffaaaaaa%s|r"
 
--- headline with the value, then one grey line per material (naming those that still give skill points)
--- and one comparing with selling
-local function DisenchantText(verdict, prices)
-  local de = verdict.disenchant
-  local text = verdict.forSkill and L.TIP_DISENCHANT_FOR_SKILL:format(Money(de.value))
-    or de.value and L.TIP_DISENCHANT_VALUE:format(Money(de.value)) or L.TIP_DISENCHANT
-  for _, o in ipairs(de.outcomes or {}) do text = text .. DETAIL:format(OutcomeText(o)) end
-  local compare = verdict.bound and L.TIP_BOUND .. ", " .. L.TIP_VENDOR:format(Money(prices.vendor))
-    or L.TIP_PRICES:format(Money(prices.ah), Money(prices.vendor))
-  return text .. DETAIL:format(compare)
+-- headline, then one grey line per material (naming those that still give skill points); the value and
+-- what selling would bring follow in the rows
+local function DisenchantText(verdict)
+  local text = verdict.forSkill and L.TIP_DISENCHANT_FOR_SKILL or L.TIP_DISENCHANT
+  for _, o in ipairs(verdict.disenchant.outcomes or {}) do text = text .. DETAIL:format(OutcomeText(o)) end
+  return text
 end
 
 local AH_CUT = 0.05
 
--- kept gear: the best way to get rid of it once the player no longer needs it, the others for comparison;
--- the auction price counts after the AH cut. nil when nothing is known.
-local function WearableText(verdict, prices)
+-- color of the way to get rid of an item, so it stands out from the stat lines above
+local COLOR = {disenchant = "ffc78fff", ah = "ff66ccff", vendor = "ffffaa33"}
+local GREY = "ffaaaaaa"
+-- the way each group gets rid of an item; kept items have none
+local CHOSEN = {ah = "ah", junk = "vendor", disenchant = "disenchant"}
+
+-- Rows of {label, money, color} for two-column lines below the tooltip text (amounts line up on the right like
+-- the price lines of other addons): the ways to get rid of the item. The group's own way comes first in its
+-- color; for kept items the best one, as "Otherwise: …". The rest follow in grey, best first; the auction price
+-- counts after the AH cut. nil when nothing is known. Pure apart from money formatting.
+function ns.TooltipRows(verdict, prices)
+  prices = prices or {}
+  local chosen = CHOSEN[verdict.kind]
   local options = {}
-  local de = verdict.disenchant
-  if de and de.value and de.value > 0 then
-    table.insert(options, {de.value, L.TIP_DISENCHANT_VALUE:format(Money(de.value))})
+  local deValue = verdict.disenchant and verdict.disenchant.value or verdict.deValue
+  if deValue and deValue > 0 then
+    table.insert(options, {deValue, "disenchant", L.TIP_DISENCHANT, "~" .. Money(deValue)})
   end
-  if not verdict.bound and verdict.ahTrusted and prices.ah and prices.ah > 0 then
-    table.insert(options, {prices.ah * (1 - AH_CUT), L.TIP_AH_PRICE:format(Money(prices.ah))})
+  if not verdict.bound and (verdict.ahTrusted or chosen == "ah") and prices.ah and prices.ah > 0 then
+    table.insert(options, {prices.ah * (1 - AH_CUT), "ah", L.TIP_AH, Money(prices.ah)})
   end
   if prices.vendor and prices.vendor > 0 then
-    table.insert(options, {prices.vendor, L.TIP_VENDOR:format(Money(prices.vendor))})
+    table.insert(options, {prices.vendor, "vendor", L.TIP_VENDOR_NAME, Money(prices.vendor)})
   end
   if #options == 0 then return nil end
-  table.sort(options, function(a, b) return a[1] > b[1] end)
-  local best = options[1][2]
-  if #options > 1 then
-    local others = {}
-    for i = 2, #options do table.insert(others, options[i][2]) end
-    best = best .. " (" .. table.concat(others, ", ") .. ")"
+  table.sort(options, function(a, b)
+    if (a[2] == chosen) ~= (b[2] == chosen) then return a[2] == chosen end
+    return a[1] > b[1]
+  end)
+  local rows = {}
+  for i, o in ipairs(options) do
+    if i == 1 and o[2] == chosen then
+      table.insert(rows, {"   » " .. o[3], o[4], COLOR[o[2]]})
+    elseif i == 1 and not chosen then
+      table.insert(rows, {"   » " .. L.TIP_OTHERWISE:format(o[3]), o[4], COLOR[o[2]]})
+    else
+      table.insert(rows, {"      " .. o[3], o[4], GREY})
+    end
   end
-  return L.TIP_KEEP .. " – " .. L.TIP_WEARABLE .. DETAIL:format(L.TIP_IF_UNNEEDED:format(best))
+  return rows
 end
 
 local RECIPE_TEXT = {recipe_known = "TIP_RECIPE_KNOWN", recipe_other = "TIP_RECIPE_OTHER"}
@@ -116,26 +138,18 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   elseif kind == "profession" then
     text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING or L.TIP_PROFESSION
   elseif kind == "ah" then
-    text = L.TIP_AH .. " – " .. PriceText(prices, verdict, db)
-    if reason == "unusable" then text = text .. ", " .. L.TIP_UNUSABLE end
-    if UselessText(verdict) then text = text .. ", " .. UselessText(verdict) end
+    text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict),
+      PriceNote(prices, verdict, db))
   elseif kind == "junk" then
-    if reason == "plain" then
-      text = L.TIP_JUNK .. " – " .. L.TIP_PLAIN .. ", " .. PriceText(prices, verdict, db)
-    elseif reason == "unusable_bound" then
-      text = L.TIP_JUNK .. " – " .. L.TIP_UNUSABLE .. ", " .. L.TIP_BOUND
-    elseif UselessText(verdict) then
-      local detail = verdict.bound and L.TIP_BOUND or PriceText(prices, verdict, db)
-      text = L.TIP_JUNK .. " – " .. UselessText(verdict) .. ", " .. detail
-    elseif reason == "unusable" then
-      text = L.TIP_JUNK .. " – " .. L.TIP_UNUSABLE .. ", " .. PriceText(prices, verdict, db)
-    else
-      text = L.TIP_JUNK .. " – " .. PriceText(prices, verdict, db)
-    end
+    local why = reason == "plain" and L.TIP_PLAIN or UselessText(verdict)
+      or (reason == "unusable" or reason == "unusable_bound") and L.TIP_UNUSABLE or nil
+    -- soulbound junk goes to the vendor whatever the prices say
+    local note = not verdict.bound and PriceNote(prices, verdict, db) or nil
+    text = Headline(L.TIP_JUNK, why, verdict.bound and L.TIP_BOUND or nil, note)
   elseif kind == "disenchant" then
-    text = DisenchantText(verdict, prices)
-  elseif reason == "wearable" and not verdict.needsPrice then
-    text = WearableText(verdict, prices)
+    text = DisenchantText(verdict)
+  elseif reason == "wearable" and not verdict.needsPrice and ns.TooltipRows(verdict, prices) then
+    text = L.TIP_KEEP_WEARABLE
   elseif reason == "tool" then
     text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
   elseif reason == "classitem" then
@@ -172,8 +186,14 @@ local function AddLine(tooltip, data)
   local unstacked = ns.IsUnstackable(id)
   local slots = (verdict.kind == "open" or unstacked) and ns.CountSlots(id) or nil
   local text = ns.TooltipText(verdict, facts.prices, KeepOrSellDB, slots, unstacked)
+  local rows = ns.TooltipRows(verdict, facts.prices)
   if text then
+    -- an empty line sets the verdict apart from the lines other addons add above it
+    tooltip:AddLine(" ")
     tooltip:AddLine(text, 1, 1, 1, true)
+    for _, row in ipairs(rows or {}) do
+      tooltip:AddDoubleLine("|c" .. row[3] .. row[1] .. "|r", "|c" .. row[3] .. row[2] .. "|r", 1, 1, 1, 1, 1, 1)
+    end
     tooltip:Show()
   end
 end

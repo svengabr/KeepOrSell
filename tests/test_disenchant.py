@@ -216,10 +216,12 @@ class FactsTests(unittest.TestCase):
         self.rt.execute("OWN[10940] = 300; OWN[10938] = 600")
         facts = self.ns.ItemFacts(20, "link20")
         text = self.ns.TooltipText(self.ns.Decide(facts, self.db), facts.prices, self.db)
-        self.assertIn("Disenchant ~810c\n"
+        self.assertIn("Disenchant\n"
                       "    |cffaaaaaa80% Lesser Magic Essence ×1–2|r\n"
-                      "    |cffaaaaaa20% Strange Dust ×1–2|r\n"
-                      "    |cffaaaaaasoulbound, vendor 612c|r", text)
+                      "    |cffaaaaaa20% Strange Dust ×1–2|r", text)
+        rows = [tuple(r.values()) for r in self.ns.TooltipRows(self.ns.Decide(facts, self.db), facts.prices).values()]
+        # soulbound: no auction house
+        self.assertEqual(rows, [("   » Disenchant", "~810c", "ffc78fff"), ("      Vendor", "612c", "ffaaaaaa")])
 
     def test_tooltip_without_value(self):
         facts = self.ns.ItemFacts(20, "link20")
@@ -240,33 +242,39 @@ class FactsTests(unittest.TestCase):
         self.ns.IsSkillUpReagent = self.rt.eval("function(id) return id == 10938 end")
         facts = self.ns.ItemFacts(20, "link20")
         text = self.ns.TooltipText(self.ns.Decide(facts, self.db), facts.prices, self.db)
-        self.assertIn("Disenchant for skill points ~30c (selling pays more)\n", text)
+        self.assertIn("Disenchant for skill points (selling pays more)\n", text)
+        rows = [tuple(r.values()) for r in self.ns.TooltipRows(self.ns.Decide(facts, self.db), facts.prices).values()]
+        # the chosen way comes first even though the vendor pays more
+        self.assertEqual(rows[0], ("   » Disenchant", "~30c", "ffc78fff"))
 
 
-    def tooltip(self, item_id):
+    def rows(self, item_id):
         facts = self.ns.ItemFacts(item_id, "link%d" % item_id)
-        return self.ns.TooltipText(self.ns.Decide(facts, self.db), facts.prices, self.db)
+        verdict = self.ns.Decide(facts, self.db)
+        self.assertIn("Keep (wearable)", self.ns.TooltipText(verdict, facts.prices, self.db))
+        rows = self.ns.TooltipRows(verdict, facts.prices)
+        return [tuple(r.values()) for r in rows.values()]
 
     def test_wearable_hint_disenchant(self):
         # cloth cloak: 80% x 1.5 x 229 + 20% x 1.5 x 300 = 365
         self.rt.execute("OWN[10940] = 229; OWN[10938] = 300")
-        self.assertIn("Keep – wearable\n    |cffaaaaaaIf you no longer need it: Disenchant ~365c (vendor 67c)|r",
-                      self.tooltip(21))
+        self.assertEqual(self.rows(21), [("   » Otherwise: Disenchant", "~365c", "ffc78fff"),
+                                         ("      Vendor", "67c", "ffaaaaaa")])
 
     def test_wearable_hint_auction_house(self):
         # below the 2x threshold, so the cloak stays, but the AH still pays more than the vendor
         self.rt.execute("PROFESSIONS = {197}; BOUND[21] = nil; AH.link21 = 100")
-        self.assertIn("If you no longer need it: auction house 100c (vendor 67c)", self.tooltip(21))
+        self.assertEqual(self.rows(21), [("   » Otherwise: Auction house", "100c", "ff66ccff"),
+                                         ("      Vendor", "67c", "ffaaaaaa")])
 
     def test_wearable_hint_bound_ignores_auction_house(self):
         self.rt.execute("PROFESSIONS = {197}; AH.link21 = 100")
-        text = self.tooltip(21)
-        self.assertIn("If you no longer need it: vendor 67c|r", text)
-        self.assertNotIn("auction", text)
+        self.assertEqual(self.rows(21), [("   » Otherwise: Vendor", "67c", "ffffaa33")])
 
     def test_wearable_hint_compares_all(self):
         self.rt.execute("OWN[10940] = 229; OWN[10938] = 300; BOUND[21] = nil; AH.link21 = 100")
-        self.assertIn("If you no longer need it: Disenchant ~365c (auction house 100c, vendor 67c)", self.tooltip(21))
+        self.assertEqual([r[0] for r in self.rows(21)],
+                         ["   » Otherwise: Disenchant", "      Auction house", "      Vendor"])
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ TOOLTIP_LINES = lines
 GameTooltip = {
   GetItem = function() return "Item", CURRENT_LINK end,
   AddLine = function(self, text) table.insert(lines, text) end,
+  AddDoubleLine = function(self, left, right) table.insert(lines, left .. " | " .. right) end,
   Show = function() end,
 }
 Enum = {TooltipDataType = {Item = 0}}
@@ -28,10 +29,18 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("CURRENT_LINK = 'link%d'; for k in pairs(TOOLTIP_LINES) do TOOLTIP_LINES[k] = nil end" % item_id)
         self.rt.execute("POSTCALL(GameTooltip, {})")
         lines = list(self.rt.eval("TOOLTIP_LINES").values())
-        return lines[0] if lines else None
+        return "\n".join(lines) if lines else None
+
+    def test_empty_line_sets_verdict_apart(self):
+        self.show(3)
+        lines = list(self.rt.eval("TOOLTIP_LINES").values())
+        self.assertEqual(lines[0], " ")
+        self.assertIn("KeepOrSell:", lines[1])
 
     def test_auction_house_with_prices(self):
-        self.assertIn("Auction house – AH 1000c, vendor 38c", self.show(3))
+        text = self.show(3)
+        self.assertIn("KeepOrSell:|r Auction house\n", text)
+        self.assertIn("|cff66ccff   » Auction house|r | |cff66ccff1000c|r\n|cffaaaaaa      Vendor|r | |cffaaaaaa38c|r", text)
 
     def test_tsm_price_named(self):
         self.rt.execute("""
@@ -39,13 +48,15 @@ class TooltipTests(unittest.TestCase):
           TSM_API = {ToItemString = function(link) return link end,
                      GetCustomPriceValue = function(_, s) return s == "link3" and 1000 or nil end}
         """)
-        self.assertIn("AH 1000c, vendor 38c (TSM)", self.show(3))
+        self.assertIn("Auction house – (TSM)", self.show(3))
 
     def test_auctionator_price_not_named_tsm(self):
         self.assertNotIn("(TSM)", self.show(3))
 
     def test_junk(self):
-        self.assertIn("Junk – AH 15c, vendor 13c (below 2x vendor price)", self.show(4))
+        text = self.show(4)
+        self.assertIn("Junk – (below 2x vendor price)", text)
+        self.assertIn("|cffffaa33   » Vendor|r | |cffffaa3313c|r\n|cffaaaaaa      Auction house|r | |cffaaaaaa15c|r", text)
 
     def test_junk_names_min_profit(self):
         self.rt.execute("AH.link4 = 40; KeepOrSellDB.minProfit = 1")
@@ -75,7 +86,9 @@ class TooltipTests(unittest.TestCase):
 
     def test_missing_price(self):
         self.rt.execute("AH.link4 = nil")
-        self.assertIn("Keep – no auction price", self.show(4))
+        text = self.show(4)
+        self.assertIn("Keep – no auction price", text)
+        self.assertIn("» Otherwise: Vendor|r | |cffffaa3313c|r", text)
 
     def test_plain_gear(self):
         self.assertIn("Junk – plain gear", self.show(10))
@@ -94,7 +107,7 @@ class TooltipTests(unittest.TestCase):
           IsValid = function() error("bad argument #1 to 'DoesItemExist'") end,
         } end""")
         self.rt.execute("CURRENT_LINK = 'link10'; POSTCALL(GameTooltip, {guid = 'g'})")
-        self.assertIn("Junk – plain gear", list(self.rt.eval("TOOLTIP_LINES").values())[0])
+        self.assertIn("Junk – plain gear", list(self.rt.eval("TOOLTIP_LINES").values())[1])
 
     def test_stale_price_on_other_items(self):
         # a potion with an outdated price could be an auction house item; say why it stays
@@ -103,7 +116,7 @@ class TooltipTests(unittest.TestCase):
 
     def test_useless_recipe_text(self):
         text = self.ns.TooltipText(self.rt.eval("{kind = 'junk', reason = 'recipe_known'}"), self.rt.eval("{ah = 120, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
-        self.assertIn("Junk – recipe already known, AH", text)
+        self.assertIn("Junk – recipe already known", text)
         text = self.ns.TooltipText(self.rt.eval("{kind = 'junk', reason = 'recipe_other', bound = true}"), None, self.rt.eval("KeepOrSellDB"))
         self.assertIn("recipe for a profession you don't have, soulbound", text)
         text = self.ns.TooltipText(self.rt.eval("{kind = 'ah', reason = 'recipe_other'}"), self.rt.eval("{ah = 5000, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
@@ -119,8 +132,10 @@ class TooltipTests(unittest.TestCase):
         self.assertIn("older than 7 days", self.show(4))
 
     def test_wearable_gear_names_what_it_would_bring(self):
-        self.assertIn("Keep – wearable", self.show(7))
-        self.assertIn("If you no longer need it: vendor 100c", self.show(7))
+        self.show(7)
+        lines = list(self.rt.eval("TOOLTIP_LINES").values())
+        self.assertIn("Keep (wearable)", lines[1])
+        self.assertEqual(lines[2], "|cffffaa33   » Otherwise: Vendor|r | |cffffaa33100c|r")
 
     def test_nothing_for_plain_items(self):
         self.assertIsNone(self.show(9))
@@ -135,6 +150,18 @@ class TooltipTests(unittest.TestCase):
         self.assertIn("Profession", text)
         self.assertIn("can still learn", text)
 
+    def test_kept_items_name_the_best_way_otherwise(self):
+        # Wool Cloth for a recipe still to learn: the auction house pays more than the vendor
+        rows = self.ns.TooltipRows(self.rt.eval("{kind = 'profession', reason = 'upcoming', ahTrusted = true}"),
+                                   self.rt.eval("{ah = 65, vendor = 33}"))
+        self.assertEqual([tuple(r.values()) for r in rows.values()],
+                         [("   » Otherwise: Auction house", "65c", "ff66ccff"), ("      Vendor", "33c", "ffaaaaaa")])
+
+    def test_kept_items_skip_untrusted_auction_price(self):
+        rows = self.ns.TooltipRows(self.rt.eval("{kind = 'quest', reason = 'open', ahTrusted = false}"),
+                                   self.rt.eval("{ah = 65, vendor = 33}"))
+        self.assertEqual([tuple(r.values()) for r in rows.values()], [("   » Otherwise: Vendor", "33c", "ffffaa33")])
+
     def test_switch_off(self):
         self.rt.execute("KeepOrSellDB.tooltip = false")
         self.assertIsNone(self.show(3))
@@ -147,7 +174,7 @@ class TooltipTests(unittest.TestCase):
         db = self.rt.eval("KeepOrSellDB")
         text = self.ns.TooltipText(self.rt.eval("{kind = 'ah'}"),
                                    self.rt.eval("{ah = 1000, vendor = 38, age = 2, from = 'Sven'}"), db)
-        self.assertIn("AH 1000c, vendor 38c (price from Sven, 2 days old)", text)
+        self.assertIn("Auction house – (price from Sven, 2 days old)", text)
         text = self.ns.TooltipText(self.rt.eval("{kind = 'ah'}"),
                                    self.rt.eval("{ah = 1000, vendor = 38, age = 0, from = 'Sven'}"), db)
         self.assertIn("(price from Sven, today)", text)
