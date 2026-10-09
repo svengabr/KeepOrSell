@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.16.0
 
+- Clearer tooltip: an empty line sets KeepOrSell apart from other addons, and below the verdict each way to get rid of the item gets its own line with the amount on the right (disenchant, auction house, vendor). The group's own way comes first in color; items KeepOrSell keeps show the best one as "Otherwise: Auction house 4s", so you see at a glance what to do once you no longer need them.
 - With the legacy talent "Reagent Economy" learned, vendor reagents of your class (Wild Berries, Arcane Powder, candles, symbols, Ankh, Flash Powder …) are no longer kept no matter what; they are sorted like any other item. Rebirth seeds and the Light Feather stay protected, since Rebirth and Slow Fall still ask for them with the talent. Tools, poisons and Soul Shards are always kept.
 
 ## 0.15.1
