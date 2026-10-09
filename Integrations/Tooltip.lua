@@ -48,13 +48,12 @@ local function OutcomeText(o)
   local text = ("%g%%"):format(math.floor(o.chance * 1000 + 0.5) / 10)
   if name then text = text .. " " .. name end
   if o.max > 1 then text = text .. (o.min == o.max and " ×%d" or " ×%d–%d"):format(o.min, o.max) end
-  if o.skillUp then text = text .. " – " .. L.TIP_DISENCHANT_SKILL end
   return text
 end
 
 local DETAIL = "\n    |cffaaaaaa%s|r"
 
--- headline, then one grey line per material (naming those that still give skill points); the value and
+-- headline, then one grey line per material; the value and
 -- what selling would bring follow in the rows
 local function DisenchantText(verdict)
   local text = verdict.forSkill and L.TIP_DISENCHANT_FOR_SKILL or L.TIP_DISENCHANT
@@ -159,6 +158,8 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   elseif verdict.needsPrice and verdict.priceReason == "stale" then
     text = L.TIP_KEEP .. " – " .. L.TIP_STALE:format(db.maxAge)
   end
+  -- anything else kept (consumables …) still names what it would bring
+  if not text and not kind and ns.TooltipRows(verdict, prices) then text = L.TIP_KEEP end
   -- Baganator may show copies as one stack; say how many slots they really take
   if unstacked and kind ~= "open" and (slots or 0) > 1 then
     text = text and text .. ", " .. L.TIP_UNSTACKED:format(slots) or L.TIP_UNSTACKED_ALONE:format(slots)

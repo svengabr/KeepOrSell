@@ -137,8 +137,11 @@ class TooltipTests(unittest.TestCase):
         self.assertIn("Keep (wearable)", lines[1])
         self.assertEqual(lines[2], "|cffffaa33   » Otherwise: Vendor|r | |cffffaa33100c|r")
 
-    def test_nothing_for_plain_items(self):
-        self.assertIsNone(self.show(9))
+    def test_plain_items_just_kept(self):
+        self.assertIn("KeepOrSell:|r Keep\n|cffffaa33   » Otherwise: Vendor|r", self.show(9))
+
+    def test_nothing_without_a_price(self):
+        self.assertIsNone(self.ns.TooltipText(self.rt.eval("{}"), self.rt.eval("{}"), self.rt.eval("KeepOrSellDB")))
 
     def test_profession_tool(self):
         text = self.ns.TooltipText(self.rt.eval("{reason = 'tool'}"), self.rt.eval("{ah = 120, vendor = 100}"), self.rt.eval("KeepOrSellDB"))
@@ -156,6 +159,14 @@ class TooltipTests(unittest.TestCase):
                                    self.rt.eval("{ah = 65, vendor = 33}"))
         self.assertEqual([tuple(r.values()) for r in rows.values()],
                          [("   » Otherwise: Auction house", "65c", "ff66ccff"), ("      Vendor", "33c", "ffaaaaaa")])
+
+    def test_plain_kept_item_names_the_best_way_otherwise(self):
+        # a consumable below the auction factor: kept, but the auction house still pays more than the vendor
+        db = self.rt.eval("KeepOrSellDB")
+        verdict = self.rt.eval("{ahTrusted = true}")
+        prices = self.rt.eval("{ah = 39, vendor = 25}")
+        self.assertEqual(self.ns.TooltipText(verdict, prices, db), "|cffffd200KeepOrSell:|r Keep")
+        self.assertEqual(list(self.ns.TooltipRows(verdict, prices)[1].values())[0], "   » Otherwise: Auction house")
 
     def test_kept_items_skip_untrusted_auction_price(self):
         rows = self.ns.TooltipRows(self.rt.eval("{kind = 'quest', reason = 'open', ahTrusted = false}"),
