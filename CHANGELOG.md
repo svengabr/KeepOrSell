@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.16.2
+
+- Fix: the tooltip of kept items no longer suggests "Otherwise: Auction house" when the auction price beats the vendor only slightly. The auction house now has to pass your auction factor, like for the AuctionHouse group, since the deposit and the chance of not selling eat a small gain; otherwise the vendor comes first.
+
 ## 0.16.1
 
 - Fix: "Disenchant for skill points" no longer shows at Enchanting 60 or higher, or at the skill cap of your rank (e.g. 150/150). Disenchanting itself only gives skill points below 60; above that an item is disenchanted only when its materials are worth more than selling it to a vendor or on the auction house.
