@@ -72,7 +72,8 @@ local CHOSEN = {ah = "ah", junk = "vendor", disenchant = "disenchant"}
 -- Rows of {label, money, color} for two-column lines below the tooltip text (amounts line up on the right like
 -- the price lines of other addons): the ways to get rid of the item. The group's own way comes first in its
 -- color; for kept items the best one, as "Otherwise: …". The rest follow in grey, best first; the auction price
--- counts after the AH cut. nil when nothing is known. Pure apart from money formatting.
+-- counts after the AH cut, and only when it passes the factor (verdict.ahWorth), else it comes last.
+-- nil when nothing is known. Pure apart from money formatting.
 function ns.TooltipRows(verdict, prices)
   prices = prices or {}
   local chosen = CHOSEN[verdict.kind]
@@ -82,7 +83,9 @@ function ns.TooltipRows(verdict, prices)
     table.insert(options, {deValue, "disenchant", L.TIP_DISENCHANT, "~" .. Money(deValue)})
   end
   if not verdict.bound and (verdict.ahTrusted or chosen == "ah") and prices.ah and prices.ah > 0 then
-    table.insert(options, {prices.ah * (1 - AH_CUT), "ah", L.TIP_AH, Money(prices.ah)})
+    -- below the factor the deposit and the risk of not selling eat the gain: then it ranks last
+    local worth = (verdict.ahWorth or chosen == "ah") and prices.ah * (1 - AH_CUT) or 0
+    table.insert(options, {worth, "ah", L.TIP_AH, Money(prices.ah)})
   end
   if prices.vendor and prices.vendor > 0 then
     table.insert(options, {prices.vendor, "vendor", L.TIP_VENDOR_NAME, Money(prices.vendor)})

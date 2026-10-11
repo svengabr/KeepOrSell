@@ -26,9 +26,9 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- Baganator shows them stacked, so they go to the Open group to be opened
 -- Returns {kind = "quest" | "open" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
 -- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
--- Kept wearable gear also gets {disenchant}. Every verdict gets {bound, ahTrusted, deValue} for the tooltip rows
--- comparing the ways to get rid of the item: ahTrusted = the auction price is known and recent, deValue = what
--- disenchanting brings (enchanters only).
+-- Kept wearable gear also gets {disenchant}. Every verdict gets {bound, ahTrusted, ahWorth, deValue} for the
+-- tooltip rows comparing the ways to get rid of the item: ahTrusted = the auction price is known and recent,
+-- ahWorth = it passes the factor and minimum profit, deValue = what disenchanting brings (enchanters only).
 -- needsPrice = the item stays only because its auction price is missing or too old. Pure.
 local function Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
@@ -114,9 +114,10 @@ end
 
 function ns.Decide(facts, db)
   local verdict = Decide(facts, db)
-  local _, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
+  local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
   verdict.bound = facts.bound or nil
   verdict.ahTrusted = priceReason ~= "noprice" and priceReason ~= "stale"
+  verdict.ahWorth = priceClass == "ah"
   verdict.deValue = db.disenchant and facts.disenchant and facts.disenchant.value or nil
   return verdict
 end

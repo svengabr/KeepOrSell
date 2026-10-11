@@ -158,6 +158,13 @@ class DecideTests(unittest.TestCase):
         self.assertIsNone(verdict.kind)
         self.assertEqual(verdict.reason, "wearable")
 
+    def test_ah_worth_follows_the_factor(self):
+        # Hunter's Muzzle Loader: 10s on the AH, 9s 40c at the vendor, below factor 2 (the deposit eats the rest)
+        verdict = self.decide(classID=2, equipLoc="INVTYPE_RANGED", prices={"ah": 1000, "vendor": 940, "age": 0})
+        self.assertTrue(verdict.ahTrusted)
+        self.assertFalse(verdict.ahWorth)
+        self.assertTrue(self.decide(classID=4, equipLoc="INVTYPE_CHEST", prices=self.FRESH_AH).ahWorth)
+
     def test_wearable_gear_to_ah_when_tradeable_and_worth_it(self):
         self.assertEqual(self.kind(classID=4, equipLoc="INVTYPE_CHEST", prices=self.FRESH_AH), "ah")
         self.assertIsNone(self.kind(classID=4, equipLoc="INVTYPE_CHEST", bound=True, prices=self.FRESH_AH))

@@ -155,18 +155,22 @@ class TooltipTests(unittest.TestCase):
 
     def test_kept_items_name_the_best_way_otherwise(self):
         # Wool Cloth for a recipe still to learn: the auction house pays more than the vendor
-        rows = self.ns.TooltipRows(self.rt.eval("{kind = 'profession', reason = 'upcoming', ahTrusted = true}"),
-                                   self.rt.eval("{ah = 65, vendor = 33}"))
+        rows = self.ns.TooltipRows(
+            self.rt.eval("{kind = 'profession', reason = 'upcoming', ahTrusted = true, ahWorth = true}"),
+            self.rt.eval("{ah = 70, vendor = 33}"))
         self.assertEqual([tuple(r.values()) for r in rows.values()],
-                         [("   » Otherwise: Auction house", "65c", "ff66ccff"), ("      Vendor", "33c", "ffaaaaaa")])
+                         [("   » Otherwise: Auction house", "70c", "ff66ccff"), ("      Vendor", "33c", "ffaaaaaa")])
 
-    def test_plain_kept_item_names_the_best_way_otherwise(self):
-        # a consumable below the auction factor: kept, but the auction house still pays more than the vendor
+    def test_kept_item_below_the_factor_names_the_vendor(self):
+        # Hunter's Muzzle Loader: 10s on the AH beats 9s 40c at the vendor after the cut, but not by the
+        # factor, so the deposit and the risk of not selling make the vendor the better way
         db = self.rt.eval("KeepOrSellDB")
-        verdict = self.rt.eval("{ahTrusted = true}")
-        prices = self.rt.eval("{ah = 39, vendor = 25}")
-        self.assertEqual(self.ns.TooltipText(verdict, prices, db), "|cffffd200KeepOrSell:|r Keep")
-        self.assertEqual(list(self.ns.TooltipRows(verdict, prices)[1].values())[0], "   » Otherwise: Auction house")
+        verdict = self.rt.eval("{reason = 'wearable', ahTrusted = true, ahWorth = false}")
+        prices = self.rt.eval("{ah = 1000, vendor = 940}")
+        self.assertEqual(self.ns.TooltipText(verdict, prices, db), "|cffffd200KeepOrSell:|r Keep (wearable)")
+        rows = self.ns.TooltipRows(verdict, prices)
+        self.assertEqual([list(r.values())[0] for r in rows.values()],
+                         ["   » Otherwise: Vendor", "      Auction house"])
 
     def test_kept_items_skip_untrusted_auction_price(self):
         rows = self.ns.TooltipRows(self.rt.eval("{kind = 'quest', reason = 'open', ahTrusted = false}"),

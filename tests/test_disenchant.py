@@ -272,11 +272,11 @@ class FactsTests(unittest.TestCase):
         self.assertEqual(self.rows(21), [("   » Otherwise: Disenchant", "~365c", "ffc78fff"),
                                          ("      Vendor", "67c", "ffaaaaaa")])
 
-    def test_wearable_hint_auction_house(self):
-        # below the 2x threshold, so the cloak stays, but the AH still pays more than the vendor
+    def test_wearable_hint_auction_house_below_factor(self):
+        # below the 2x threshold the AH pays more than the vendor after the cut, but not after the deposit
         self.rt.execute("PROFESSIONS = {197}; BOUND[21] = nil; AH.link21 = 100")
-        self.assertEqual(self.rows(21), [("   » Otherwise: Auction house", "100c", "ff66ccff"),
-                                         ("      Vendor", "67c", "ffaaaaaa")])
+        self.assertEqual(self.rows(21), [("   » Otherwise: Vendor", "67c", "ffffaa33"),
+                                         ("      Auction house", "100c", "ffaaaaaa")])
 
     def test_wearable_hint_bound_ignores_auction_house(self):
         self.rt.execute("PROFESSIONS = {197}; AH.link21 = 100")
@@ -285,7 +285,7 @@ class FactsTests(unittest.TestCase):
     def test_wearable_hint_compares_all(self):
         self.rt.execute("OWN[10940] = 229; OWN[10938] = 300; BOUND[21] = nil; AH.link21 = 100")
         self.assertEqual([r[0] for r in self.rows(21)],
-                         ["   » Otherwise: Disenchant", "      Auction house", "      Vendor"])
+                         ["   » Otherwise: Disenchant", "      Vendor", "      Auction house"])
 
 
 if __name__ == "__main__":
