@@ -88,7 +88,7 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:keepClick", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
+            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:upcomingReagents", "checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:keepClick", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
             "checkbox:lootCoins", "checkbox:bagValue", "checkbox:setSource"])
 
     def test_sections(self):
@@ -192,6 +192,7 @@ class OptionsTests(unittest.TestCase):
     def test_new_options_on_by_default(self):
         self.assertTrue(self.rt.eval("KeepOrSellDB.keepClick"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.lootCoins"))
+        self.assertTrue(self.rt.eval("KeepOrSellDB.upcomingReagents"))
         self.assertTrue(self.rt.eval("ENABLED")("lootCoins"))  # Blizzard's loot window, no addon needed
 
     def test_forget_kept_button(self):

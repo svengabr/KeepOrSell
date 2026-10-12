@@ -4,7 +4,7 @@ local addonName, ns = ...
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, bagValue = true, share = true,
-  disenchant = true, openable = true, keepClick = true, lootCoins = true,
+  disenchant = true, openable = true, keepClick = true, lootCoins = true, upcomingReagents = true,
 }
 
 local frame = CreateFrame("Frame")

@@ -88,6 +88,14 @@ class ProfessionTests(unittest.TestCase):
         self.ns.ClearCache()
         self.assertEqual(self.ns.Classify(3, "link3").kind, "junk")
 
+    def test_upcoming_reagents_switched_off(self):
+        self.ns.ScanProfession()
+        self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}; AH.link3 = 110; KeepOrSellDB.upcomingReagents = false")
+        self.assertEqual(self.ns.Classify(3, "link3").kind, "junk")
+        self.rt.execute("AH.link3 = 50000")
+        self.ns.ClearCache()
+        self.assertEqual(self.ns.Classify(3, "link3").kind, "ah")
+
     def test_upcoming_reagent_without_price(self):
         self.ns.ScanProfession()
         self.rt.execute("ITEMS[3] = {'Silk Cloth', 7, 5, '', 100}")

@@ -12,7 +12,7 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
 -- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
--- group like a reagent of a known recipe, even when worth auctioning
+-- group like a reagent of a known recipe, even when worth auctioning (option upcomingReagents)
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- classItem = a spell reagent or tool of the player's class (Thieves' Tools, Light Feather ...), kept no matter
 -- what, even when the class quest that handed it out is done
@@ -48,7 +48,7 @@ local function Decide(facts, db)
   if facts.tool then return {reason = "tool"} end
   if facts.classItem then return {reason = "classitem"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
-  if db.profession and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
+  if db.profession and db.upcomingReagents and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
 
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)

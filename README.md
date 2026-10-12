@@ -67,7 +67,7 @@ That's it. The groups show up in Baganator inside the equipment sets category. W
 
 Esc → Options → AddOns → **KeepOrSell**, or just type `/kos`.
 
-You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials, disenchanting, Questie, Alt+Right-click to keep, tooltip, hints, destroy button, loot coins, bag value, price sharing. One button forgets every item you marked to keep. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
+You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials (also those for recipes you haven't learned yet), disenchanting, Questie, Alt+Right-click to keep, tooltip, hints, destroy button, loot coins, bag value, price sharing. One button forgets every item you marked to keep. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
 
 If you mark something as "not junk" in Scrap, KeepOrSell won't argue.
 
