@@ -4,6 +4,13 @@ local L = ns.L
 
 local category
 
+-- Blizzard's gamepad UI (Forever's controller mode) is on
+function ns.IsGamepadUI()
+  return C_InputInterfaceStyle ~= nil and C_InputInterfaceStyle.GetCurrentStyle ~= nil and Enum ~= nil
+    and Enum.InputDeviceInterfaceType ~= nil
+    and C_InputInterfaceStyle.GetCurrentStyle() == Enum.InputDeviceInterfaceType.Gamepad
+end
+
 -- Registers the panel; db must already hold the defaults
 function ns.RegisterOptions(db, defaults)
   if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then return end
@@ -73,10 +80,16 @@ function ns.RegisterOptions(db, defaults)
   Checkbox("questie", L.OPT_QUESTIE, L.OPT_QUESTIE_TIP, true)
   Checkbox("disenchant", L.OPT_DISENCHANT, L.OPT_DISENCHANT_TIP, true)
   Checkbox("openable", L.OPT_OPEN, L.OPT_OPEN_TIP, true)
+  Checkbox("keepClick", L.OPT_KEEP_CLICK, L.OPT_KEEP_CLICK_TIP)
+  if layout and CreateSettingsButtonInitializer then
+    layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_KEEP_FORGET, L.OPT_KEEP_FORGET_BUTTON,
+      function() ns.ForgetKept() end, L.OPT_KEEP_FORGET_TIP, true))
+  end
   Header(L.SECTION_DISPLAY)
   Checkbox("tooltip", L.OPT_TOOLTIP, L.OPT_TOOLTIP_TIP)
   Checkbox("hints", L.OPT_HINTS, L.OPT_HINTS_TIP, true)
   Checkbox("destroy", L.OPT_DESTROY, L.OPT_DESTROY_TIP, true)
+  Checkbox("lootCoins", L.OPT_LOOT_COINS, L.OPT_LOOT_COINS_TIP)
   Checkbox("bagValue", L.OPT_BAG_VALUE, L.OPT_BAG_VALUE_TIP, true)
   Checkbox("setSource", L.OPT_SETS, L.OPT_SETS_TIP)
 
@@ -91,7 +104,10 @@ function ns.RegisterOptions(db, defaults)
 end
 
 function ns.OpenOptions()
-  if not category then return end
+  if not category then
+    if ns.IsGamepadUI() then print("|cffffd200KeepOrSell:|r " .. L.OPTIONS_GAMEPAD) end
+    return
+  end
   -- Settings.OpenToCategory goes through C_SettingsUtil.OpenSettingsPanel, which newer
   -- clients only allow from untainted code (ADDON_ACTION_BLOCKED); the panel's own method is not restricted
   if SettingsPanel and SettingsPanel.OpenToCategory then

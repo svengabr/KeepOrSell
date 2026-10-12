@@ -4,7 +4,7 @@ local addonName, ns = ...
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, bagValue = true, share = true,
-  disenchant = true, openable = true,
+  disenchant = true, openable = true, keepClick = true, lootCoins = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -58,9 +58,12 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     end
     -- older versions allowed a lower threshold
     KeepOrSellDB.factor = math.max(KeepOrSellDB.factor, ns.MIN_FACTOR)
-    ns.RegisterOptions(KeepOrSellDB, DEFAULTS)
+    -- with the gamepad UI on, closing Blizzard's settings window after an addon page showed can get blocked
+    -- and loop the "blocked" popup until the game freezes (reported by LootTriage); /kos says why instead
+    if not ns.IsGamepadUI() then ns.RegisterOptions(KeepOrSellDB, DEFAULTS) end
     -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()
+    ns.HookKeepClick()
   elseif event == "PLAYER_LOGIN" then
     ns.Refresh()
     ns.RegisterBaganator()
@@ -86,6 +89,8 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     frame:RegisterEvent("LOOT_OPENED")
     frame:RegisterEvent("LOOT_CLOSED")
     frame:RegisterEvent("UI_ERROR_MESSAGE")
+    frame:RegisterEvent("LOOT_SLOT_CLEARED")
+    frame:RegisterEvent("EQUIPMENT_SETS_CHANGED")
     reagentEconomy = ns.HasReagentEconomy()
     frame:RegisterEvent("SPELLS_CHANGED")
   elseif event == "QUEST_LOG_UPDATE" then
@@ -96,6 +101,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
   elseif event == "BAG_UPDATE_DELAYED" then
     ScheduleHints()
     ns.ScheduleShareQuery()
+    ns.LootCoinsChanged()
   elseif event == "SPELLS_CHANGED" then
     -- fires often; only a change of the talent sorts the vendor reagents again
     local known = ns.HasReagentEconomy()
@@ -109,8 +115,15 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.ShareRosterChanged()
   elseif event == "LOOT_OPENED" then
     ns.LootOpened()
+    ns.LootCoinsOpened()
+  elseif event == "LOOT_SLOT_CLEARED" then
+    ns.LootCoinsChanged()
   elseif event == "LOOT_CLOSED" then
     ns.LootClosed()
+    ns.LootCoinsClosed()
+  elseif event == "EQUIPMENT_SETS_CHANGED" then
+    -- a copy saved in a set is kept, so the groups change with the sets
+    ns.SettingsChanged()
   elseif event == "UI_ERROR_MESSAGE" then
     ns.InventoryFull(...) -- arg1 is the error type, the message follows
   elseif event == "CHAT_MSG_ADDON" then
@@ -139,7 +152,11 @@ frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
 if C_AuctionHouse and C_AuctionHouse.ReplicateItems then frame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE") end
 
 SLASH_KEEPORSELL1 = "/kos"
--- /kos opens the options, /kos setup the setup window
+-- /kos opens the options, /kos setup the setup window, /kos keep|unkeep <item> and /kos kept the keep marks
 SlashCmdList.KEEPORSELL = function(msg)
-  if msg and msg:lower():match("^%s*setup%s*$") then ns.ShowSetup() else ns.OpenOptions() end
+  if msg and msg:lower():match("^%s*setup%s*$") then
+    ns.ShowSetup()
+  elseif not ns.HandleKeepCommand(msg) then
+    ns.OpenOptions()
+  end
 end

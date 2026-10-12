@@ -22,7 +22,9 @@ Your bag items end up in these groups:
 
 Hover over any item and the tooltip tells you which group it's in and why, for example "Auction house: AH 1g 20s, vendor 15s". For gear you can wear it also says what it would bring once you no longer need it: disenchanting, the auction house or the vendor, whichever pays most.
 
-Not sure about an item? Then it stays. No auction price means no junk. And green or better gear you could wear never counts as junk.
+Not sure about an item? Then it stays. No auction price means no junk. And green or better gear you could wear never counts as junk, nor does anything saved in an equipment set.
+
+Want to keep something KeepOrSell would sell? **Alt+Right-click** it in your bags. It stays from now on, also without Scrap; click again to undo. `/kos kept` lists what you marked.
 
 ![Auction house](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/02-auction-house.jpg)
 
@@ -36,7 +38,8 @@ Not sure about an item? Then it stays. No auction price means no junk. And green
 
 ## A few extras
 
-- **Destroy button**: bags full and no vendor around? Click it and the cheapest junk in your bags is gone. Hover it to see what's next. It never touches rare or better items. If your bags are full while looting and the loot is worth more, the button lights up.
+- **Destroy button**: bags full and no vendor around? Click it and the cheapest junk in your bags is gone. Hover it to see what's next. It never touches rare or better items, and skips junk in profession bags (that wouldn't free a slot for anything else).
+- **Loot coins**: loot with full bags, and a gold coin marks the loot that's worth more than the junk it would replace. Hover the loot to see which item to destroy for it, and the destroy button lights up. Loot that still fits onto a stack or into a profession bag needs no room and gets no coin.
 - **Bag value**: a small line shows what your junk and your auction items are worth, e.g. "Junk 1g 20s · AH 15g".
 - **Hints**: if KeepOrSell needs something from you (like a fresh AH scan), a little button shows up in your bag window.
 - **Price sharing**: in a group, everyone with KeepOrSell keeps each other's auction prices fresh. Whoever has the newer price shares it.
@@ -64,7 +67,7 @@ That's it. The groups show up in Baganator inside the equipment sets category. W
 
 Esc → Options → AddOns → **KeepOrSell**, or just type `/kos`.
 
-You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials, disenchanting, Questie, tooltip, hints, destroy button, bag value, price sharing. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
+You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials, disenchanting, Questie, Alt+Right-click to keep, tooltip, hints, destroy button, loot coins, bag value, price sharing. One button forgets every item you marked to keep. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
 
 If you mark something as "not junk" in Scrap, KeepOrSell won't argue.
 
@@ -86,9 +89,9 @@ Schon mal beim Händler gestanden und dich gefragt, ob das komische Item in der 
 - **Schrott**: graues Zeug, billige Handwerkswaren, Ausrüstung, die deine Klasse nie tragen kann, Rezepte, die du schon kennst. Scrap verkauft das beim nächsten Händler.
 - **Entzaubern** (nur für Verzauberer): grüne, blaue und lila Ausrüstung, die du sonst verkaufen würdest, wenn ihre Materialien mehr bringen als Händler oder AH. Auch seelengebundene Ausrüstung, die nicht ins AH darf. Der Tooltip zeigt den Durchschnittswert und was wahrscheinlich rauskommt.
 
-Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Bei Ausrüstung, die du tragen kannst, steht dazu, was sie dir bringt, falls du sie nicht mehr brauchst: Entzaubern, Auktionshaus oder Händler, je nachdem, was am meisten bringt. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie.
+Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Bei Ausrüstung, die du tragen kannst, steht dazu, was sie dir bringt, falls du sie nicht mehr brauchst: Entzaubern, Auktionshaus oder Händler, je nachdem, was am meisten bringt. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie, genauso wenig wie alles aus einem Ausrüstungsset. Willst du etwas behalten, das KeepOrSell verkaufen würde? **Alt+Rechtsklick** darauf in der Tasche, dann bleibt es, auch ohne Scrap. Nochmal klicken hebt es auf, `/kos kept` listet alles Markierte.
 
-**Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items). Sind die Taschen beim Looten voll und die Beute ist mehr wert, leuchtet er. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise.
+**Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items, nie aus Berufstaschen). Sind die Taschen beim Looten voll, markiert eine Goldmünze die Beute, die mehr wert ist als der Schrott, den sie ersetzen würde; der Tooltip der Beute sagt, was du dafür zerstören solltest, und der Knopf leuchtet. Beute, die noch auf einen Stapel passt, bekommt keine Münze. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise.
 
 **Du brauchst:** Baganator und Auctionator (einmal das AH scannen). Scrap und Questie sind optional. Mit Questie werden Quest-Items zu Schrott, sobald alle ihre Quests erledigt sind – auch Items, die eine Quest starten (etwa die Bibliotheksbücher) oder die dir eine Quest gibt. Solange die Quest offen ist, bleiben sie in der Gruppe Quest.
 

@@ -227,6 +227,28 @@ class DecideTests(unittest.TestCase):
         open_quest = self.rt.eval("{name = 'X', level = 15}")
         self.assertEqual(self.kind(classItem=True, questOnly=True, questItemFor=open_quest), "quest")
 
+    def test_kept_by_player_beats_every_group_but_quest(self):
+        for facts in ({"classID": 7, "prices": self.CHEAP}, {"classID": 7, "prices": self.FRESH_AH},
+                      {"classID": 4, "equipLoc": "INVTYPE_CHEST", "unusable": True, "bound": True},
+                      {"classID": 15, "openable": True}):
+            verdict = self.decide(kept=True, **facts)
+            self.assertIsNone(verdict.kind, facts)
+            self.assertEqual(verdict.reason, "kept")
+        self.assertEqual(self.kind(kept=True, quest="open"), "quest")
+
+    def test_kept_no_disenchant(self):
+        self.db.disenchant = True
+        de = self.rt.eval("{value = 100000, outcomes = {}}")
+        self.assertIsNone(self.kind(kept=True, classID=4, equipLoc="INVTYPE_CHEST", unusable=True, disenchant=de))
+
+    def test_equipment_set_never_sold(self):
+        plain = {"classID": 4, "equipLoc": "INVTYPE_CHEST", "plain": True, "priceData": True, "prices": self.CHEAP}
+        self.assertEqual(self.kind(**plain), "junk")
+        verdict = self.decide(equipSet=True, **plain)
+        self.assertIsNone(verdict.kind)
+        self.assertEqual(verdict.reason, "equipset")
+        self.assertIsNone(self.kind(equipSet=True, classID=4, equipLoc="INVTYPE_CHEST", prices=self.FRESH_AH))
+
     def test_unusable_gear_switch_off(self):
         self.db.gear = False
         self.assertIsNone(self.kind(classID=4, equipLoc="INVTYPE_CHEST", unusable=True, bound=True))
@@ -399,6 +421,36 @@ class FactsTests(unittest.TestCase):
         rt, ns = load(stubs="C_Item.IsBound = function(loc) return loc.bound end")
         self.assertTrue(ns.ItemFacts(5, "link5", rt.eval("{bound = true}")).bound)
         self.assertFalse(ns.ItemFacts(5, "link5", rt.eval("{bound = false}")).bound)
+
+
+class KeepAndSetFactsTests(unittest.TestCase):
+    STUBS = """
+    SET = {}
+    C_Container = {GetContainerItemEquipmentSetInfo = function(bag, slot) return SET[slot] == true, SET[slot] and "PvP" or "" end}
+    function SLOT(n) return {IsBagAndSlot = function() return true end,
+      GetBagAndSlot = function() return 0, n end, IsValid = function() return true end} end
+    """
+
+    def setUp(self):
+        self.rt, self.ns = load(stubs=self.STUBS)
+        self.ns.items = self.rt.eval("{}")
+
+    def test_equipment_set_from_bag_slot(self):
+        self.rt.execute("SET[1] = true")
+        self.assertTrue(self.ns.ItemFacts(10, "link10", self.rt.eval("SLOT(1)")).equipSet)
+        self.assertFalse(self.ns.ItemFacts(10, "link10", self.rt.eval("SLOT(2)")).equipSet)
+        self.assertFalse(self.ns.ItemFacts(10, "link10").equipSet)
+
+    def test_set_copy_cached_separately(self):
+        self.rt.execute("SET[1] = true")
+        self.assertIsNone(self.ns.Classify(10, "link10", self.rt.eval("SLOT(1)")).kind)
+        self.assertEqual(self.ns.Classify(10, "link10", self.rt.eval("SLOT(2)")).kind, "junk")
+
+    def test_kept_from_saved_variables(self):
+        self.assertFalse(self.ns.ItemFacts(4, "link4").kept)
+        self.rt.execute("KeepOrSellDB.keep = {[4] = true}")
+        self.assertTrue(self.ns.ItemFacts(4, "link4").kept)
+        self.assertIsNone(self.ns.Classify(4, "link4").kind)
 
 
 class TSMPriceDataTests(unittest.TestCase):

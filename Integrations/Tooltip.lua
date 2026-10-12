@@ -156,6 +156,10 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
     text = L.TIP_KEEP .. " – " .. L.TIP_TOOL
   elseif reason == "classitem" then
     text = L.TIP_KEEP .. " – " .. L.TIP_CLASS_ITEM
+  elseif reason == "kept" then
+    text = L.TIP_KEEP .. " – " .. (db.keepClick and L.TIP_KEPT_UNDO or L.TIP_KEPT)
+  elseif reason == "equipset" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_EQUIP_SET
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NO_PRICE
   elseif verdict.needsPrice and verdict.priceReason == "stale" then
@@ -198,8 +202,14 @@ local function AddLine(tooltip, data)
     for _, row in ipairs(rows or {}) do
       tooltip:AddDoubleLine("|c" .. row[3] .. row[1] .. "|r", "|c" .. row[3] .. row[2] .. "|r", 1, 1, 1, 1, 1, 1)
     end
-    tooltip:Show()
   end
+  -- loot with a coin (LootCoins.lua): which junk to destroy for it
+  local note = ns.LootTooltipNote and tooltip.GetOwner and ns.LootTooltipNote(tooltip:GetOwner())
+  if note then
+    if not text then tooltip:AddLine(" ") end
+    tooltip:AddLine(PREFIX .. note, 0.2, 1, 0.2, true)
+  end
+  if text or note then tooltip:Show() end
 end
 
 function ns.HookTooltip()

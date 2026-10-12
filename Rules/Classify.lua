@@ -5,7 +5,7 @@ local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
 -- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, classItem, unusable, plain, bound, reagent, upcoming,
--- recipe, prices, priceData, disenchant, openable}
+-- recipe, prices, priceData, disenchant, openable, kept, equipSet}
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
@@ -24,6 +24,8 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- openable = the bag slot has loot or the tooltip says "<Right Click to Open>", and the tooltip doesn't
 -- say "Locked" (clams, boxes): each takes its own bag slot even when
 -- Baganator shows them stacked, so they go to the Open group to be opened
+-- kept = the player marked the item to keep (Keep.lua); equipSet = this copy is saved in an equipment set;
+-- both are kept no matter what, after the quest checks
 -- Returns {kind = "quest" | "open" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
 -- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
 -- Kept wearable gear also gets {disenchant}. Every verdict gets {bound, ahTrusted, ahWorth, deValue} for the
@@ -40,6 +42,8 @@ local function Decide(facts, db)
   if questItem and not doneQuestItem then
     return {kind = "quest", reason = "questitem", quest = facts.questItemFor}
   end
+  if facts.kept then return {reason = "kept"} end
+  if facts.equipSet then return {reason = "equipset"} end
   if db.openable and facts.openable then return {kind = "open"} end
   if facts.tool then return {reason = "tool"} end
   if facts.classItem then return {reason = "classitem"} end
@@ -203,6 +207,14 @@ local function DisenchantFacts(itemID, itemLink, classID)
   }
 end
 
+-- the bag slot holds a copy saved in an equipment set; only a bag slot can tell
+local function InEquipmentSet(location)
+  if not (location and location.IsBagAndSlot and location:IsBagAndSlot() and location.GetBagAndSlot) then return false end
+  if location.IsValid and not location:IsValid() then return false end
+  if not (C_Container and C_Container.GetContainerItemEquipmentSetInfo) then return false end
+  return C_Container.GetContainerItemEquipmentSetInfo(location:GetBagAndSlot()) and true or false
+end
+
 local function IsBound(itemLink, location)
   if location and C_Item.IsBound and (not location.IsBagAndSlot or location:IsBagAndSlot()) and (not location.IsValid or location:IsValid()) then
     return C_Item.IsBound(location)
@@ -237,6 +249,8 @@ function ns.ItemFacts(itemID, itemLink, location)
     priceData = ns.HasPriceData(),
     disenchant = DisenchantFacts(itemID, itemLink, classID),
     openable = ns.IsOpenable(fromTooltip.lines, ITEM_OPENABLE, LOCKED, HasLoot(location)),
+    kept = ns.IsKept(itemID),
+    equipSet = InEquipmentSet(location),
   }
 end
 
@@ -254,6 +268,7 @@ function ns.Classify(itemID, itemLink, location)
   local now = GetTime and GetTime() or 0
   if now - cacheTime > CACHE_SECONDS then cache, cacheTime = {}, now end
   local key = tostring(itemLink or itemID) .. (IsBound(itemLink, location) and "|bound" or "")
+    .. (InEquipmentSet(location) and "|set" or "")
   if cache[key] then return cache[key] end
   local facts = ns.ItemFacts(itemID, itemLink, location)
   local verdict = ns.Decide(facts, KeepOrSellDB)

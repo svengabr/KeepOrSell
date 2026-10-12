@@ -6,25 +6,39 @@ local L = ns.L
 local PREFIX = "|cffffd200KeepOrSell:|r "
 local RARE = 3 -- Enum.ItemQuality; the client asks to type DELETE from here on
 
--- candidates: list of {bag, slot, value, quality, locked}. Returns the cheapest one that may be
--- destroyed, the first slot on a tie, or nil. Pure.
-function ns.PickCheapest(candidates)
-  local best
-  for _, item in ipairs(candidates) do
-    if not item.locked and (item.quality or 0) < RARE and (not best or item.value < best.value) then
-      best = item
-    end
+-- candidates: list of {bag, slot, value, quality, locked}. Returns those that may be destroyed, cheapest
+-- first, in list order on a tie. Pure.
+function ns.SortCheapest(candidates)
+  local list = {}
+  for i, item in ipairs(candidates) do
+    if not item.locked and (item.quality or 0) < RARE then table.insert(list, {item = item, index = i}) end
   end
-  return best
+  table.sort(list, function(a, b)
+    if a.item.value ~= b.item.value then return a.item.value < b.item.value end
+    return a.index < b.index
+  end)
+  for i, entry in ipairs(list) do list[i] = entry.item end
+  return list
 end
 
--- Returns the bag item (see ns.ScanBags) of the junk to destroy, or nil
-function ns.FindDestroyTarget()
+-- The cheapest candidate that may be destroyed, the first slot on a tie, or nil. Pure.
+function ns.PickCheapest(candidates)
+  return ns.SortCheapest(candidates)[1]
+end
+
+-- Junk in the regular bags (see ns.ScanBags), cheapest first: destroying junk in a profession bag
+-- frees no slot for other items
+function ns.DestroyCandidates()
   local candidates = {}
   for _, item in ipairs(ns.ScanBags()) do
-    if item.junk then table.insert(candidates, item) end
+    if item.junk and not item.special then table.insert(candidates, item) end
   end
-  return ns.PickCheapest(candidates)
+  return ns.SortCheapest(candidates)
+end
+
+-- Returns the bag item of the junk to destroy, or nil
+function ns.FindDestroyTarget()
+  return ns.DestroyCandidates()[1]
 end
 
 -- Destroys target only if it still sits unchanged in its slot and the cursor is free. Returns true on success.
@@ -45,13 +59,18 @@ function ns.DestroyTarget(target)
   return true
 end
 
--- loot: list of {link, count, value, keep}; keep = KeepOrSell would keep it (quest, profession).
--- Returns the loot item worth destroying target for, or nil. Pure.
+-- true if the loot item is worth destroying target for: KeepOrSell would keep it, or it's worth more
+local function WorthMore(item, target)
+  return item.keep or item.value > target.value
+end
+
+-- loot: list of {slot, link, count, value, keep, fits}; keep = KeepOrSell would keep it (quest, profession),
+-- fits = it needs no free slot. Returns the loot item worth destroying target for, or nil. Pure.
 function ns.LootWorthMore(loot, target)
   if not target then return nil end
   local best
   for _, item in ipairs(loot) do
-    if item.keep or item.value > target.value then
+    if not item.fits and WorthMore(item, target) then
       if not best or (item.keep and not best.keep) or (item.keep == best.keep and item.value > best.value) then
         best = item
       end
@@ -60,7 +79,38 @@ function ns.LootWorthMore(loot, target)
   return best
 end
 
--- The items in the open loot window, valued at the better of auction and vendor price
+-- Pairs loot with the junk that makes room for it: the most valuable loot (kept items first) takes a free
+-- slot, once those are used up the cheapest junk, the next one the next cheapest junk, and so on. Loot that
+-- fits needs nothing. loot: see ns.LootWorthMore; junk: cheapest first (ns.DestroyCandidates); free: free
+-- regular slots. Returns a list of {loot, target, worth}: no target = a free slot is left for it; worth =
+-- destroying target for it pays off. Loot left without a free slot or junk is not listed. Pure.
+function ns.PairLoot(loot, junk, free)
+  local needs = {}
+  for i, item in ipairs(loot) do
+    if not item.fits then table.insert(needs, {item = item, index = i}) end
+  end
+  table.sort(needs, function(a, b)
+    local ak, bk = a.item.keep or false, b.item.keep or false
+    if ak ~= bk then return ak end
+    if a.item.value ~= b.item.value then return a.item.value > b.item.value end
+    return a.index < b.index
+  end)
+  local result = {}
+  free = free or 0
+  for i, entry in ipairs(needs) do
+    if i <= free then
+      table.insert(result, {loot = entry.item})
+    else
+      local target = junk[i - free]
+      if not target then break end
+      table.insert(result, {loot = entry.item, target = target, worth = WorthMore(entry.item, target)})
+    end
+  end
+  return result
+end
+
+-- The items in the open loot window, valued at the better of auction and vendor price; slot = loot slot,
+-- fits = needs no free regular slot (ns.LootFits)
 function ns.LootItems()
   local items = {}
   if not (GetNumLootItems and GetLootSlotLink and GetLootSlotInfo) then return items end
@@ -69,10 +119,11 @@ function ns.LootItems()
     if link then
       local count = select(3, GetLootSlotInfo(slot)) or 1
       local prices = ns.GetPrices(link)
-      local kind = ns.Classify(C_Item.GetItemInfoInstant(link), link).kind
+      local itemID = C_Item.GetItemInfoInstant(link)
+      local kind = ns.Classify(itemID, link).kind
       table.insert(items, {
-        link = link, count = count, value = math.max(prices.ah or 0, prices.vendor or 0) * count,
-        keep = kind == "quest" or kind == "profession",
+        slot = slot, link = link, count = count, value = math.max(prices.ah or 0, prices.vendor or 0) * count,
+        keep = kind == "quest" or kind == "profession", fits = ns.LootFits(itemID, count),
       })
     end
   end
@@ -86,6 +137,11 @@ local function SetGlow(on)
   if not button then return end
   if on then button.Pulse:Play() else button.Pulse:Stop() end
   button.Glow:SetShown(on)
+end
+
+-- The loot coins (LootCoins.lua) light the button up when destroying junk makes room for better loot
+function ns.SetDestroyGlow(on)
+  SetGlow(on and KeepOrSellDB.destroy and button ~= nil and button.target ~= nil)
 end
 
 function ns.IsDestroyGlowing()

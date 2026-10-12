@@ -71,7 +71,7 @@ def load():
       ns.UpdateBagValue = function() ns.valueUpdated = (ns.valueUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
-    for f in ("Locales.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
+    for f in ("Locales.lua", "Keep.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             source(f), ns)
     return rt, ns
@@ -88,7 +88,8 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy", "checkbox:bagValue", "checkbox:setSource"])
+            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:keepClick", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
+            "checkbox:lootCoins", "checkbox:bagValue", "checkbox:setSource"])
 
     def test_sections(self):
         headers = [i.header for i in self.calls.layout.values() if i.header]
@@ -187,6 +188,62 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(layout[0].header, "Dependencies")
         self.assertEqual([i.data.name for i in layout[1:]], ["Auctionator", "TradeSkillMaster", "Baganator", "Scrap", "Questie"])
         self.assertEqual(layout[1].template, "KeepOrSellDependencyTemplate")
+
+    def test_new_options_on_by_default(self):
+        self.assertTrue(self.rt.eval("KeepOrSellDB.keepClick"))
+        self.assertTrue(self.rt.eval("KeepOrSellDB.lootCoins"))
+        self.assertTrue(self.rt.eval("ENABLED")("lootCoins"))  # Blizzard's loot window, no addon needed
+
+    def test_forget_kept_button(self):
+        rt, ns = load()
+        rt.execute("""
+          BUTTONS = {}
+          function CreateSettingsButtonInitializer(name, text, click, tip, tags) BUTTONS[name] = click return {} end
+          PRINTED = {}
+          print = function(text) table.insert(PRINTED, text) end
+          KeepOrSellDB = {keep = {[4] = true}}
+        """)
+        rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        rt.execute("BUTTONS['Kept items']()")
+        self.assertIsNone(rt.eval("next(KeepOrSellDB.keep)"))
+        self.assertIn("Forgot 1", rt.eval("PRINTED[1]"))
+
+    def test_slash_keep(self):
+        self.rt.execute("""
+          PRINTED = {}
+          print = function(text) table.insert(PRINTED, text) end
+          C_Item = {GetItemInfo = function(id) return "Linen", "[Linen]" end}
+        """)
+        self.rt.execute("SlashCmdList.KEEPORSELL('keep 4')")
+        self.assertTrue(self.rt.eval("KeepOrSellDB.keep[4]"))
+        self.assertIsNone(self.calls.opened)
+        self.rt.execute("SlashCmdList.KEEPORSELL('kept')")
+        self.assertIn("[Linen]", self.rt.eval("PRINTED[#PRINTED]"))
+
+    def test_no_panel_with_gamepad_ui(self):
+        rt, ns = load()
+        rt.execute("""
+          C_InputInterfaceStyle = {GetCurrentStyle = function() return 1 end}
+          Enum = {InputDeviceInterfaceType = {Mkb = 0, Gamepad = 1}}
+          PRINTED = {}
+          print = function(text) table.insert(PRINTED, text) end
+          KeepOrSellDB = {}
+        """)
+        rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertIsNone(rt.eval("CALLS.registered"))
+        self.assertTrue(rt.eval("KeepOrSellDB.tooltip"))  # defaults still set
+        rt.execute("SlashCmdList.KEEPORSELL('')")
+        self.assertIn("gamepad", rt.eval("PRINTED[1]"))
+
+    def test_panel_with_mouse_ui(self):
+        rt, ns = load()
+        rt.execute("""
+          C_InputInterfaceStyle = {GetCurrentStyle = function() return 0 end}
+          Enum = {InputDeviceInterfaceType = {Mkb = 0, Gamepad = 1}}
+          KeepOrSellDB = {}
+        """)
+        rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertIsNotNone(rt.eval("CALLS.registered"))
 
     def test_without_settings_api(self):
         rt, ns = load()

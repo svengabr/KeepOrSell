@@ -268,5 +268,110 @@ class LootFlowTests(unittest.TestCase):
         self.assertEqual(len(self.rt.eval("PRINTED")), 2)
 
 
+# bag 1: herb bag (family 32) with one free slot holding a grey item
+BAGS_STUBS = """
+NUM_BAG_SLOTS = 1
+BAG1 = {[1] = {itemID = 21, stackCount = 1, quality = 0}}
+FAMILY = {[0] = 0, [1] = 32}
+FREE = {[0] = 0, [1] = 1}
+MAXSTACK = {[4] = 20}
+ITEM_FAMILY = {[30] = 32}
+ITEMS[30] = {"Peacebloom", 7, 9, "", 5, 1}
+C_Container.GetContainerNumSlots = function(bag) return bag == 0 and 4 or 2 end
+local bag0 = C_Container.GetContainerItemInfo
+C_Container.GetContainerItemInfo = function(bag, slot)
+  if bag == 0 then return bag0(bag, slot) end
+  local s = BAG1[slot]
+  if not s then return nil end
+  return {itemID = s.itemID, hyperlink = "link" .. s.itemID, stackCount = s.stackCount, quality = s.quality,
+    isLocked = false, iconFileID = 100 + s.itemID}
+end
+C_Container.GetContainerNumFreeSlots = function(bag) return FREE[bag], FAMILY[bag] end
+C_Item.GetItemMaxStackSizeByID = function(id) return MAXSTACK[id] or 1 end
+C_Item.GetItemFamily = function(id) return ITEM_FAMILY[id] or 0 end
+"""
+
+
+class FitsTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS + BAGS_STUBS)
+
+    def test_fits_on_stacks(self):
+        fits = self.ns.FitsOnStacks
+        self.assertTrue(fits(17, 20, 1, 3))
+        self.assertFalse(fits(18, 20, 1, 3))
+        self.assertTrue(fits(10, 20, 2, 30))  # loot fills every stack with room
+        self.assertFalse(fits(1, 20, 0, 0))   # no stack yet
+        self.assertFalse(fits(1, 1, 3, 3))    # doesn't stack
+        self.assertFalse(fits(1, None, 1, 1))
+
+    def test_family_matches(self):
+        self.assertTrue(self.ns.FamilyMatches(32, 32))
+        self.assertTrue(self.ns.FamilyMatches(32 + 8, 32))
+        self.assertFalse(self.ns.FamilyMatches(8, 32))
+        self.assertFalse(self.ns.FamilyMatches(0, 32))
+        self.assertFalse(self.ns.FamilyMatches(32, 0))
+
+    def test_free_slots_only_regular_bags(self):
+        self.assertEqual(self.ns.FreeSlots(), 0)
+        self.rt.execute("FREE[0] = 2")
+        self.assertEqual(self.ns.FreeSlots(), 2)
+
+    def test_loot_fits(self):
+        self.assertTrue(self.ns.LootFits(4, 17))   # linen x3 in the bags, stacks to 20
+        self.assertFalse(self.ns.LootFits(4, 18))
+        self.assertTrue(self.ns.LootFits(30, 1))   # herb into the herb bag's free slot
+        self.rt.execute("FREE[1] = 0")
+        self.assertFalse(self.ns.LootFits(30, 1))
+        self.assertFalse(self.ns.LootFits(9, 1))   # potion doesn't stack
+
+    def test_junk_in_profession_bag_not_destroyed(self):
+        # the pebble in the herb bag is cheapest, but destroying it frees no regular slot
+        self.rt.execute("ITEMS[21][5] = 1")
+        target = self.ns.FindDestroyTarget()
+        self.assertEqual((target.bag, target.itemID), (0, 20))
+        self.assertTrue(all(not c.special for c in self.ns.DestroyCandidates().values()))
+
+    def test_fitting_loot_needs_no_junk(self):
+        loot(self.rt, (4, 5))
+        items = self.ns.LootItems()
+        self.assertTrue(items[1].fits)
+        self.assertIsNone(self.ns.LootWorthMore(items, self.ns.FindDestroyTarget()))
+
+
+def item(rt, slot, value, keep=False, fits=False):
+    return rt.table_from({"slot": slot, "link": f"loot{slot}", "value": value, "keep": keep, "fits": fits})
+
+
+class PairLootTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS)
+        self.junk = self.rt.table_from([self.rt.table_from({"link": f"junk{v}", "value": v}) for v in (5, 10, 50)])
+
+    def pair(self, loot, free=0):
+        result = self.ns.PairLoot(self.rt.table_from(loot), self.junk, free)
+        return [(p.loot.slot, p.target and p.target.link, p.worth) for p in result.values()]
+
+    def test_most_valuable_loot_gets_cheapest_junk(self):
+        loot = [item(self.rt, 1, 8), item(self.rt, 2, 30), item(self.rt, 3, 7)]
+        self.assertEqual(self.pair(loot), [(2, "junk5", True), (1, "junk10", False), (3, "junk50", False)])
+
+    def test_kept_loot_first_and_always_worth_it(self):
+        loot = [item(self.rt, 1, 30), item(self.rt, 2, 0, keep=True)]
+        self.assertEqual(self.pair(loot), [(2, "junk5", True), (1, "junk10", True)])
+
+    def test_free_slots_go_to_the_best_loot(self):
+        loot = [item(self.rt, 1, 8), item(self.rt, 2, 30)]
+        self.assertEqual(self.pair(loot, free=1), [(2, None, None), (1, "junk5", True)])
+
+    def test_fitting_loot_skipped(self):
+        loot = [item(self.rt, 1, 100, fits=True), item(self.rt, 2, 30)]
+        self.assertEqual(self.pair(loot), [(2, "junk5", True)])
+
+    def test_out_of_junk(self):
+        loot = [item(self.rt, i, 100 + i) for i in range(1, 5)]
+        self.assertEqual(len(self.pair(loot)), 3)
+
+
 if __name__ == "__main__":
     unittest.main()
