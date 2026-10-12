@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.17.0
+
+- Keep anything you like: Alt+Right-click an item in your bags and KeepOrSell keeps it from now on – never junk, auction house or disenchant, also without Scrap. Click again to undo. `/kos kept` lists your marks, `/kos keep <item>` and `/kos unkeep <item>` work too, and a button in the options forgets them all. Items on Scrap's own junk list stay junk.
+- Gear saved in an equipment set is always kept.
+- Loot coins: when you loot with full bags, a gold coin in the loot window marks loot worth more than the junk it would replace (quest items always). Hover the loot to see which item to destroy for it; the destroy button lights up right away. Option "Loot coins when bags are full" (on by default, works without Baganator).
+- Loot that still fits onto a stack in your bags or into a profession bag no longer counts as needing room, and the destroy button skips junk in profession bags, since destroying it frees no slot for anything else.
+- With the gamepad UI on, the options page stays off: Blizzard's settings window can freeze the game there with addon pages. `/kos` says so; switch to mouse and keyboard and /reload to change options.
+
 ## 0.16.2
 
 - Fix: the tooltip of kept items no longer suggests "Otherwise: Auction house" when the auction price beats the vendor only slightly. The auction house now has to pass your auction factor, like for the AuctionHouse group, since the deposit and the chance of not selling eat a small gain; otherwise the vendor comes first.
