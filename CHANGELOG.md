@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.1
+
+- New option "Reagents for recipes you haven't learned" (on by default): turn it off and reagents of recipes you could still learn are sorted like any other item (auction house, junk) until you learn the recipe. Recipes you don't know yet are still kept.
+
 ## 0.17.0
 
 - Keep anything you like: Alt+Right-click an item in your bags and KeepOrSell keeps it from now on – never junk, auction house or disenchant, also without Scrap. Click again to undo. `/kos kept` lists your marks, `/kos keep <item>` and `/kos unkeep <item>` work too, and a button in the options forgets them all. Items on Scrap's own junk list stay junk.
