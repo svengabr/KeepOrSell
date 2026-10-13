@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.17.2
+
+- Unlearning a profession now drops its reagents too: they no longer stay in the Profession group as if a recipe still gave skill points. Reagents remembered by older versions are cleared once, so open your remaining professions once more.
+
 ## 0.17.1
 
 - New option "Reagents for recipes you haven't learned" (on by default): turn it off and reagents of recipes you could still learn are sorted like any other item (auction house, junk) until you learn the recipe. Recipes you don't know yet are still kept.
