@@ -76,6 +76,17 @@ local function CharacterRecipes()
   return CharacterTable("recipes")
 end
 
+-- {[name] = true} of the character's professions; nil if the client can't tell
+local function CurrentProfessions()
+  if not (GetProfessions and GetProfessionInfo) then return nil end
+  local current = {}
+  for _, profIndex in pairs({GetProfessions()}) do
+    local name = GetProfessionInfo(profIndex)
+    if name then current[name] = true end
+  end
+  return current
+end
+
 -- Rereads the open profession; true if anything changed. The window may show a filtered list, so only
 -- the recipes seen are updated, the others keep their last known state.
 function ns.ScanProfession()
@@ -87,16 +98,21 @@ function ns.ScanProfession()
   end
   local getIDs = api.GetAllRecipeIDs or api.GetFilteredRecipeIDs
   if not getIDs then return false end
+  local changed = ns.ForgetLostProfessions()
   local profession = api.GetBaseProfessionInfo and api.GetBaseProfessionInfo()
-  if profession and profession.professionName then CharacterTable("opened")[profession.professionName] = true end
+  local professionName = profession and profession.professionName
+  -- only real professions count as opened (and can be lost later), not windows like poisons
+  local current = CurrentProfessions()
+  if professionName and (not current or current[professionName]) then CharacterTable("opened")[professionName] = true end
 
   local stored, storedUpcoming, storedCrafts = CharacterRecipes(), CharacterTable("upcoming"), CharacterTable("crafts")
+  local owners = CharacterTable("recipeProfession")
   local recipes, upcoming, crafts = ns.CollectRecipes(api, getIDs())
-  local changed = false
   local function Store(target, recipeID, reagents)
     local old = target[recipeID]
     if (old == nil) ~= (reagents == nil) or (old == false) ~= (reagents == false) then changed = true end
     target[recipeID] = reagents
+    if reagents ~= nil then owners[recipeID] = professionName or owners[recipeID] end
   end
   for recipeID, reagents in pairs(recipes) do
     Store(stored, recipeID, reagents)
@@ -106,9 +122,49 @@ function ns.ScanProfession()
   for recipeID, craft in pairs(crafts) do
     if not storedCrafts[recipeID] then changed = true end
     storedCrafts[recipeID] = craft
+    owners[recipeID] = professionName or owners[recipeID]
   end
   if changed then index, upcomingIndex = nil, nil end
   return changed
+end
+
+-- Removes the recipes of professions in lost ({[name] = true}) from the tables ({[recipeID] = ...}), using owners
+-- ({[recipeID] = profession name}). Recipes stored before owners existed can't be told apart, so then all of them
+-- go and every profession counts as unopened again; returns that as second value. Pure.
+function ns.DropProfessionRecipes(tables, owners, lost)
+  local legacy = false
+  for _, target in ipairs(tables) do
+    for recipeID in pairs(target) do
+      if owners[recipeID] == nil then legacy = true end
+    end
+  end
+  for _, target in ipairs(tables) do
+    for recipeID in pairs(target) do
+      if legacy or lost[owners[recipeID]] then target[recipeID] = nil end
+    end
+  end
+  for recipeID, owner in pairs(owners) do
+    if legacy or lost[owner] then owners[recipeID] = nil end
+  end
+  return legacy
+end
+
+-- Forgets the recipes of professions the character has unlearned; true if anything was dropped
+function ns.ForgetLostProfessions()
+  local current = CurrentProfessions()
+  if not current then return false end
+  local opened, lost, any = CharacterTable("opened"), {}, false
+  for name in pairs(opened) do
+    if not current[name] then lost[name], any = true, true end
+  end
+  if not any then return false end
+  local legacy = ns.DropProfessionRecipes({CharacterRecipes(), CharacterTable("upcoming"), CharacterTable("crafts")},
+    CharacterTable("recipeProfession"), lost)
+  for name in pairs(opened) do
+    if legacy or lost[name] then opened[name] = nil end
+  end
+  index, upcomingIndex = nil, nil
+  return true
 end
 
 -- true if a known recipe of this character still gains skill from the item, directly or after crafting it

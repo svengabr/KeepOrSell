@@ -110,6 +110,8 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
       ns.SettingsChanged()
     end
   elseif event == "SKILL_LINES_CHANGED" then
+    -- an unlearned profession takes its reagents along
+    if ns.ForgetLostProfessions() then ns.RefreshBaganator() end
     ScheduleHints()
   elseif event == "GROUP_ROSTER_UPDATE" then
     ns.ShareRosterChanged()

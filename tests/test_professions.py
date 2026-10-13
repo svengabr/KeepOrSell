@@ -137,6 +137,68 @@ class ProfessionTests(unittest.TestCase):
         self.assertFalse(ns.IsSkillUpReagent(4))
 
 
+# two professions; the window shows recipes 10..16 for the one in OPEN
+LOST_STUBS = STUBS + """
+PROFS = {"Enchanting", "Tailoring"}
+OPEN = "Enchanting"
+C_TradeSkillUI.GetBaseProfessionInfo = function() return {professionName = OPEN} end
+function GetProfessions() return 1, 2 end
+function GetProfessionInfo(i) return PROFS[i], 0, 1, 75, 0, 0, i == 1 and 333 or 197 end
+"""
+
+
+class LostProfessionTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(stubs=LOST_STUBS)
+
+    def unlearn(self, name):
+        self.rt.execute("for i, n in ipairs(PROFS) do if n == %r then table.remove(PROFS, i) end end" % name)
+
+    def test_unlearned_profession_drops_reagents(self):
+        self.ns.ScanProfession()
+        self.unlearn("Enchanting")
+        self.assertTrue(self.ns.ForgetLostProfessions())
+        self.assertFalse(self.ns.IsSkillUpReagent(4))
+        self.assertFalse(self.ns.IsSkillUpReagent(40))
+        self.assertFalse(self.ns.IsUpcomingReagent(3))
+        self.assertFalse(self.ns.ForgetLostProfessions())  # nothing left to drop
+
+    def test_other_profession_stays(self):
+        self.ns.ScanProfession()
+        self.rt.execute("OPEN = 'Tailoring'; RECIPES[17] = {learned = true, relativeDifficulty = 0, reagents = {50}}; SHOWN = {17}")
+        self.ns.ScanProfession()
+        self.unlearn("Enchanting")
+        self.ns.ForgetLostProfessions()
+        self.assertFalse(self.ns.IsSkillUpReagent(4))
+        self.assertTrue(self.ns.IsSkillUpReagent(50))
+        self.assertEqual(list(self.ns.UnopenedProfessions().values()), [])
+
+    def test_recipes_without_profession_all_dropped(self):
+        # stored by an older version: no owner, so every profession has to be opened again
+        self.rt.execute("KeepOrSellDB.recipes = {['Tester-Realm'] = {[10] = {4}}};"
+                        "KeepOrSellDB.opened = {['Tester-Realm'] = {Enchanting = true, Tailoring = true}}")
+        self.unlearn("Enchanting")
+        self.assertTrue(self.ns.ForgetLostProfessions())
+        self.assertFalse(self.ns.IsSkillUpReagent(4))
+        self.assertEqual(list(self.ns.UnopenedProfessions().values()), ["Tailoring"])
+
+    def test_window_that_is_no_profession_never_lost(self):
+        self.rt.execute("OPEN = 'Poisons'")
+        self.ns.ScanProfession()
+        self.assertFalse(self.ns.ForgetLostProfessions())
+        self.assertTrue(self.ns.IsSkillUpReagent(4))
+
+    def test_drop_profession_recipes_pure(self):
+        recipes = self.rt.eval("{[1] = {4}, [2] = {5}}")
+        owners = self.rt.eval('{[1] = "A", [2] = "B"}')
+        lost = self.rt.eval("{A = true}")
+        legacy = self.ns.DropProfessionRecipes(self.rt.eval("function(t) return {t} end")(recipes), owners, lost)
+        self.assertFalse(legacy)
+        self.assertIsNone(recipes[1])
+        self.assertIsNotNone(recipes[2])
+        self.assertIsNone(owners[1])
+
+
 RECIPE_STUBS = """
 Enum = {TooltipDataLineType = {UsageRequirement = 43}, TooltipDataUsageRequirementType = {Skill = 2, NotAlreadyKnown = 14}}
 ITEM_SPELL_KNOWN = "Already known"
