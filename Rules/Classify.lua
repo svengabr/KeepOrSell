@@ -4,68 +4,9 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
--- facts: {quest, questie, questOnly, questItemFor, classID, equipLoc, tool, classItem, unusable, plain, bound, reagent, upcoming,
--- recipe, prices, priceData, disenchant, openable, kept, equipSet}
--- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
--- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
--- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
--- starter = {name, done} of the quest the item begins per the game's item table (Data/Starts.lua)
--- newItem = original Classic didn't have the item (Data/NewItems.lua): never junk for a low price alone
--- learned = {name, level} of a quest QuestieDB lacks that some character's quest log asked for, not done here
--- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
--- learned, "other" for a profession the player doesn't have
--- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
--- group like a reagent of a known recipe, even when worth auctioning (option upcomingReagents)
--- altReagent = {name, ...} of the player's other characters (same realm and faction) whose known recipes
--- still gain skill from the item: Profession group unless bound (option altReagents)
--- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
--- classItem = a spell reagent or tool of the player's class (Thieves' Tools, Light Feather ...), kept no matter
--- what, even when the class quest that handed it out is done
--- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
--- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
--- price means nobody sells the item there
--- disenchant = {outcomes, value, skillUp} when the player is an enchanter and can disenchant the item;
--- skillUp = disenchanting itself still raises Enchanting
--- openable = the bag slot has loot or the tooltip says "<Right Click to Open>", and the tooltip doesn't
--- say "Locked" (clams, boxes): each takes its own bag slot even when
--- Baganator shows them stacked, so they go to the Open group to be opened
--- kept = the player marked the item to keep (Keep.lua); equipSet = this copy is saved in an equipment set;
--- both are kept no matter what, after the quest checks
--- Returns {kind = "quest" | "open" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
--- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
--- Kept wearable gear also gets {disenchant}. Every verdict gets {bound, ahTrusted, ahWorth, deValue} for the
--- tooltip rows comparing the ways to get rid of the item: ahTrusted = the auction price is known and recent,
--- ahWorth = it passes the factor and minimum profit, deValue = what disenchanting brings (enchanters only).
--- needsPrice = the item stays only because its auction price is missing or too old. Pure.
-local function Decide(facts, db)
-  if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
-  if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
-  if db.questie and facts.learned then return {kind = "quest", reason = "learned", quest = facts.learned} end
-  -- a quest item stays unless every quest the player could do with it is done; besides the quest item
-  -- class, QuestieDB knows quest starters and handed-out items of any class
-  -- the game's own item table knows every quest starter, also those QuestieDB lacks (facts.starter)
-  local questItem = facts.classID == QUESTITEM or (db.questie and facts.questOnly) or facts.starter ~= nil
-  local questFor = facts.questItemFor or facts.starter
-  local doneQuestItem = questItem and db.questie and questFor and questFor.done
-  if questItem and not doneQuestItem then
-    return {kind = "quest", reason = "questitem", quest = questFor and questFor.name and questFor or nil}
-  end
-  if facts.kept then return {reason = "kept"} end
-  if facts.equipSet then return {reason = "equipset"} end
-  if db.openable and facts.openable then return {kind = "open"} end
-  if facts.tool then return {reason = "tool"} end
-  if facts.classItem then return {reason = "classitem"} end
-  if db.profession and facts.reagent then return {kind = "profession"} end
-  if db.profession and db.upcomingReagents and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
-  -- another character of the player still learns from it; only worth it when it can be mailed
-  if db.profession and db.altReagents and facts.altReagent and not facts.bound then
-    return {kind = "profession", reason = "alt", alts = facts.altReagent}
-  end
-  if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
-
-  local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
+-- The built-in verdict for an item no rule and no earlier check decided: by price, gear and usefulness.
+local function BuiltInVerdict(facts, db, priceClass, priceReason, isGear, doneQuestItem, questFor)
   local verdict = {priceReason = priceReason}
-  local isGear = (facts.classID == WEAPON or facts.classID == ARMOR) and (facts.equipLoc or "") ~= ""
   local uselessRecipe = db.recipeJunk and (facts.recipe == "known" or facts.recipe == "other")
 
   if (db.gear and facts.unusable) or uselessRecipe or doneQuestItem then
@@ -104,6 +45,117 @@ local function Decide(facts, db)
   end
   -- an outdated price may hide an auction house item; say so instead of staying silent
   if not verdict.kind and priceReason == "stale" and not facts.bound then verdict.needsPrice = true end
+  return verdict
+end
+
+-- The verdict of a filter rule (Filter.lua) naming group for the item, or nil when the rule doesn't apply and the
+-- built-in logic decides. rule = "item" | "category". Existing toggles gate rules of their group; a category
+-- rule only makes junk what "when in doubt, keep" allows: grey, bound, or a known recent price not worth
+-- auctioning, never green-or-better wearable gear.
+local function RuleVerdict(group, rule, facts, db, priceClass, priceReason, isGear)
+  if not group then return nil end
+  local verdict = {reason = "filter", rule = rule, priceReason = priceReason}
+  if group == "keep" then return verdict end
+  if group == "profession" then
+    if not db.profession then return nil end
+    verdict.kind = "profession"
+  elseif group == "ah" then
+    if facts.bound then return nil end
+    verdict.kind = "ah"
+  elseif group == "disenchant" then
+    if not (db.disenchant and facts.disenchant) then return nil end
+    verdict.kind, verdict.disenchant, verdict.bound = "disenchant", facts.disenchant, facts.bound
+  elseif group == "junk" and rule == "item" then
+    verdict.kind = "junk"
+  elseif group == "junk" then
+    -- green or better, or quality not known yet
+    if isGear and (facts.quality == nil or facts.quality >= 2) then return nil end
+    if facts.quality == 0 or facts.bound or priceClass == "vendor" then
+      verdict.kind = "junk"
+    elseif priceClass == nil then
+      verdict.needsPrice = true
+    else
+      return nil -- worth auctioning
+    end
+  else
+    return nil
+  end
+  return verdict
+end
+
+-- facts: {quest, questie, questOnly, questItemFor, itemID, classID, subclassID, quality, equipLoc, tool, classItem,
+-- unusable, plain, bound, reagent, upcoming, recipe, prices, priceData, disenchant, openable, kept, equipSet}
+-- itemID, classID, subclassID, quality (nil when not cached yet) = what the filter rules match on (db.filter)
+-- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
+-- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
+-- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
+-- starter = {name, done} of the quest the item begins per the game's item table (Data/Starts.lua)
+-- newItem = original Classic didn't have the item (Data/NewItems.lua): never junk for a low price alone
+-- learned = {name, level} of a quest QuestieDB lacks that some character's quest log asked for, not done here
+-- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
+-- learned, "other" for a profession the player doesn't have
+-- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
+-- group like a reagent of a known recipe, even when worth auctioning (option upcomingReagents)
+-- altReagent = {name, ...} of the player's other characters (same realm and faction) whose known recipes
+-- still gain skill from the item: Profession group unless bound (option altReagents)
+-- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
+-- classItem = a spell reagent or tool of the player's class (Thieves' Tools, Light Feather ...), kept no matter
+-- what, even when the class quest that handed it out is done
+-- unusable = the player's class can never use it (gear type or a "Classes:" restriction)
+-- plain = grey or white gear; priceData = Auctionator has seen the auction house, so a missing
+-- price means nobody sells the item there
+-- disenchant = {outcomes, value, skillUp} when the player is an enchanter and can disenchant the item;
+-- skillUp = disenchanting itself still raises Enchanting
+-- openable = the bag slot has loot or the tooltip says "<Right Click to Open>", and the tooltip doesn't
+-- say "Locked" (clams, boxes): each takes its own bag slot even when
+-- Baganator shows them stacked, so they go to the Open group to be opened
+-- kept = the player marked the item to keep (Keep.lua); equipSet = this copy is saved in an equipment set;
+-- both are kept no matter what, after the quest checks
+-- Returns {kind = "quest" | "open" | "profession" | "ah" | "junk" | "disenchant" | nil, reason, priceReason, needsPrice}.
+-- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
+-- Kept wearable gear also gets {disenchant}. Every verdict gets {bound, ahTrusted, ahWorth, deValue} for the
+-- tooltip rows comparing the ways to get rid of the item: ahTrusted = the auction price is known and recent,
+-- ahWorth = it passes the factor and minimum profit, deValue = what disenchanting brings (enchanters only).
+-- needsPrice = the item stays only because its auction price is missing or too old.
+-- reason = "filter" with rule = "item" | "category": a rule of the player's filter (db.filter) decided; an item
+-- rule comes after the safeguards (quest, keep marks, equipment sets, items to open, tools, class items) and
+-- before the profession checks, a category rule after them. Pure.
+local function Decide(facts, db)
+  if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
+  if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
+  if db.questie and facts.learned then return {kind = "quest", reason = "learned", quest = facts.learned} end
+  -- a quest item stays unless every quest the player could do with it is done; besides the quest item
+  -- class, QuestieDB knows quest starters and handed-out items of any class
+  -- the game's own item table knows every quest starter, also those QuestieDB lacks (facts.starter)
+  local questItem = facts.classID == QUESTITEM or (db.questie and facts.questOnly) or facts.starter ~= nil
+  local questFor = facts.questItemFor or facts.starter
+  local doneQuestItem = questItem and db.questie and questFor and questFor.done
+  if questItem and not doneQuestItem then
+    return {kind = "quest", reason = "questitem", quest = questFor and questFor.name and questFor or nil}
+  end
+  if facts.kept then return {reason = "kept"} end
+  if facts.equipSet then return {reason = "equipset"} end
+  if db.openable and facts.openable then return {kind = "open"} end
+  if facts.tool then return {reason = "tool"} end
+  if facts.classItem then return {reason = "classitem"} end
+
+  local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
+  local isGear = (facts.classID == WEAPON or facts.classID == ARMOR) and (facts.equipLoc or "") ~= ""
+  -- the filter author named this item: it beats the profession checks
+  local verdict = RuleVerdict(ns.FilterItemRule(db.filter, facts.itemID), "item", facts, db, priceClass, priceReason, isGear)
+  if not verdict then
+    if db.profession and facts.reagent then return {kind = "profession"} end
+    if db.profession and db.upcomingReagents and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
+    -- another character of the player still learns from it; only worth it when it can be mailed
+    if db.profession and db.altReagents and facts.altReagent and not facts.bound then
+      return {kind = "profession", reason = "alt", alts = facts.altReagent}
+    end
+    if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
+    -- after the profession checks: a broad rule never takes a reagent that still gives skill
+    verdict = RuleVerdict(ns.FilterCategoryRule(db.filter, facts.classID, facts.subclassID, facts.quality),
+      "category", facts, db, priceClass, priceReason, isGear)
+  end
+  if not verdict then verdict = BuiltInVerdict(facts, db, priceClass, priceReason, isGear, doneQuestItem, questFor) end
 
   -- an enchanter may get more out of an item that would be sold, auctioned or kept only for a missing price
   local disenchant = db.disenchant and facts.disenchant
@@ -124,10 +176,17 @@ local function Decide(facts, db)
   end
 
   -- item name not cached yet: it might be a quest objective
-  if verdict.kind == "junk" and facts.quest == nil then verdict.kind = nil end
+  if verdict.kind == "junk" and facts.quest == nil then
+    verdict.kind = nil
+    -- don't claim the filter keeps it
+    if verdict.reason == "filter" then verdict.reason, verdict.rule = nil, nil end
+  end
   -- Forever added the item and only its low price speaks against it: KeepOrSell can't judge it yet. Gear the
-  -- class can't wear, known recipes and done quest items carry their own reason and stay junk.
-  if verdict.kind == "junk" and verdict.reason == nil and facts.newItem then verdict.kind, verdict.reason = nil, "new" end
+  -- class can't wear, known recipes and done quest items carry their own reason and stay junk; an item rule
+  -- names the item, a category rule doesn't.
+  if verdict.kind == "junk" and facts.newItem and (verdict.reason == nil or verdict.rule == "category") then
+    verdict.kind, verdict.reason, verdict.rule = nil, "new", nil
+  end
   return verdict
 end
 
@@ -285,7 +344,10 @@ function ns.ItemFacts(itemID, itemLink, location)
     starter = ns.GetStarterQuest(itemID),
     learned = ns.GetLearnedQuest(itemID),
     newItem = ns.IsNewItem(itemID),
+    itemID = itemID,
     classID = classID,
+    subclassID = subclassID,
+    quality = Quality(itemID, itemLink),
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID, classID, subclassID),
     classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),

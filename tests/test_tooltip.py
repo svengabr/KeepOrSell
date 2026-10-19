@@ -197,6 +197,28 @@ class TooltipTests(unittest.TestCase):
     def test_own_price_has_no_sender(self):
         self.assertNotIn("price from", self.show(3))
 
+    def test_filter_rule_lines(self):
+        db = self.rt.eval("KeepOrSellDB")
+        L = self.ns.L
+        junk = self.rt.eval("{kind = 'junk', reason = 'filter', rule = 'item'}")
+        prices = self.rt.eval("{vendor = 100}")
+        db.filter = self.rt.eval("{name = 'Leveling', items = {}, categories = {}}")
+        text = self.ns.TooltipText(junk, prices, db)
+        self.assertIn(L.TIP_FILTER_NAMED % "Leveling", text)
+        self.assertIn("Junk – filter 'Leveling'", text)
+        db.filter = self.rt.eval("{items = {}, categories = {}}")
+        self.assertIn("Junk – " + L.TIP_FILTER, self.ns.TooltipText(junk, prices, db))
+        db.filter = None
+        self.assertIn("Junk – " + L.TIP_FILTER, self.ns.TooltipText(junk, prices, db))
+        waits = self.rt.eval("{reason = 'filter', rule = 'category', needsPrice = true, priceReason = 'noprice'}")
+        self.assertIn(L.TIP_FILTER_PRICE, self.ns.TooltipText(waits, prices, db))
+        kept = self.rt.eval("{reason = 'filter', rule = 'item'}")
+        self.assertIn("Keep – " + L.TIP_FILTER, self.ns.TooltipText(kept, prices, db))
+        worth = self.rt.eval("{ah = 1000, vendor = 38}")
+        for kind, head in (("ah", "Auction house"), ("profession", "Profession")):
+            verdict = self.rt.eval("{kind = '%s', reason = 'filter', rule = 'category'}" % kind)
+            self.assertIn(head + " – " + L.TIP_FILTER, self.ns.TooltipText(verdict, worth, db))
+
 
 if __name__ == "__main__":
     unittest.main()

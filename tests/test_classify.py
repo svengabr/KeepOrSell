@@ -337,6 +337,118 @@ class DecideTests(unittest.TestCase):
         self.assertIsNone(verdict.kind)
         self.assertEqual(verdict.priceReason, "stale")
 
+    # shareable filters: rules in the decision
+    LINEN = {"itemID": 2589, "classID": 7, "subclassID": 5, "quality": 1}
+
+    def set_filter(self, items=None, categories=None):
+        lua = "{items = {%s}, categories = {%s}}" % (
+            ", ".join('[%d] = "%s"' % (k, v) for k, v in (items or {}).items()), ", ".join(categories or []))
+        self.db.filter = self.rt.eval(lua)
+
+    def test_item_rule_junk(self):
+        self.set_filter(items={2589: "junk"})
+        verdict = self.decide(**self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.rule), ("junk", "filter", "item"))
+
+    def test_no_filter_is_no_rules(self):
+        for lua in ("{}", "{items = {}}", "{categories = {}}"):
+            self.db.filter = self.rt.eval(lua)
+            verdict = self.decide(**self.LINEN)
+            self.assertIsNone(verdict.kind)
+            self.assertTrue(verdict.needsPrice)
+
+    def test_safeguards_beat_item_rules(self):
+        self.set_filter(items={2589: "junk"})
+        for facts in ({"classID": 12}, {"kept": True}, {"equipSet": True}, {"openable": True},
+                      {"tool": True}, {"classItem": True}):
+            merged = dict(self.LINEN, prices=self.CHEAP)
+            merged.update(facts)
+            self.assertNotEqual(self.kind(**merged), "junk", facts)
+
+    def test_item_rule_beats_reagent(self):
+        self.set_filter(items={2589: "junk"})
+        self.assertEqual(self.kind(reagent=True, **self.LINEN), "junk")
+        self.set_filter(categories=['{class = 7, subclass = 5, group = "junk"}'])
+        self.assertEqual(self.kind(reagent=True, prices=self.CHEAP, **self.LINEN), "profession")
+
+    def test_category_junk_needs_grey_bound_or_cheap(self):
+        self.set_filter(categories=['{class = 7, group = "junk"}'])
+        verdict = self.decide(prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.rule), ("junk", "filter", "category"))
+        self.assertEqual(self.kind(**dict(self.LINEN, quality=0)), "junk")
+        self.assertEqual(self.kind(bound=True, **self.LINEN), "junk")
+        # worth auctioning: the junk rule doesn't apply
+        self.assertEqual(self.kind(prices=self.FRESH_AH, **self.LINEN), "ah")
+
+    def test_category_junk_waits_for_price(self):
+        self.set_filter(categories=['{class = 7, group = "junk"}'])
+        self.db.scrap = False  # the built-in trade goods rule stays out of it
+        for prices in ({}, {"vendor": 100}, {"ah": 120, "vendor": 100, "age": 9, "hasAge": True}):
+            verdict = self.decide(prices=prices, **self.LINEN)
+            self.assertIsNone(verdict.kind, prices)
+            self.assertTrue(verdict.needsPrice, prices)
+            self.assertEqual((verdict.reason, verdict.rule), ("filter", "category"))
+
+    def test_category_junk_spares_green_gear_and_new_items(self):
+        self.set_filter(categories=['{class = 4, group = "junk"}', '{class = 7, group = "junk"}'])
+        gear = {"itemID": 100, "classID": 4, "subclassID": 1, "equipLoc": "INVTYPE_CHEST", "quality": 2}
+        verdict = self.decide(prices=self.CHEAP, **gear)
+        self.assertEqual((verdict.kind, verdict.reason), (None, "wearable"))
+        unknown = dict(gear)
+        del unknown["quality"]
+        verdict = self.decide(prices=self.CHEAP, **unknown)
+        self.assertEqual((verdict.kind, verdict.reason), (None, "wearable"))
+        # white gear may follow the rule
+        self.assertEqual(self.kind(prices=self.CHEAP, **dict(gear, quality=1)), "junk")
+        verdict = self.decide(newItem=True, prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), (None, "new"))
+        # an item rule names the item, new or not
+        self.set_filter(items={2589: "junk"})
+        self.assertEqual(self.kind(newItem=True, prices=self.CHEAP, **self.LINEN), "junk")
+
+    def test_rule_targets(self):
+        self.set_filter(items={2589: "keep"})
+        verdict = self.decide(prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.rule), (None, "filter", "item"))
+
+        self.set_filter(items={2589: "profession"})
+        verdict = self.decide(prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("profession", "filter"))
+        self.db.profession = False
+        verdict = self.decide(prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", None))
+        self.db.profession = True
+
+        self.set_filter(items={2589: "ah"})
+        verdict = self.decide(prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("ah", "filter"))
+        verdict = self.decide(bound=True, prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", None))
+
+        self.set_filter(items={2589: "disenchant"})
+        self.db.disenchant = True
+        verdict = self.decide(prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", None))
+        de = self.rt.eval("{value = 50, outcomes = {}}")
+        verdict = self.decide(disenchant=de, prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("disenchant", "filter"))
+        self.db.disenchant = False
+        self.assertIsNone(self.decide(disenchant=de, prices=self.CHEAP, **self.LINEN).reason)
+
+    def test_enchanter_upgrade_applies_to_rule_junk(self):
+        self.set_filter(items={2589: "junk"})
+        self.db.disenchant = True
+        self.ns.DisenchantWins = self.rt.eval("function() return true end")
+        de = self.rt.eval("{value = 500, outcomes = {}}")
+        verdict = self.decide(disenchant=de, prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason), ("disenchant", "filter"))
+
+    def test_name_not_cached_blocks_rule_junk(self):
+        self.set_filter(items={2589: "junk"})
+        self.assertIsNone(self.kind(**dict(self.LINEN, quest=None)))
+        self.set_filter(categories=['{class = 7, group = "junk"}'])
+        self.assertIsNone(self.kind(prices=self.CHEAP, **dict(self.LINEN, quest=None)))
+
 
 class ClassRestrictionTests(unittest.TestCase):
     STUBS = """

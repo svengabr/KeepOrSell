@@ -250,6 +250,35 @@ class SerializeTests(unittest.TestCase):
             self.assertIsNotNone(f)
             self.assertEqual(report.ignored, 0)
 
+    def test_category_precedence(self):
+        f = self.rt.eval("""{categories = {
+          {class = 7, group = "ah"},
+          {class = 7, qmin = 0, qmax = 1, group = "keep"},
+          {class = 7, subclass = 5, group = "profession"},
+          {class = 7, subclass = 5, qmin = 0, qmax = 1, group = "junk"},
+          {class = 7, subclass = 5, group = "ah"},
+        }}""")
+        rule = self.ns.FilterCategoryRule
+        self.assertEqual(rule(f, 7, 5, 1), "junk")
+        self.assertEqual(rule(f, 7, 5, 3), "profession")  # first among equals
+        self.assertEqual(rule(f, 7, 8, 0), "keep")
+        self.assertEqual(rule(f, 7, 8, 3), "ah")
+        self.assertIsNone(rule(f, 4, 0, 1))
+        # a quality range needs a known quality
+        self.assertEqual(rule(f, 7, 5, None), "profession")
+        self.assertEqual(rule(f, 7, 8, None), "ah")
+        self.assertIsNone(rule(None, 7, 5, 1))
+        self.assertIsNone(rule(self.rt.eval("{}"), 7, 5, 1))
+
+    def test_item_rule(self):
+        f = self.rt.eval("{items = {[2589] = 'junk', [4306] = 'bogus'}}")
+        self.assertEqual(self.ns.FilterItemRule(f, 2589), "junk")
+        self.assertIsNone(self.ns.FilterItemRule(f, 4306))
+        self.assertIsNone(self.ns.FilterItemRule(f, 2592))
+        self.assertIsNone(self.ns.FilterItemRule(f, None))
+        self.assertIsNone(self.ns.FilterItemRule(None, 2589))
+        self.assertIsNone(self.ns.FilterItemRule(self.rt.eval("{}"), 2589))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -201,6 +201,29 @@ function ns.ParseFilter(text)
   return filter, report
 end
 
+-- The group an item rule names for this item ID, or nil. filter = KeepOrSellDB.filter (may be nil). Pure.
+function ns.FilterItemRule(filter, itemID)
+  local group = itemID and filter and filter.items and filter.items[itemID]
+  return ns.FILTER_GROUPS[group] and group or nil
+end
+
+-- The group of the most specific category rule matching the item, or nil: class+subclass+quality beats
+-- class+subclass beats class+quality beats class; among equals the first in the list. A quality range only
+-- matches a known quality. Pure.
+function ns.FilterCategoryRule(filter, classID, subclassID, quality)
+  if not (classID and filter and filter.categories) then return nil end
+  local best, bestScore = nil, 0
+  for _, rule in ipairs(filter.categories) do
+    if rule.class == classID and ns.FILTER_GROUPS[rule.group]
+        and (rule.subclass == nil or rule.subclass == subclassID)
+        and (rule.qmin == nil or (quality and quality >= rule.qmin and quality <= (rule.qmax or rule.qmin))) then
+      local score = 1 + (rule.subclass and 2 or 0) + (rule.qmin and 1 or 0)
+      if score > bestScore then best, bestScore = rule.group, score end
+    end
+  end
+  return best
+end
+
 local KEEP_PER_LINE = 20
 
 -- A " # text" comment from a name, or "". Control characters would break the one-statement-per-line format.

@@ -55,8 +55,8 @@ local DETAIL = "\n    |cffaaaaaa%s|r"
 
 -- headline, then one grey line per material; the value and
 -- what selling would bring follow in the rows
-local function DisenchantText(verdict)
-  local text = verdict.forSkill and L.TIP_DISENCHANT_FOR_SKILL or L.TIP_DISENCHANT
+local function DisenchantText(verdict, filterText)
+  local text = Headline(verdict.forSkill and L.TIP_DISENCHANT_FOR_SKILL or L.TIP_DISENCHANT, filterText)
   for _, o in ipairs(verdict.disenchant.outcomes or {}) do text = text .. DETAIL:format(OutcomeText(o)) end
   return text
 end
@@ -119,11 +119,19 @@ local function UselessText(verdict)
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
+-- "filter 'Leveling'" for a verdict a filter rule made, "filter rule" when the filter has no name; nil otherwise
+local function FilterText(verdict, db)
+  if verdict.reason ~= "filter" then return nil end
+  local name = db and type(db.filter) == "table" and db.filter.name
+  return type(name) == "string" and name ~= "" and L.TIP_FILTER_NAMED:format(name) or L.TIP_FILTER
+end
+
 -- Tooltip text for a verdict (see ns.Decide), nil = nothing worth saying; slots = bag slots the item takes,
 -- unstacked = it never stacks, so each copy takes its own slot. Pure apart from money formatting.
 function ns.TooltipText(verdict, prices, db, slots, unstacked)
   prices = prices or {}
   local kind, reason = verdict.kind, verdict.reason
+  local filterText = FilterText(verdict, db)
   local text
   if kind == "quest" and reason == "questie" then
     local q = verdict.quest
@@ -147,20 +155,26 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
     text = reason == "done" and L.TIP_QUEST_DONE or reason == "open" and L.TIP_QUEST_OPEN or L.TIP_QUEST_ITEM
   elseif kind == "open" then
     text = (slots or 0) > 1 and L.TIP_OPEN_SLOTS:format(slots) or L.TIP_OPEN
+  elseif kind == "profession" and filterText then
+    text = Headline(L.TIP_PROFESSION_GROUP, filterText)
   elseif kind == "profession" then
     text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING
       or reason == "alt" and L.TIP_ALT:format(table.concat(verdict.alts or {}, ", ")) or L.TIP_PROFESSION
   elseif kind == "ah" then
-    text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict),
+    text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict), filterText,
       PriceNote(prices, verdict, db))
   elseif kind == "junk" then
     local why = reason == "plain" and L.TIP_PLAIN or UselessText(verdict)
       or (reason == "unusable" or reason == "unusable_bound") and L.TIP_UNUSABLE or nil
     -- soulbound junk goes to the vendor whatever the prices say
     local note = not verdict.bound and PriceNote(prices, verdict, db) or nil
-    text = Headline(L.TIP_JUNK, why, verdict.bound and L.TIP_BOUND or nil, note)
+    text = Headline(L.TIP_JUNK, why, filterText, verdict.bound and L.TIP_BOUND or nil, note)
   elseif kind == "disenchant" then
-    text = DisenchantText(verdict)
+    text = DisenchantText(verdict, filterText)
+  elseif filterText and verdict.needsPrice then
+    text = L.TIP_FILTER_PRICE
+  elseif filterText then
+    text = L.TIP_KEEP .. " – " .. filterText
   elseif reason == "wearable" and not verdict.needsPrice and ns.TooltipRows(verdict, prices) then
     text = L.TIP_KEEP_WEARABLE
   elseif reason == "tool" then
