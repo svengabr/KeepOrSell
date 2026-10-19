@@ -72,6 +72,18 @@ class PlainGearTests(unittest.TestCase):
         self.assertFalse(self.ns.IsProfessionTool(25))  # Worn Shortsword
         self.assertFalse(self.ns.IsProfessionTool(None))
 
+    def test_fishing_poles_are_profession_tools(self):
+        # any fishing pole by subclass (weapon 2, fishing pole 20), not only listed IDs
+        self.assertTrue(self.ns.IsProfessionTool(6256, 2, 20))  # Fishing Pole
+        self.assertTrue(self.ns.IsProfessionTool(19022, 2, 20))  # Nat Pagle's Extreme Angler FC-5000
+        self.assertFalse(self.ns.IsProfessionTool(25, 2, 7))  # Worn Shortsword
+
+    def test_swiftthistle_is_a_rogue_item(self):
+        # Thistle Tea, the rogue's energy drink, needs it
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 2452))
+        self.assertTrue(self.ns.IsClassItem("ROGUE", 2452, True))  # not a vendor reagent
+        self.assertFalse(self.ns.IsClassItem("MAGE", 2452))
+
     def test_class_items_belong_to_their_class(self):
         self.assertTrue(self.ns.IsClassItem("ROGUE", 5060))  # Thieves' Tools
         self.assertTrue(self.ns.IsClassItem("ROGUE", 6947))  # Instant Poison

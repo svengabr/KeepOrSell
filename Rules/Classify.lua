@@ -237,7 +237,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     questItemFor = (classID == QUESTITEM or questOnly) and ns.GetQuestItemQuest(itemID) or nil,
     classID = classID,
     equipLoc = equipLoc,
-    tool = ns.IsProfessionTool(itemID),
+    tool = ns.IsProfessionTool(itemID, classID, subclassID),
     classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass or false,
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),

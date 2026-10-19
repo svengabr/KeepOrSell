@@ -70,8 +70,9 @@ local PROFESSION_TOOLS = Set(
   20815, 40772, 40892, 40893 -- Jeweler's Kit, Gnomish Army Knife, Hammer Pick, Bladed Pickaxe
 )
 
--- true = a profession tool that must never be sold
-function ns.IsProfessionTool(itemID)
+-- true = a profession tool that must never be sold; every fishing pole counts, by subclass
+function ns.IsProfessionTool(itemID, classID, subclassID)
+  if classID == WEAPON and subclassID == FISHING_POLE then return true end
   return itemID ~= nil and PROFESSION_TOOLS[itemID] == true
 end
 
@@ -89,7 +90,8 @@ local CLASS_ITEMS = {
     3775, 3776, 5237, 6951, 9186, -- Crippling Poison I-II, Mind-numbing Poison I-III
     10918, 10920, 10921, 10922, -- Wound Poison I-IV
     2928, 2930, 5173, 8923, 8924, -- poison reagents: Dust of Decay, Essence of Pain, Deathweed, Essence of Agony,
-    3371, 3372, 8925 -- Dust of Deterioration, and the Empty, Leaded and Crystal Vials
+    3371, 3372, 8925, -- Dust of Deterioration, and the Empty, Leaded and Crystal Vials
+    2452 -- Swiftthistle for Thistle Tea
   ),
   SHAMAN = Set(5175, 5176, 5177, 5178, 17030), -- Earth, Fire, Water and Air Totem, Ankh
   WARLOCK = Set(6265, 5565, 16583), -- Soul Shard, Infernal Stone, Demonic Figurine

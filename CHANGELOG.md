@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Fishing poles (every one, whatever its name) now show "Keep – profession tool" in the tooltip, like mining picks and skinning knives.
+- Rogues always keep Swiftthistle, the reagent for Thistle Tea.
+
 ## 0.17.2
 
 - Unlearning a profession now drops its reagents too: they no longer stay in the Profession group as if a recipe still gave skill points. Reagents remembered by older versions are cleared once, so open your remaining professions once more.
