@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.18.0
 
 - Fishing poles (every one, whatever its name) now show "Keep – profession tool" in the tooltip, like mining picks and skinning knives.
 - Rogues always keep Swiftthistle, the reagent for Thistle Tea.
