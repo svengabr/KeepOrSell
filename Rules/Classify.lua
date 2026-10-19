@@ -9,10 +9,15 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 -- questie = {name, level} of a quest not done yet that needs the item (QuestieDB)
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
+-- starter = {name, done} of the quest the item begins per the game's item table (Data/Starts.lua)
+-- newItem = original Classic didn't have the item (Data/NewItems.lua): never junk for a low price alone
+-- learned = {name, level} of a quest QuestieDB lacks that some character's quest log asked for, not done here
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
 -- learned, "other" for a profession the player doesn't have
 -- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
 -- group like a reagent of a known recipe, even when worth auctioning (option upcomingReagents)
+-- altReagent = {name, ...} of the player's other characters (same realm and faction) whose known recipes
+-- still gain skill from the item: Profession group unless bound (option altReagents)
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- classItem = a spell reagent or tool of the player's class (Thieves' Tools, Light Feather ...), kept no matter
 -- what, even when the class quest that handed it out is done
@@ -35,12 +40,15 @@ local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 local function Decide(facts, db)
   if facts.quest == "open" or facts.quest == "done" then return {kind = "quest", reason = facts.quest} end
   if db.questie and facts.questie then return {kind = "quest", reason = "questie", quest = facts.questie} end
+  if db.questie and facts.learned then return {kind = "quest", reason = "learned", quest = facts.learned} end
   -- a quest item stays unless every quest the player could do with it is done; besides the quest item
   -- class, QuestieDB knows quest starters and handed-out items of any class
-  local questItem = facts.classID == QUESTITEM or (db.questie and facts.questOnly)
-  local doneQuestItem = questItem and db.questie and facts.questItemFor and facts.questItemFor.done
+  -- the game's own item table knows every quest starter, also those QuestieDB lacks (facts.starter)
+  local questItem = facts.classID == QUESTITEM or (db.questie and facts.questOnly) or facts.starter ~= nil
+  local questFor = facts.questItemFor or facts.starter
+  local doneQuestItem = questItem and db.questie and questFor and questFor.done
   if questItem and not doneQuestItem then
-    return {kind = "quest", reason = "questitem", quest = facts.questItemFor}
+    return {kind = "quest", reason = "questitem", quest = questFor and questFor.name and questFor or nil}
   end
   if facts.kept then return {reason = "kept"} end
   if facts.equipSet then return {reason = "equipset"} end
@@ -49,6 +57,10 @@ local function Decide(facts, db)
   if facts.classItem then return {reason = "classitem"} end
   if db.profession and facts.reagent then return {kind = "profession"} end
   if db.profession and db.upcomingReagents and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
+  -- another character of the player still learns from it; only worth it when it can be mailed
+  if db.profession and db.altReagents and facts.altReagent and not facts.bound then
+    return {kind = "profession", reason = "alt", alts = facts.altReagent}
+  end
   if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
 
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
@@ -59,7 +71,7 @@ local function Decide(facts, db)
   if (db.gear and facts.unusable) or uselessRecipe or doneQuestItem then
     -- nothing the player can use: auction it when worth it, otherwise sell it
     if doneQuestItem then
-      verdict.reason, verdict.quest, verdict.bound = "questitem_done", facts.questItemFor, facts.bound
+      verdict.reason, verdict.quest, verdict.bound = "questitem_done", questFor.name and questFor or nil, facts.bound
     elseif uselessRecipe then
       verdict.reason = "recipe_" .. facts.recipe
       verdict.bound = facts.bound
@@ -113,7 +125,30 @@ local function Decide(facts, db)
 
   -- item name not cached yet: it might be a quest objective
   if verdict.kind == "junk" and facts.quest == nil then verdict.kind = nil end
+  -- Forever added the item and only its low price speaks against it: KeepOrSell can't judge it yet. Gear the
+  -- class can't wear, known recipes and done quest items carry their own reason and stay junk.
+  if verdict.kind == "junk" and verdict.reason == nil and facts.newItem then verdict.kind, verdict.reason = nil, "new" end
   return verdict
+end
+
+-- true if the item ID lies in one of the runs {first, last, first, last ...} (Data/NewItems.lua: items
+-- original Classic didn't have). Binary search over the sorted runs. Pure.
+function ns.IsNewItem(itemID, runs)
+  runs = runs or ns.NEW_ITEM_RUNS
+  if not (itemID and runs) then return false end
+  local low, high = 1, #runs / 2
+  while low <= high do
+    local mid = math.floor((low + high) / 2)
+    local first, last = runs[2 * mid - 1], runs[2 * mid]
+    if itemID < first then
+      high = mid - 1
+    elseif itemID > last then
+      low = mid + 1
+    else
+      return true
+    end
+  end
+  return false
 end
 
 function ns.Decide(facts, db)
@@ -224,6 +259,18 @@ local function IsBound(itemLink, location)
   return bindType == BIND_ON_PICKUP or bindType == BIND_QUEST
 end
 
+local function ItemSpellName(itemID)
+  return C_Item.GetItemSpell and (C_Item.GetItemSpell(itemID))
+end
+
+local drinkName
+local function DrinkName()
+  if drinkName == nil then
+    drinkName = C_Spell and C_Spell.GetSpellName and C_Spell.GetSpellName(ns.DRINK_SPELL) or false
+  end
+  return drinkName or nil
+end
+
 -- Gathers the facts for an item; location (ItemLocation) is optional and makes "bound" exact
 function ns.ItemFacts(itemID, itemLink, location)
   local _, _, _, equipLoc, _, classID, subclassID = C_Item.GetItemInfoInstant(itemID)
@@ -235,11 +282,16 @@ function ns.ItemFacts(itemID, itemLink, location)
     questie = ns.GetQuestieQuest(itemID),
     questOnly = questOnly,
     questItemFor = (classID == QUESTITEM or questOnly) and ns.GetQuestItemQuest(itemID) or nil,
+    starter = ns.GetStarterQuest(itemID),
+    learned = ns.GetLearnedQuest(itemID),
+    newItem = ns.IsNewItem(itemID),
     classID = classID,
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID, classID, subclassID),
     classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),
-    unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass or false,
+    unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass
+      or ns.IsUselessDrink(playerClass, classID, ItemSpellName(itemID), DrinkName()) or false,
+    altReagent = ns.AltsNeedingReagent(itemID),
     plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
     reagent = ns.IsSkillUpReagent(itemID),

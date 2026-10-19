@@ -117,15 +117,32 @@ function ns.IsClassItem(classFile, itemID, reagentFree)
   return not (reagentFree and VENDOR_REAGENTS[itemID])
 end
 
+local CONSUMABLE = 0 -- Enum.ItemClass
+local NO_MANA = Set("WARRIOR", "ROGUE")
+ns.DRINK_SPELL = 430 -- "Drink": restores mana only; food and drink together is "Refreshment"
+
+-- true = a drink that only restores mana, for a class without mana. spellName is the item's use spell,
+-- drinkName the name of the "Drink" spell, both in the client's language. Pure.
+function ns.IsUselessDrink(classFile, classID, spellName, drinkName)
+  return classID == CONSUMABLE and NO_MANA[classFile] == true and spellName ~= nil and spellName == drinkName
+end
+
 -- true = the player has learned "Reagent Economy"
 function ns.HasReagentEconomy()
   return C_SpellBook ~= nil and C_SpellBook.IsSpellKnown ~= nil
     and C_SpellBook.IsSpellKnown(ns.REAGENT_ECONOMY_SPELL) == true
 end
 
--- true = this class can never wear the item; false otherwise, also for unknown classes and subclasses
+local PROJECTILE, QUIVER = 6, 11 -- Enum.ItemClass: arrows and bullets, quivers and ammo pouches
+
+-- true = this class can never wear the item; false otherwise, also for unknown classes and subclasses.
+-- Ammo and quivers count as gear of classes that can never use a bow, gun or crossbow.
 function ns.IsUnusableGear(classFile, classID, subclassID, equipLoc)
   if equipLoc == "INVTYPE_CLOAK" then return false end
+  if classID == PROJECTILE or classID == QUIVER then
+    local allowed = WEAPONS[classFile]
+    return allowed ~= nil and not (allowed[BOW] or allowed[GUN] or allowed[CROSSBOW])
+  end
   if classID == WEAPON and RESTRICTED_WEAPONS[subclassID] then
     local allowed = WEAPONS[classFile]
     return allowed ~= nil and not allowed[subclassID]

@@ -16,6 +16,8 @@
 ## X-Curse-Project-ID: 1725855
 
 Locales\Locales.lua
+Data\Starts.lua
+Data\NewItems.lua
 Rules\Keep.lua
 Rules\Objectives.lua
 Rules\Prices.lua
@@ -37,6 +39,7 @@ UI\Setup.lua
 Core\Bags.lua
 UI\Destroy.lua
 UI\LootCoins.lua
+UI\Warnings.lua
 UI\BagValue.lua
 UI\Options.lua
 Core\Core.lua

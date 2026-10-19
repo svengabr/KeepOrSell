@@ -112,7 +112,10 @@ local RECIPE_TEXT = {recipe_known = "TIP_RECIPE_KNOWN", recipe_other = "TIP_RECI
 
 -- why an item nobody needs any more is useless: a recipe or a quest item of a done quest
 local function UselessText(verdict)
-  if verdict.reason == "questitem_done" then return L.TIP_QUEST_ITEM_USELESS:format(verdict.quest.name) end
+  if verdict.reason == "questitem_done" then
+    -- a quest starter's title may not be loaded yet
+    return verdict.quest and L.TIP_QUEST_ITEM_USELESS:format(verdict.quest.name) or L.TIP_QUEST_DONE_UNNAMED
+  end
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
@@ -127,6 +130,9 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
     -- a repeatable quest's own level says nothing about when it is worth doing
     text = q.repeatable and L.TIP_QUESTIE_REPEATABLE:format(q.name)
       or q.level and q.level > 0 and L.TIP_QUESTIE:format(q.name, q.level) or L.TIP_QUESTIE_SCALING:format(q.name)
+    if q.chain then text = text .. L.TIP_CHAIN end
+  elseif kind == "quest" and reason == "learned" then
+    text = L.TIP_LEARNED:format(verdict.quest.name or "?")
   elseif kind == "quest" and reason == "questitem" and verdict.quest then
     local q = verdict.quest
     if q.done then
@@ -142,7 +148,8 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   elseif kind == "open" then
     text = (slots or 0) > 1 and L.TIP_OPEN_SLOTS:format(slots) or L.TIP_OPEN
   elseif kind == "profession" then
-    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING or L.TIP_PROFESSION
+    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING
+      or reason == "alt" and L.TIP_ALT:format(table.concat(verdict.alts or {}, ", ")) or L.TIP_PROFESSION
   elseif kind == "ah" then
     text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict),
       PriceNote(prices, verdict, db))
@@ -164,6 +171,8 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
     text = L.TIP_KEEP .. " – " .. (db.keepClick and L.TIP_KEPT_UNDO or L.TIP_KEPT)
   elseif reason == "equipset" then
     text = L.TIP_KEEP .. " – " .. L.TIP_EQUIP_SET
+  elseif reason == "new" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_NEW
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NO_PRICE
   elseif verdict.needsPrice and verdict.priceReason == "stale" then

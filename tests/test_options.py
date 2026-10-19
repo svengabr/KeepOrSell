@@ -71,7 +71,8 @@ def load():
       ns.UpdateBagValue = function() ns.valueUpdated = (ns.valueUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
-    for f in ("Locales.lua", "Keep.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Core.lua"):
+    for f in ("Locales.lua", "Keep.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Warnings.lua",
+              "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             source(f), ns)
     return rt, ns
@@ -88,8 +89,8 @@ class OptionsTests(unittest.TestCase):
         self.assertIsNotNone(self.calls.registered)
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
-            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:upcomingReagents", "checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:keepClick", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
-            "checkbox:lootCoins", "checkbox:bagValue", "checkbox:setSource"])
+            "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:upcomingReagents", "checkbox:altReagents","checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:keepClick", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
+            "checkbox:lootCoins", "checkbox:lossWarnings", "checkbox:bagValue", "checkbox:setSource"])
 
     def test_sections(self):
         headers = [i.header for i in self.calls.layout.values() if i.header]
@@ -193,6 +194,8 @@ class OptionsTests(unittest.TestCase):
         self.assertTrue(self.rt.eval("KeepOrSellDB.keepClick"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.lootCoins"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.upcomingReagents"))
+        self.assertTrue(self.rt.eval("KeepOrSellDB.lossWarnings"))
+        self.assertTrue(self.rt.eval("ENABLED")("lossWarnings"))
         self.assertTrue(self.rt.eval("ENABLED")("lootCoins"))  # Blizzard's loot window, no addon needed
 
     def test_forget_kept_button(self):

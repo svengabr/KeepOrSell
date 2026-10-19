@@ -182,6 +182,40 @@ function ns.IsUpcomingReagent(itemID)
   return upcomingIndex[itemID] == true
 end
 
+-- recipes/crafts: KeepOrSellDB.recipes/.crafts ({["Name-Realm"] = {...}}); factions: {["Name-Realm"] = faction}.
+-- Returns {[itemID] = {name, ...}}: the other characters of the player on the same realm and faction whose
+-- known recipes still gain skill from the item (the item can be mailed to them). Characters whose faction
+-- isn't known yet are left out. Pure.
+function ns.AltReagentIndex(recipes, crafts, factions, me, faction)
+  local realm = me:match("%-(.+)$")
+  local result = {}
+  for key, stored in pairs(recipes or {}) do
+    local name, keyRealm = key:match("^(.-)%-(.+)$")
+    if key ~= me and keyRealm == realm and faction and factions[key] == faction then
+      for itemID in pairs(ns.ReagentIndex(stored, crafts and crafts[key])) do
+        result[itemID] = result[itemID] or {}
+        table.insert(result[itemID], name)
+      end
+    end
+  end
+  for _, names in pairs(result) do table.sort(names) end
+  return result
+end
+
+local altIndex -- built once per session: other characters only change in their own sessions
+
+-- Names of the player's other characters that still gain skill from the item, or nil
+function ns.AltsNeedingReagent(itemID)
+  if not (itemID and KeepOrSellDB) then return nil end
+  if not altIndex then
+    local me, faction = ns.CharacterKey(), UnitFactionGroup and UnitFactionGroup("player")
+    KeepOrSellDB.factions = KeepOrSellDB.factions or {}
+    KeepOrSellDB.factions[me] = faction or KeepOrSellDB.factions[me]
+    altIndex = ns.AltReagentIndex(KeepOrSellDB.recipes, KeepOrSellDB.crafts, KeepOrSellDB.factions, me, faction)
+  end
+  return altIndex[itemID]
+end
+
 local NO_RECIPES = {[356] = true, [794] = true} -- fishing, archaeology
 
 -- Names of the player's professions whose window was never opened; empty if the client can't tell

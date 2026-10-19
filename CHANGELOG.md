@@ -4,6 +4,13 @@
 
 - Fishing poles (every one, whatever its name) now show "Keep – profession tool" in the tooltip, like mining picks and skinning knives.
 - Rogues always keep Swiftthistle, the reagent for Thistle Tea.
+- Quest starters Questie doesn't know (many of Forever's new ones) are now kept as quest items until their quest is done, also without Questie. The list comes from the game's own item table.
+- Quests Questie doesn't know are remembered from your quest log, so your other characters keep their items too until they've done the quest. Needs QuestieDB.
+- Items Forever added are no longer junked just for a low price: KeepOrSell can't judge them yet, so they stay ("new in Forever"). Gear your class can't wear still goes.
+- A quest whose chain you started (an earlier step is done) keeps its items at any level, and the tooltip says it's next in your chain.
+- Warnings: destroying or selling an item KeepOrSell would keep (quest items, reagents, items you marked, class items, tools, equipment sets) prints why in chat and on screen. Option "Warn before losing kept items".
+- Ammo and quivers count as unusable for classes without bows or guns, and mana-only drinks for warriors and rogues.
+- Reagents that still give skill points to another of your characters (same realm and faction, not soulbound) go to the Profession group, with the character's name in the tooltip. Option "Reagents for your other characters"; each character opens its professions once.
 - Repeatable quests (cloth donations, Argent Dawn turn-ins …) now keep their items from the quest's required level on, not only within five levels of the quest, and the tooltip says "repeatable quest". Needs QuestieDB.
 - A question mark in Baganator's bag window lists KeepOrSell's shortcuts when you hover it: Alt+Right-click to always keep an item, the destroy button and the `/kos` commands. Click it for the options.
 

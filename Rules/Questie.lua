@@ -33,11 +33,12 @@ end
 -- the player
 -- player: {level, race, faction, class, completed = function(questID)}
 -- Returns the open quest within range (default LEVEL_RANGE) of the player's level that is closest in level,
--- or nil. A repeatable quest (cloth turn-ins …) is never done and counts from its required level on, with no
--- upper cap; a regular quest in range comes first. Pure.
+-- or nil. Outside the range still count, in this order: a quest whose chain the player started (chainStarted =
+-- a prerequisite is done), then a repeatable quest (cloth turn-ins …), which is never done and counts from its
+-- required level on, with no upper cap. Pure.
 function ns.PickQuestieQuest(quests, player, range)
   range = range or LEVEL_RANGE
-  local best, bestDistance, repeatable
+  local best, bestDistance, chain, repeatable
   for _, q in ipairs(quests) do
     local allowed = RaceAllowed(q.races, player) and Allowed(q.classes, player.class)
     if q.repeatable then
@@ -48,13 +49,18 @@ function ns.PickQuestieQuest(quests, player, range)
       if level == -1 then level = player.level end
       if not level or level <= 0 then level = q.requiredLevel end
       local distance = level and math.abs(level - player.level)
-      local open = distance and distance <= range and allowed and not player.completed(q.id)
+      local open = allowed and not player.completed(q.id)
       for _, other in ipairs(q.exclusiveTo or {}) do
         if open and player.completed(other) then open = false end
       end
-      if open and (not best or distance < bestDistance) then best, bestDistance = q, distance end
+      if open and distance and distance <= range then
+        if not best or distance < bestDistance then best, bestDistance = q, distance end
+      elseif open and q.chainStarted and not chain then
+        chain = q
+      end
     end
   end
+  if not best and chain then return {id = chain.id, name = chain.name, level = chain.level, chain = true} end
   return best or repeatable
 end
 
@@ -139,6 +145,18 @@ function ns.BuildQuestieIndex(done)
   Step()
 end
 
+-- true if a quest that must come before this one is done (preQuestSingle: any of them, preQuestGroup: all of
+-- them; a negative ID marks a quest that must not be done, no step)
+local function ChainStarted(Quest, questID)
+  for _, field in ipairs({"preQuestSingle", "preQuestGroup"}) do
+    local earlier = Quest[field] and Quest[field](questID)
+    for _, id in ipairs(type(earlier) == "table" and earlier or {}) do
+      if id > 0 and C_QuestLog.IsQuestFlaggedCompleted(id) then return true end
+    end
+  end
+  return false
+end
+
 local function Lookup(lib, itemID, pick)
   local Quest, quests = lib.Quest, {}
   for _, questID in ipairs(index[itemID] or {}) do
@@ -148,6 +166,7 @@ local function Lookup(lib, itemID, pick)
       requiredLevel = Quest.requiredLevel(questID), races = Quest.requiredRaces(questID),
       classes = Quest.requiredClasses(questID), exclusiveTo = Quest.exclusiveTo(questID),
       repeatable = type(flags) == "number" and HasBit(flags, REPEATABLE_BIT),
+      chainStarted = ChainStarted(Quest, questID),
     })
   end
   local player = {
@@ -165,7 +184,7 @@ local function Find(itemID, pick)
   if not (lib and C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) then return nil end
   -- in doubt the item just isn't protected; a database error must not break the bags
   local ok, q = pcall(Lookup, lib, itemID, pick)
-  return ok and q and q.name and {name = q.name, level = q.level, done = q.done, repeatable = q.repeatable} or nil
+  return ok and q and q.name and {name = q.name, level = q.level, done = q.done, repeatable = q.repeatable, chain = q.chain} or nil
 end
 
 -- {name, level} of an upcoming quest that needs the item, or nil (also without QuestieDB)
@@ -178,7 +197,29 @@ function ns.GetQuestItemQuest(itemID)
   return Find(itemID, ns.PickQuestItemQuest)
 end
 
+-- true/false whether QuestieDB has the quest; nil without QuestieDB
+function ns.QuestieKnowsQuest(questID)
+  local lib = QuestieDB()
+  if not (lib and lib.Quest.name) then return nil end
+  local ok, name = pcall(lib.Quest.name, questID)
+  if not ok then return nil end -- in doubt nothing is learned
+  return name ~= nil
+end
+
 -- true if the item exists only for a quest (it starts one or a quest hands it out), per QuestieDB
 function ns.IsQuestOnlyItem(itemID)
   return itemID ~= nil and questOnly[itemID] == true
+end
+
+-- {name, done} of the quest the item begins per the game's own item table (Data/Starts.lua), also for
+-- quests Forever added that QuestieDB doesn't know; nil for other items. name is nil while the client
+-- hasn't loaded the quest title. Works without QuestieDB.
+function ns.GetStarterQuest(itemID)
+  local questID = itemID and ns.STARTS_QUEST and ns.STARTS_QUEST[itemID]
+  if not (questID and C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) then return nil end
+  local lib = QuestieDB()
+  local ok, name = false, nil
+  if lib and lib.Quest.name then ok, name = pcall(lib.Quest.name, questID) end
+  if not (ok and name) and C_QuestLog.GetTitleForQuestID then name = C_QuestLog.GetTitleForQuestID(questID) end
+  return {name = name, done = C_QuestLog.IsQuestFlaggedCompleted(questID) == true}
 end

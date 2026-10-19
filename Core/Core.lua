@@ -5,6 +5,7 @@ local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, bagValue = true, share = true,
   disenchant = true, openable = true, keepClick = true, lootCoins = true, upcomingReagents = true,
+  lossWarnings = true, altReagents = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -64,6 +65,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()
     ns.HookKeepClick()
+    ns.HookLossWarnings()
   elseif event == "PLAYER_LOGIN" then
     ns.Refresh()
     ns.RegisterBaganator()

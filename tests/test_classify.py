@@ -72,6 +72,23 @@ class PlainGearTests(unittest.TestCase):
         self.assertFalse(self.ns.IsProfessionTool(25))  # Worn Shortsword
         self.assertFalse(self.ns.IsProfessionTool(None))
 
+    def test_ammo_and_quivers_need_a_bow_or_gun(self):
+        for class_id in (6, 11):  # projectile, quiver
+            for cls in ("MAGE", "PRIEST", "WARLOCK", "DRUID", "PALADIN", "SHAMAN"):
+                self.assertTrue(self.ns.IsUnusableGear(cls, class_id, 2, "INVTYPE_AMMO"), (cls, class_id))
+            for cls in ("HUNTER", "WARRIOR", "ROGUE"):
+                self.assertFalse(self.ns.IsUnusableGear(cls, class_id, 2, "INVTYPE_AMMO"), (cls, class_id))
+        self.assertFalse(self.ns.IsUnusableGear(None, 6, 2, "INVTYPE_AMMO"))
+
+    def test_mana_drinks_for_classes_without_mana(self):
+        self.assertTrue(self.ns.IsUselessDrink("WARRIOR", 0, "Drink", "Drink"))
+        self.assertTrue(self.ns.IsUselessDrink("ROGUE", 0, "Drink", "Drink"))
+        self.assertFalse(self.ns.IsUselessDrink("MAGE", 0, "Drink", "Drink"))
+        self.assertFalse(self.ns.IsUselessDrink("WARRIOR", 0, "Food", "Drink"))
+        self.assertFalse(self.ns.IsUselessDrink("WARRIOR", 0, "Refreshment", "Drink"))
+        self.assertFalse(self.ns.IsUselessDrink("WARRIOR", 7, "Drink", "Drink"))
+        self.assertFalse(self.ns.IsUselessDrink("WARRIOR", 0, None, None))
+
     def test_fishing_poles_are_profession_tools(self):
         # any fishing pole by subclass (weapon 2, fishing pole 20), not only listed IDs
         self.assertTrue(self.ns.IsProfessionTool(6256, 2, 20))  # Fishing Pole
@@ -155,6 +172,36 @@ class DecideTests(unittest.TestCase):
         self.assertEqual(self.kind(classID=7, prices=self.CHEAP), "junk")
         self.db.scrap = False
         self.assertIsNone(self.kind(classID=7, prices=self.CHEAP))
+
+    def test_reagent_for_an_alt(self):
+        self.db.altReagents = True
+        bob = self.rt.eval("{'Bob'}")
+        verdict = self.decide(classID=7, altReagent=bob, prices=self.CHEAP)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.alts[1]), ("profession", "alt", "Bob"))
+        self.assertEqual(self.kind(classID=7, altReagent=bob, bound=True, prices=self.CHEAP), "junk")
+        self.db.altReagents = False
+        self.assertEqual(self.kind(classID=7, altReagent=bob, prices=self.CHEAP), "junk")
+
+    def test_new_forever_trade_good_never_junk(self):
+        # KeepOrSell can't judge what Forever added: a cheap new trade good stays, a pricey one may still sell
+        verdict = self.decide(classID=7, newItem=True, prices=self.CHEAP)
+        self.assertEqual((verdict.kind, verdict.reason), (None, "new"))
+        self.assertEqual(self.kind(classID=7, newItem=True, prices=self.FRESH_AH), "ah")
+
+    def test_new_forever_gear_the_class_cannot_wear_is_still_junk(self):
+        self.assertEqual(self.kind(classID=4, equipLoc="INVTYPE_CHEST", unusable=True, bound=True,
+                                   newItem=True, prices=self.CHEAP), "junk")
+
+    def test_new_item_runs(self):
+        runs = self.rt.eval("{10, 12, 20, 20, 30, 35}")
+        for item_id in (10, 11, 12, 20, 30, 33, 35):
+            self.assertTrue(self.ns.IsNewItem(item_id, runs), item_id)
+        for item_id in (9, 13, 19, 21, 29, 36, None):
+            self.assertFalse(self.ns.IsNewItem(item_id, runs), item_id)
+
+    def test_generated_new_items(self):
+        self.assertTrue(self.ns.IsNewItem(33154))  # Sinister Squashling, a Forever pet
+        self.assertFalse(self.ns.IsNewItem(2589))  # Linen Cloth
 
     def test_unknown_name_never_junk(self):
         self.assertIsNone(self.kind(quest=None, classID=7, prices=self.CHEAP))

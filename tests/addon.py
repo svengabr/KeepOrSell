@@ -4,7 +4,7 @@ from pathlib import Path
 from wowapi import runtime
 
 ROOT = Path(__file__).resolve().parent.parent
-SOURCE_DIRS = ("Locales", "Core", "Rules", "Integrations", "UI")
+SOURCE_DIRS = ("Locales", "Data", "Core", "Rules", "Integrations", "UI")
 
 
 def source(name):
@@ -60,7 +60,7 @@ KeepOrSellDB = {factor = 2, minProfit = 0, maxAge = 7, scrap = true, gear = true
   recipeJunk = true, profession = true, upcomingReagents = true, tooltip = true, hints = true, ahVisited = true, openable = true}
 """
 
-CORE_FILES = ("Locales.lua", "Keep.lua", "Objectives.lua", "Prices.lua", "TSM.lua", "Gear.lua", "Professions.lua", "Questie.lua", "Classify.lua")
+CORE_FILES = ("Locales.lua", "Starts.lua", "NewItems.lua", "Keep.lua", "Objectives.lua", "Prices.lua", "TSM.lua", "Gear.lua", "Professions.lua", "Questie.lua", "Classify.lua")
 
 
 def load(files=CORE_FILES, stubs="", base=True):

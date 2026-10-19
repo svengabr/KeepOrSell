@@ -30,6 +30,55 @@ C_TradeSkillUI = {
 """
 
 
+class AltReagentTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(stubs=STUBS)
+
+    def index(self, me="Tester-Realm", faction="Alliance"):
+        recipes = self.rt.eval("""{
+          ["Tester-Realm"] = {[1] = {4}},
+          ["Bob-Realm"] = {[1] = {3}, [2] = false},
+          ["Amy-Realm"] = {[1] = {3, 20}},
+          ["Hordie-Realm"] = {[1] = {21}},
+          ["Far-Other"] = {[1] = {22}},
+          ["Old-Realm"] = {[1] = {23}},
+        }""")
+        crafts = self.rt.eval("{['Bob-Realm'] = {[9] = {output = 3, reagents = {40}}}}")
+        factions = self.rt.eval("{['Tester-Realm'] = 'Alliance', ['Bob-Realm'] = 'Alliance', ['Amy-Realm'] = 'Alliance',"
+                                " ['Hordie-Realm'] = 'Horde', ['Far-Other'] = 'Alliance'}")
+        result = self.ns.AltReagentIndex(recipes, crafts, factions, me, faction)
+        return {k: list(v.values()) for k, v in result.items()}
+
+    def test_other_characters_of_realm_and_faction(self):
+        index = self.index()
+        self.assertEqual(index[3], ["Amy", "Bob"])
+        self.assertEqual(index[20], ["Amy"])
+        self.assertEqual(index[40], ["Bob"])  # crafted into silk first
+
+    def test_own_other_faction_other_realm_and_unknown_faction_left_out(self):
+        index = self.index()
+        for item_id in (4, 21, 22, 23):
+            self.assertNotIn(item_id, index)
+
+    def test_without_own_faction_nothing(self):
+        self.assertEqual(self.index(faction=None), {})
+
+    def test_lookup_remembers_own_faction(self):
+        self.rt.execute("function UnitFactionGroup() return 'Alliance' end")
+        self.rt.execute("KeepOrSellDB.recipes = {['Bob-Realm'] = {[1] = {3}}}; KeepOrSellDB.factions = {['Bob-Realm'] = 'Alliance'}")
+        self.assertEqual(list(self.ns.AltsNeedingReagent(3).values()), ["Bob"])
+        self.assertEqual(self.rt.eval("KeepOrSellDB.factions['Tester-Realm']"), "Alliance")
+        self.assertIsNone(self.ns.AltsNeedingReagent(4))
+
+
+class AltTooltipTests(unittest.TestCase):
+    def test_names_the_alts(self):
+        rt, ns = load(stubs=STUBS, files=__import__("addon").CORE_FILES + ("Tooltip.lua",))
+        text = ns.TooltipText(rt.eval("{kind = 'profession', reason = 'alt', alts = {'Amy', 'Bob'}}"), None,
+                              rt.eval("KeepOrSellDB"))
+        self.assertIn("Profession – still gives skill to Amy, Bob, mail it over", text)
+
+
 class ProfessionTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(stubs=STUBS)

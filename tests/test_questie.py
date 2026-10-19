@@ -42,6 +42,9 @@ for _, key in ipairs({"name", "questLevel", "requiredLevel", "requiredRaces", "r
                       "requiredSourceItems", "exclusiveTo", "startedBy", "sourceItemId", "specialFlags"}) do
   LibQuestieDB.Quest[key] = field(key)
 end
+PREQUESTS = {}  -- questID -> preQuestSingle
+LibQuestieDB.Quest.preQuestSingle = function(id) return PREQUESTS[id] end
+LibQuestieDB.Quest.preQuestGroup = function() return nil end
 -- item 12 "Okra" is of the quest item class (12); quest 500 "Westfall Stew" (level 14) wants it
 ITEMS[12] = {"Okra", 12, 0, "", 15}
 QUESTS[500] = {name = "Westfall Stew", questLevel = 14, requiredLevel = 10, requiredRaces = 0, requiredClasses = 0,
@@ -140,6 +143,22 @@ class PickTests(unittest.TestCase):
     def test_repeatable_still_checks_race_and_class(self):
         self.assertIsNone(self.pick(quest(self.rt, races=2 ** 1, requiredLevel=10, repeatable=True)))
 
+    def test_started_chain_counts_outside_the_window(self):
+        q = quest(self.rt, level=40, chainStarted=True)
+        self.assertEqual(self.pick(q).name, "Q")
+        self.assertIsNone(self.pick(quest(self.rt, level=40)))
+
+    def test_started_chain_still_needs_an_open_quest(self):
+        self.assertIsNone(self.pick(quest(self.rt, id=99, level=40, chainStarted=True)))
+        self.assertIsNone(self.pick(quest(self.rt, races=2 ** 1, level=40, chainStarted=True)))
+
+    def test_window_beats_chain_beats_repeatable(self):
+        regular = quest(self.rt, id=1, name="Regular", level=22)
+        chain = quest(self.rt, id=2, name="Chain", level=40, chainStarted=True)
+        repeat = quest(self.rt, id=3, name="Repeat", level=60, requiredLevel=10, repeatable=True)
+        self.assertEqual(self.pick(repeat, chain, regular).name, "Regular")
+        self.assertEqual(self.pick(repeat, chain).name, "Chain")
+
     def test_regular_quest_in_window_beats_repeatable(self):
         repeat = quest(self.rt, id=1, name="Repeat", level=60, requiredLevel=10, repeatable=True)
         regular = quest(self.rt, id=2, name="Regular", level=22)
@@ -197,6 +216,21 @@ class LookupTests(unittest.TestCase):
     def test_repeatable_flag_from_special_flags(self):
         q = self.ns.GetQuestieQuest(22)
         self.assertEqual((q.name, q.repeatable), ("Runecloth Donation", True))
+
+    def test_chain_started_by_a_done_prerequisite(self):
+        # quest 200 "Cloth Drive" (level 30) follows quest 150; out of the window until 150 is done
+        self.rt.execute("PREQUESTS = {[200] = {150}}")
+        self.assertEqual(self.ns.GetQuestieQuest(4).name, "Wolf Stew")
+        self.rt.execute("COMPLETED[100] = true")
+        self.assertIsNone(self.ns.GetQuestieQuest(4))
+        self.rt.execute("COMPLETED[150] = true")
+        q = self.ns.GetQuestieQuest(4)
+        self.assertEqual((q.name, q.chain), ("Cloth Drive", True))
+
+    def test_negative_prerequisite_is_no_step(self):
+        # -150: quest 150 must NOT be done; that's no chain
+        self.rt.execute("PREQUESTS = {[200] = {-150}}; COMPLETED[100] = true; COMPLETED[150] = true")
+        self.assertIsNone(self.ns.GetQuestieQuest(4))
 
     def test_not_repeatable_without_the_flag(self):
         self.assertFalse(self.ns.GetQuestieQuest(4).repeatable)
@@ -336,6 +370,37 @@ class DecideTests(unittest.TestCase):
         self.assertEqual((verdict.kind, verdict.reason, verdict.quest.name),
                          ("junk", "questitem_done", "Arcanic Systems Manual"))
 
+    def starter_unknown_to_questie(self):
+        # item 30 "Torn Note" (miscellaneous) begins quest 900, which only the game's item table knows
+        self.rt.execute("""
+          ITEMS[30] = {"Torn Note", 15, 0, "", 0}
+          C_QuestLog.GetTitleForQuestID = function(id) return id == 900 and "A Forever Tale" or nil end
+        """)
+        self.ns.STARTS_QUEST = self.rt.eval("{[30] = 900}")
+
+    def test_starter_from_item_table_is_a_quest_item(self):
+        self.starter_unknown_to_questie()
+        verdict = self.ns.Classify(30, "link30")
+        self.assertEqual((verdict.kind, verdict.reason, verdict.quest.name), ("quest", "questitem", "A Forever Tale"))
+
+    def test_starter_from_item_table_without_questiedb(self):
+        self.starter_unknown_to_questie()
+        self.rt.execute("LibQuestieDB = nil; KeepOrSellDB.questie = false")
+        self.assertEqual(self.ns.Classify(30, "link30").kind, "quest")
+
+    def test_starter_from_item_table_is_junk_once_done(self):
+        self.starter_unknown_to_questie()
+        self.rt.execute("COMPLETED[900] = true; BOUND[30] = true")
+        verdict = self.ns.Classify(30, "link30")
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", "questitem_done"))
+
+    def test_starter_without_a_quest_name_yet(self):
+        self.starter_unknown_to_questie()
+        self.rt.execute("C_QuestLog.GetTitleForQuestID = function() return nil end")
+        verdict = self.ns.Classify(30, "link30")
+        self.assertEqual((verdict.kind, verdict.reason), ("quest", "questitem"))
+        self.assertIsNone(verdict.quest)
+
     def test_handed_out_item_is_junk_once_its_quest_is_done(self):
         self.rt.execute("COMPLETED[700] = true; BOUND[21] = true")
         self.assertEqual(self.ns.Classify(21, "link21").reason, "questitem_done")
@@ -388,9 +453,17 @@ class TooltipTextTests(unittest.TestCase):
         self.assertIn('Quest – needed for repeatable quest "Runecloth"', text)
         self.assertNotIn("level", text)
 
+    def test_started_chain_says_so(self):
+        text = self.text("{kind = 'quest', reason = 'questie', quest = {name = 'Cloth Drive', level = 30, chain = true}}")
+        self.assertIn('Quest – needed for "Cloth Drive" (level 30), next in a quest chain you started', text)
+
     def test_repeatable_quest_item_says_so(self):
         text = self.text("{kind = 'quest', reason = 'questitem', quest = {name = 'Bones', level = 55, repeatable = true}}")
         self.assertIn('Quest – quest item for repeatable quest "Bones"', text)
+
+    def test_done_starter_without_quest_name(self):
+        text = self.text("{kind = 'junk', reason = 'questitem_done', bound = true}")
+        self.assertIn("Junk – its quest is already done", text)
 
     def test_quest_item_without_questie(self):
         self.assertIn("Quest – quest item", self.text("{kind = 'quest', reason = 'questitem'}"))
