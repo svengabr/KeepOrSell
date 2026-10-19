@@ -27,6 +27,7 @@ Rules\Gear.lua
 Rules\Professions.lua
 Rules\Questie.lua
 Rules\Disenchant.lua
+Rules\Filter.lua
 Rules\Classify.lua
 Core\Dependencies.lua
 UI\Options.xml
@@ -41,5 +42,6 @@ UI\Destroy.lua
 UI\LootCoins.lua
 UI\Warnings.lua
 UI\BagValue.lua
+UI\FilterWindow.lua
 UI\Options.lua
 Core\Core.lua

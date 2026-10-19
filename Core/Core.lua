@@ -53,6 +53,9 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     -- not in DEFAULTS: a table there would be shared by reference; both are kept per auction house
     KeepOrSellDB.sharedPrices = KeepOrSellDB.sharedPrices or {}
     KeepOrSellDB.fullScans = KeepOrSellDB.fullScans or {}
+    KeepOrSellDB.filter = KeepOrSellDB.filter or {}
+    KeepOrSellDB.filter.items = KeepOrSellDB.filter.items or {}
+    KeepOrSellDB.filter.categories = KeepOrSellDB.filter.categories or {}
     -- 0.8.0/0.8.1 kept shared prices by item ID for all realms; without a realm they can't be trusted
     for key in pairs(KeepOrSellDB.sharedPrices) do
       if type(key) ~= "string" then KeepOrSellDB.sharedPrices[key] = nil end
@@ -157,11 +160,12 @@ frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
 if C_AuctionHouse and C_AuctionHouse.ReplicateItems then frame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE") end
 
 SLASH_KEEPORSELL1 = "/kos"
--- /kos opens the options, /kos setup the setup window, /kos keep|unkeep <item> and /kos kept the keep marks
+-- /kos opens the options, /kos setup the setup window, /kos export|import the filter window, /kos rule <item>
+-- <group|clear> and /kos rules the filter rules, /kos keep|unkeep <item> and /kos kept the keep marks
 SlashCmdList.KEEPORSELL = function(msg)
   if msg and msg:lower():match("^%s*setup%s*$") then
     ns.ShowSetup()
-  elseif not ns.HandleKeepCommand(msg) then
+  elseif not ns.HandleFilterCommand(msg) and not ns.HandleKeepCommand(msg) then
     ns.OpenOptions()
   end
 end

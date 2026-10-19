@@ -53,6 +53,16 @@ class ShouldWarnTests(unittest.TestCase):
             self.assertFalse(self.warn(lua), lua)
         self.assertFalse(self.ns.ShouldWarnLoss(None))
 
+    def test_filter_keep_rule_warns_like_a_keep_mark(self):
+        self.assertTrue(self.warn("{reason = 'filter', rule = 'item'}"))
+        self.assertTrue(self.warn("{reason = 'filter', rule = 'category'}"))
+
+    def test_other_filter_verdicts_stay_quiet(self):
+        # a junk rule, an AH rule, and a category junk rule only waiting for a price
+        self.assertFalse(self.warn("{kind = 'junk', reason = 'filter', rule = 'item'}"))
+        self.assertFalse(self.warn("{kind = 'ah', reason = 'filter', rule = 'category'}"))
+        self.assertFalse(self.warn("{reason = 'filter', rule = 'category', needsPrice = true}"))
+
 
 class HookTests(unittest.TestCase):
     def setUp(self):
@@ -91,6 +101,10 @@ class HookTests(unittest.TestCase):
     def test_scrap_own_list_is_the_players_choice(self):
         self.rt.execute("Scrap = {IsJunk = function() return true end}; C_Container.UseContainerItem(0, 1)")
         self.assertEqual(self.printed(), [])
+
+    def test_deleting_an_item_with_a_filter_keep_rule_warns(self):
+        self.rt.execute("KeepOrSellDB.filter = {items = {[4] = 'keep'}, categories = {}}; CURSOR = 4; StaticPopup_Show('DELETE_ITEM')")
+        self.assertEqual(len(self.printed()), 1)
 
     def test_option_off(self):
         self.rt.execute("KeepOrSellDB.lossWarnings = false; CURSOR = 2; StaticPopup_Show('DELETE_QUEST_ITEM')")

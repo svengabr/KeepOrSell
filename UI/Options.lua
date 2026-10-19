@@ -87,6 +87,17 @@ function ns.RegisterOptions(db, defaults)
     layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_KEEP_FORGET, L.OPT_KEEP_FORGET_BUTTON,
       function() ns.ForgetKept() end, L.OPT_KEEP_FORGET_TIP, true))
   end
+  -- shareable filters (FilterWindow.lua); without a backup Undo says so in chat
+  Header(L.OPT_FILTER_HEADER)
+  if layout and CreateSettingsButtonInitializer then
+    local function Button(name, text, tip, click)
+      layout:AddInitializer(CreateSettingsButtonInitializer(name, text, click, tip, true))
+    end
+    Button(L.OPT_FILTER_EXPORT, L.OPT_FILTER_EXPORT_BUTTON, L.OPT_FILTER_EXPORT_TIP, function() ns.ShowFilterWindow("export") end)
+    Button(L.OPT_FILTER_IMPORT, L.OPT_FILTER_IMPORT_BUTTON, L.OPT_FILTER_IMPORT_TIP, function() ns.ShowFilterWindow("import") end)
+    Button(L.OPT_FILTER_UNDO, L.OPT_FILTER_UNDO_BUTTON, L.OPT_FILTER_UNDO_TIP, function() ns.UndoFilterCommand() end)
+    Button(L.OPT_FILTER_CLEAR, L.OPT_FILTER_CLEAR_BUTTON, L.OPT_FILTER_CLEAR_TIP, function() ns.ClearFilterCommand() end)
+  end
   Header(L.SECTION_DISPLAY)
   Checkbox("tooltip", L.OPT_TOOLTIP, L.OPT_TOOLTIP_TIP)
   Checkbox("hints", L.OPT_HINTS, L.OPT_HINTS_TIP, true)

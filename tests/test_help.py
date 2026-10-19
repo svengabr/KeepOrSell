@@ -20,7 +20,7 @@ class HelpLineTests(unittest.TestCase):
         rows = self.lines(keepClick=True, destroy=True)
         self.assertIn((self.L.HELP_KEEP_KEY, self.L.HELP_KEEP), rows)
         self.assertIn((self.L.HELP_DESTROY_KEY, self.L.HELP_DESTROY), rows)
-        for command in ("/kos", "/kos kept", "/kos keep <item>", "/kos setup"):
+        for command in ("/kos", "/kos kept", "/kos keep <item>", "/kos setup", "/kos export", "/kos import"):
             self.assertIn(command, self.keys(keepClick=True, destroy=True))
 
     def test_keep_click_comes_first(self):
