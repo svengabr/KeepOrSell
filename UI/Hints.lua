@@ -49,8 +49,11 @@ end
 
 local BAGS = NUM_BAG_SLOTS or 4
 
+-- Items the player carries on purpose (Soul Shards, tools, keep marks): their slots are no surprise
+local CARRIED = {classitem = true, tool = true, kept = true}
+
 -- Counts bag items that stay only because their auction price is too old, items to open and slots of items
--- that don't stack (items to open have their own hint)
+-- that don't stack (items to open have their own hint, items carried on purpose get none)
 local function CountBags()
   local stale, open, unstacked = 0, 0, {}
   if not (C_Container and C_Container.GetContainerItemInfo) then return stale, open, unstacked end
@@ -63,7 +66,7 @@ local function CountBags()
         if verdict.needsPrice and verdict.priceReason == "stale" then stale = stale + 1 end
         if verdict.kind == "open" then
           open = open + 1
-        elseif ns.IsUnstackable(info.itemID) then
+        elseif not CARRIED[verdict.reason] and ns.IsUnstackable(info.itemID) then
           local entry = unstacked[info.itemID]
           if not entry then
             local name = info.itemName or (C_Item.GetItemNameByID and C_Item.GetItemNameByID(info.itemID))

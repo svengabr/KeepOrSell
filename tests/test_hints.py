@@ -103,6 +103,17 @@ class UnstackedStateTests(unittest.TestCase):
         self.assertNotIn("Clam", unstacked[0])
         self.assertTrue(any("2 bag slots" in h for h in hints), hints)
 
+    def test_unstacked_hint_skips_class_items(self):
+        # a warlock carries many Soul Shards on purpose; their slots are no surprise
+        self.rt.execute("""PLAYER_CLASS = "WARLOCK"
+          ITEMS[6265] = {"Soul Shard", 15, 0, "", 15}
+          BAG = {[1] = 6265, [2] = 6265, [3] = 6265, [4] = 9}
+          local max = C_Item.GetItemMaxStackSizeByID
+          C_Item.GetItemMaxStackSizeByID = function(id) return id == 6265 and 1 or max(id) end""")
+        self.ns.ClearCache()
+        hints = list(self.ns.GetHints().values())
+        self.assertFalse(any("Soul Shard" in h for h in hints), hints)
+
     def test_unstackable(self):
         self.assertTrue(self.ns.IsUnstackable(30))
         self.assertFalse(self.ns.IsUnstackable(9))
