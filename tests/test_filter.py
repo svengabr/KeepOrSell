@@ -142,6 +142,23 @@ class FilterTests(unittest.TestCase):
         f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 100 + "\n")
         self.assertEqual(len(f.name), 40)
 
+    def test_long_name_cut_on_utf8_boundary(self):
+        # 39 + 2 bytes: a cut at byte 40 would leave half of the "ä"
+        f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 39 + "ä\n")
+        self.assertEqual(self.rt.eval("function(f) return #f.name end")(f), 39)
+        self.assertEqual(f.name, "a" * 39)
+        # exactly 40 bytes stays whole
+        f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 38 + "ä\n")
+        self.assertEqual(f.name, "a" * 38 + "ä")
+        f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 37 + "€x\n")  # 3-byte character
+        self.assertEqual(f.name, "a" * 37 + "€")
+        f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 38 + "€\n")
+        self.assertEqual(f.name, "a" * 38)
+        # the serializer cuts the same way
+        db = self.rt.eval("{filter = {}}")
+        db.filter.name = "a" * 39 + "ä"
+        self.assertIn("name = " + "a" * 39 + "\n", self.ns.SerializeFilter(db) + "\n")
+
     # --- parser hardening ---
 
     def test_name_strips_escape_sequences(self):

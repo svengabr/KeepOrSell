@@ -51,6 +51,19 @@ local function StripEscapes(text)
   return (text:match("^%s*(.-)%s*$"))
 end
 
+-- The name cut to MAX_NAME bytes without splitting a UTF-8 character: a trailing incomplete sequence is dropped.
+local function CutName(name)
+  if #name <= MAX_NAME then return name end
+  name = name:sub(1, MAX_NAME)
+  -- find the last lead byte and how long its sequence should be
+  local i = #name
+  while i > 1 and name:byte(i) >= 0x80 and name:byte(i) < 0xC0 do i = i - 1 end
+  local lead = name:byte(i)
+  local need = lead >= 0xF0 and 4 or lead >= 0xE0 and 3 or lead >= 0xC0 and 2 or 1
+  if #name - i + 1 < need then name = name:sub(1, i - 1) end
+  return name
+end
+
 -- Strips BOM, color codes and comments, trims.
 local function CleanLine(line)
   line = line:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
@@ -148,7 +161,7 @@ function ns.ParseFilter(text)
           local name = line:match("^[^=]*=%s*(.-)$")
           name = name and StripEscapes(name)
           if name and name ~= "" then
-            filter.name = name:sub(1, MAX_NAME)
+            filter.name = CutName(name)
             ok = true
           end
         elseif left == "keep" then
@@ -243,7 +256,7 @@ function ns.SerializeFilter(db, names, withKeep)
   local lines = {"KeepOrSell filter 1"}
 
   if type(filter.name) == "string" then
-    local name = StripEscapes((filter.name:gsub("#", ""))):sub(1, MAX_NAME)
+    local name = CutName(StripEscapes((filter.name:gsub("#", ""))))
     if name ~= "" then lines[#lines + 1] = "name = " .. name end
   end
 
