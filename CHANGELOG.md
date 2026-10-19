@@ -4,6 +4,7 @@
 
 - Fishing poles (every one, whatever its name) now show "Keep – profession tool" in the tooltip, like mining picks and skinning knives.
 - Rogues always keep Swiftthistle, the reagent for Thistle Tea.
+- A question mark in Baganator's bag window lists KeepOrSell's shortcuts when you hover it: Alt+Right-click to always keep an item, the destroy button and the `/kos` commands. Click it for the options.
 
 ## 0.17.2
 

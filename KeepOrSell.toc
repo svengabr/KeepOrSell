@@ -32,6 +32,7 @@ Integrations\Scrap.lua
 Integrations\Baganator.lua
 Integrations\Tooltip.lua
 UI\Hints.lua
+UI\Help.lua
 UI\Setup.lua
 Core\Bags.lua
 UI\Destroy.lua

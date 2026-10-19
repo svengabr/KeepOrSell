@@ -24,7 +24,7 @@ Hover over any item and the tooltip tells you which group it's in and why, for e
 
 Not sure about an item? Then it stays. No auction price means no junk. And green or better gear you could wear never counts as junk, nor does anything saved in an equipment set.
 
-Want to keep something KeepOrSell would sell? **Alt+Right-click** it in your bags. It stays from now on, also without Scrap; click again to undo. `/kos kept` lists what you marked.
+Want to keep something KeepOrSell would sell? **Alt+Right-click** it in your bags. It stays from now on, also without Scrap; click again to undo. `/kos kept` lists what you marked. Forgot the shortcut? Hover the gold **?** in Baganator's bag window.
 
 ![Auction house](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/02-auction-house.jpg)
 
@@ -89,7 +89,7 @@ Schon mal beim Händler gestanden und dich gefragt, ob das komische Item in der 
 - **Schrott**: graues Zeug, billige Handwerkswaren, Ausrüstung, die deine Klasse nie tragen kann, Rezepte, die du schon kennst. Scrap verkauft das beim nächsten Händler.
 - **Entzaubern** (nur für Verzauberer): grüne, blaue und lila Ausrüstung, die du sonst verkaufen würdest, wenn ihre Materialien mehr bringen als Händler oder AH. Auch seelengebundene Ausrüstung, die nicht ins AH darf. Der Tooltip zeigt den Durchschnittswert und was wahrscheinlich rauskommt.
 
-Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Bei Ausrüstung, die du tragen kannst, steht dazu, was sie dir bringt, falls du sie nicht mehr brauchst: Entzaubern, Auktionshaus oder Händler, je nachdem, was am meisten bringt. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie, genauso wenig wie alles aus einem Ausrüstungsset. Willst du etwas behalten, das KeepOrSell verkaufen würde? **Alt+Rechtsklick** darauf in der Tasche, dann bleibt es, auch ohne Scrap. Nochmal klicken hebt es auf, `/kos kept` listet alles Markierte.
+Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Bei Ausrüstung, die du tragen kannst, steht dazu, was sie dir bringt, falls du sie nicht mehr brauchst: Entzaubern, Auktionshaus oder Händler, je nachdem, was am meisten bringt. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie, genauso wenig wie alles aus einem Ausrüstungsset. Willst du etwas behalten, das KeepOrSell verkaufen würde? **Alt+Rechtsklick** darauf in der Tasche, dann bleibt es, auch ohne Scrap. Kürzel vergessen? Das goldene **?** im Baganator-Taschenfenster zeigt sie beim Drüberfahren. Nochmal klicken hebt es auf, `/kos kept` listet alles Markierte.
 
 **Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items, nie aus Berufstaschen). Sind die Taschen beim Looten voll, markiert eine Goldmünze die Beute, die mehr wert ist als der Schrott, den sie ersetzen würde; der Tooltip der Beute sagt, was du dafür zerstören solltest, und der Knopf leuchtet. Beute, die noch auf einen Stapel passt, bekommt keine Münze. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise.
 
