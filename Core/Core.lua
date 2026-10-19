@@ -5,7 +5,7 @@ local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, bagValue = true, share = true,
   disenchant = true, openable = true, keepClick = true, lootCoins = true, upcomingReagents = true,
-  lossWarnings = true, accountMode = true,
+  lossWarnings = true, accountMode = true, helpButton = true,
 }
 
 local frame = CreateFrame("Frame")
