@@ -488,6 +488,16 @@ class CommandTests(unittest.TestCase):
         self.assertTrue(self.ns.HandleFilterCommand("rule 4 clear"))
         self.assertIsNone(self.db.filter["items"][4])
 
+    def test_slash_rule_refreshes_open_tooltip(self):
+        self.rt.execute("""GameTooltip = {shown = true, refreshed = 0,
+          IsShown = function(self) return self.shown end,
+          RefreshData = function(self) self.refreshed = self.refreshed + 1 end}""")
+        self.assertTrue(self.ns.HandleFilterCommand("rule 4 junk"))
+        self.assertEqual(self.rt.eval("GameTooltip.refreshed"), 1)
+        self.rt.execute("GameTooltip.shown = false")
+        self.assertTrue(self.ns.HandleFilterCommand("rule 4 clear"))
+        self.assertEqual(self.rt.eval("GameTooltip.refreshed"), 1)
+
     def test_slash_rule_bad_input_shows_usage(self):
         for msg in ("rule 4 quest", "rule junk", "rule", "rule [Linen] junk"):
             self.assertTrue(self.ns.HandleFilterCommand(msg), msg)

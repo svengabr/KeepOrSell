@@ -157,6 +157,7 @@ local function RuleCommand(rest)
   print(PREFIX .. (group and L.FILTER_RULE_SET:format(ns.ItemText(itemID), group)
     or L.FILTER_RULE_CLEARED:format(ns.ItemText(itemID))))
   ns.SettingsChanged()
+  if GameTooltip and GameTooltip:IsShown() and GameTooltip.RefreshData then GameTooltip:RefreshData() end
 end
 
 -- /kos export|import|rule|rules; returns true when msg was one of these
