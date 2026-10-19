@@ -48,6 +48,25 @@ Want to keep something KeepOrSell would sell? **Alt+Right-click** it in your bag
 
 ![Bag tools](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/07-bag-tools.jpg)
 
+## Sharing filters
+
+A filter is your setup as plain text: the decision options (factor, minimum profit, price age and the junk, profession and disenchant switches), your keep marks and your own rules. Post it in a forum or Discord, or paste someone else's.
+
+- `/kos export` shows your filter. Select all, copy, share.
+- `/kos import` opens an empty box. Paste a filter and press **Check**: it lists what would change (options, new keep marks, number of rules, ignored lines). **Apply** only works on a checked text. "Undo last import" in the options restores your options and rules and removes the keep marks the import added.
+- `/kos rule <item> <group>` sets a rule for one item (groups: `keep`, `profession`, `ah`, `disenchant`, `junk`; `clear` removes it), `/kos rules` lists all rules.
+
+```
+KeepOrSell filter 1
+name = Leveling
+factor = 3
+keep = 2589, 4306
+item 2592 = junk                       # Wool Cloth
+class 7 subclass 5 quality 0-1 = junk  # Trade Goods: Cloth, grey and white
+```
+
+An item rule names one item and is as strong as Scrap's own junk list. A category rule is careful: it never junks green or better gear you can wear, items Forever added, or items without a known, recent auction price. Quest items, keep marks, equipment sets, tools and class items always win over a filter. The text is only data, nothing in it is ever run, and lines KeepOrSell doesn't understand are dropped and counted.
+
 ## What you need
 
 - [Baganator](https://www.curseforge.com/wow/addons/baganator): shows the groups in your bags (category view)
@@ -100,6 +119,8 @@ Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und
 **Optional für Fortgeschrittene:** TradeSkillMaster. Hat Auctionator keinen Preis, nimmt KeepOrSell den von TSM.
 
 **Loslegen:** installieren und einloggen. Ein Einrichtungsfenster zeigt, was noch fehlt, schaltet Baganator mit einem Klick auf Kategorie-Gruppen um (als eigenes Baganator-Profil „KeepOrSell“, dein altes bleibt) und erklärt den Scan mit Auctionator. Wieder öffnen mit `/kos setup`. Dann einmal das AH mit Auctionator scannen und jedes Berufsfenster einmal öffnen. Fertig. Einstellungen gibt's unter Esc → Optionen → AddOns → **KeepOrSell** oder mit `/kos`.
+
+**Filter teilen:** Ein Filter ist dein Setup als Text: die Entscheidungs-Optionen (Faktor, Mindestgewinn, Preisalter, Schalter für Schrott, Beruf und Entzaubern), deine Behalten-Markierungen und eigene Regeln. `/kos export` zeigt ihn zum Kopieren, `/kos import` nimmt einen fremden. „Prüfen“ zeigt vorher, was sich ändern würde, erst dann geht „Anwenden“. „Letzten Import rückgängig“ in den Optionen stellt Optionen und Regeln wieder her und entfernt die Markierungen, die der Import dazugebracht hat. `/kos rule <Item> <Gruppe>` setzt eine Regel für ein Item (`keep`, `profession`, `ah`, `disenchant`, `junk`, `clear` löscht sie), `/kos rules` listet alle Regeln. Eine Item-Regel ist so stark wie Scraps eigene Liste. Eine Kategorie-Regel macht nie grüne oder bessere tragbare Ausrüstung, von Forever neu hinzugefügte Items oder Items ohne bekannten, frischen Auktionspreis zu Schrott. Quest-Items, Markierungen, Ausrüstungssets, Werkzeuge und Klassen-Items gehen immer vor. Der Text sind nur Daten und wird nie ausgeführt; Zeilen, die KeepOrSell nicht versteht, werden verworfen und gezählt.
 
 **Unterstützen:** KeepOrSell ist kostenlos und bleibt es auch. Wenn es dir das Spiel ein bisschen leichter macht, kannst du mir [einen Kaffee ausgeben](https://buymeacoffee.com/conoar).
 
