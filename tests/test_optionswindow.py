@@ -29,6 +29,7 @@ local function Widget(kind, parent)
     SetScript = function(self, name, fn) self[name] = fn end,
     GetScript = function(self, name) return self[name] end,
     SetScrollChild = function(self, child) self.scrollChild = child end,
+    SetSize = function(self, w, h) self.width, self.height = w, h end,
     GetWidth = function() return 400 end,
     GetHeight = function() return 400 end,
     GetStringWidth = function() return 50 end,
@@ -162,6 +163,28 @@ class OptionsWindowTests(unittest.TestCase):
         self.ns.ShowOptionsWindow("account")
         self.assertEqual(self.ns.OptionsAltTable().hint.text, self.ns.L.ALTS_HINT)
         self.assertIsNone(self.widget("altrow:Bob-Realm"))
+
+    def test_alt_table_stays_inside_the_page(self):
+        self.ns.ShowOptionsWindow("account")
+        layout, table = self.ns.OptionsLayout(), self.ns.OptionsAltTable()
+        bottom = layout.columnTop - table.top + table.height  # table.top is negative (below the column top)
+        self.assertLessEqual(bottom, layout.pageHeight)
+        self.assertLessEqual(table.width, layout.pageWidth)
+
+    def test_alt_columns_fit_the_scroll_area(self):
+        layout = self.ns.OptionsLayout()
+        self.assertLessEqual(layout.altRowWidth, layout.altScrollWidth)
+
+    def test_window_has_no_portrait(self):
+        self.rt.execute("HIDDEN_PORTRAIT = nil; function ButtonFrameTemplate_HidePortrait(f) HIDDEN_PORTRAIT = f.name end")
+        self.ns.ShowOptionsWindow()
+        self.assertEqual(self.rt.eval("HIDDEN_PORTRAIT"), "KeepOrSellOptionsFrame")
+
+    def test_pages_have_a_fixed_size(self):
+        self.ns.ShowOptionsWindow("junk")
+        layout = self.ns.OptionsLayout()
+        self.assertEqual((self.ns.OptionsPage("junk").width, self.ns.OptionsPage("junk").height),
+                         (layout.pageWidth, layout.pageHeight))
 
     def test_dependency_rows(self):
         self.ns.ShowOptionsWindow("addons")

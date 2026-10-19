@@ -62,12 +62,12 @@ function Style.Button(parent, text, onClick)
   return button
 end
 
--- A hidden, movable window in the style of Blizzard's own (ButtonFrameTemplate with our logo in the portrait),
--- above the settings panel, closed by Esc
-function Style.Window(name, title, width, height)
+-- A hidden, movable window in the style of Blizzard's own (ButtonFrameTemplate with our logo in the portrait;
+-- portrait = false hides it), above the settings panel, closed by Esc
+function Style.Window(name, title, width, height, portrait)
   local frame = CreateFrame("Frame", name, UIParent, "ButtonFrameTemplate")
   frame:Hide()
-  if frame.SetPortraitToAsset then
+  if portrait ~= false and frame.SetPortraitToAsset then
     frame:SetPortraitToAsset(LOGO)
     -- cut the square icon down to the round emblem (Icon.tga: centre 32/32, teal disc r 18 of 64), with room
     -- for the portrait ring, so the emblem fills it and sits in its middle

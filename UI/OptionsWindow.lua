@@ -9,7 +9,9 @@ local WIDTH, HEIGHT = 760, 486
 local NAV_W, PANEL_TOP, MARGIN = 170, -30, 12
 local PANEL_H = HEIGHT + PANEL_TOP - MARGIN
 local CONTENT_W = WIDTH - 3 * MARGIN - NAV_W
-local COLUMN_W = (CONTENT_W - 3 * MARGIN) / 2
+local PAGE_W, PAGE_H = CONTENT_W - 2 * MARGIN, PANEL_H - 2 * MARGIN
+local COLUMN_TOP = 40 -- below the section heading
+local COLUMN_W = (PAGE_W - MARGIN) / 2
 local ROW_H = 22
 local DIM = 0.45
 local GREY = {0.6, 0.6, 0.6}
@@ -109,7 +111,7 @@ local function Slider(parent, control, y)
     self.label:SetText(control.format(value))
     if not userInput then return end
     KeepOrSellDB[control.key] = value
-    -- dragging fires on every step; sort the bags once the player lets go
+    -- dragging fires on every step; sort the bags at most every 0.3 s, the last value always counts
     if not pending then
       pending = true
       C_Timer.After(0.3, function() pending = false; Changed(control) end)
@@ -161,7 +163,10 @@ local ALT_COLUMNS = {
   {field = "classItems", header = "ALTS_COL_CLASS"},
   {field = "included", header = "ALTS_COL_INCLUDED"},
 }
-local NAME_W, PROF_W, CHECK_W = 150, 170, 70
+-- the rows must fit the scroll area (page width minus the scroll bar): 125 + 135 + 8 + 3 * 78 = 502 <= 504
+local NAME_W, PROF_W, CHECK_W = 125, 135, 78
+local SCROLL_W = PAGE_W - 26
+local HEAD_Y, ROWS_Y = -20, -52 -- column headers may wrap to two lines
 
 local function OwnRecord()
   local key = ns.CharacterKey()
@@ -176,7 +181,7 @@ end
 
 local function AltRow(parent, index)
   local row = CreateFrame("Frame", nil, parent)
-  row:SetSize(CONTENT_W - 40, ROW_H)
+  row:SetSize(SCROLL_W, ROW_H)
   row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_H)
   row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
   row.name:SetPoint("LEFT", 2, 0)
@@ -206,7 +211,9 @@ end
 
 local function AltTable(parent, _, y)
   local t = CreateFrame("Frame", nil, parent)
-  t:SetSize(CONTENT_W - 2 * MARGIN, PANEL_H - 2 * MARGIN + y)
+  -- from y below the column top down to the page bottom
+  t.top, t.width, t.height = y, PAGE_W, PAGE_H - COLUMN_TOP + y
+  t:SetSize(t.width, t.height)
   t:SetPoint("TOPLEFT", 0, y)
   t.header = t:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   t.header:SetPoint("TOPLEFT", 4, 0)
@@ -216,20 +223,20 @@ local function AltTable(parent, _, y)
   end
   for _, head in ipairs(heads) do
     local text = t:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
-    text:SetPoint("TOPLEFT", head[2], -22)
+    text:SetPoint("TOPLEFT", head[2], HEAD_Y)
     if head[3] then text:SetWidth(head[3]); text:SetJustifyH("CENTER") end
     text:SetText(head[1])
   end
   -- rows scroll when there are more alts than room
   t.scroll = CreateFrame("ScrollFrame", nil, t, "UIPanelScrollFrameTemplate")
-  t.scroll:SetPoint("TOPLEFT", 0, -40)
-  t.scroll:SetPoint("BOTTOMRIGHT", -26, 34)
+  t.scroll:SetPoint("TOPLEFT", 0, ROWS_Y)
+  t.scroll:SetPoint("BOTTOMRIGHT", -(PAGE_W - SCROLL_W), 34)
   local child = CreateFrame("Frame", nil, t.scroll)
-  child:SetSize(CONTENT_W - 50, ROW_H)
+  child:SetSize(SCROLL_W, ROW_H)
   t.scroll:SetScrollChild(child)
   t.hint = t:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   t.hint:SetPoint("BOTTOMLEFT", 4, 6)
-  t.hint:SetWidth(CONTENT_W - 40)
+  t.hint:SetWidth(PAGE_W - 8)
   t.hint:SetJustifyH("LEFT")
   t.hint:SetText(L.ALTS_HINT)
   t.rows = {}
@@ -267,21 +274,27 @@ local function AltTable(parent, _, y)
   return 0
 end
 
+-- The numbers the layout rests on (tests)
+function ns.OptionsLayout()
+  return {pageWidth = PAGE_W, pageHeight = PAGE_H, columnTop = COLUMN_TOP,
+    altRowWidth = NAME_W + PROF_W + 8 + #ALT_COLUMNS * CHECK_W, altScrollWidth = SCROLL_W}
+end
+
 -- Pages and sidebar --------------------------------------------------------------------------------------------
 
 local BUILDERS = {checkbox = Checkbox, slider = Slider, button = ActionButton, dependencies = Dependencies,
   alts = AltTable}
 
 local function BuildPage(parent, section)
+  -- a fixed size, so the heading's divider knows its width before the window was ever shown
   local page = CreateFrame("Frame", nil, parent)
+  page:SetSize(PAGE_W, PAGE_H)
   page:SetPoint("TOPLEFT", MARGIN, -MARGIN)
-  page:SetPoint("BOTTOMRIGHT", -MARGIN, MARGIN)
-  local title = Style.Heading(page, L[section.label], 20, 0)
-  title:SetPoint("TOPLEFT", 0, 0)
+  Style.Heading(page, L[section.label], 20, 0)
   for i, controls in ipairs(section.columns) do
     local column = CreateFrame("Frame", nil, page)
-    column:SetSize(COLUMN_W, PANEL_H - 60)
-    column:SetPoint("TOPLEFT", (i - 1) * (COLUMN_W + MARGIN), -40)
+    column:SetSize(COLUMN_W, PAGE_H - COLUMN_TOP)
+    column:SetPoint("TOPLEFT", (i - 1) * (COLUMN_W + MARGIN), -COLUMN_TOP)
     local y = 0
     for _, control in ipairs(controls) do
       y = y - BUILDERS[control.kind](column, control, y)
@@ -328,7 +341,8 @@ function ns.RefreshOptionsWindow()
 end
 
 local function CreateWindow()
-  frame = Style.Window(addonName .. "OptionsFrame", L.OPT_WINDOW_TITLE, WIDTH, HEIGHT)
+  -- no portrait: it would reach into the sidebar's first entry
+  frame = Style.Window(addonName .. "OptionsFrame", L.OPT_WINDOW_TITLE, WIDTH, HEIGHT, false)
   local nav = Style.Box(frame, 0.08, 0.7)
   nav:SetSize(NAV_W, PANEL_H)
   nav:SetPoint("TOPLEFT", MARGIN, PANEL_TOP)
