@@ -17,21 +17,4 @@
       <OnLoad method="OnLoad"/>
     </Scripts>
   </Frame>
-  <!-- Up to two lines of small text in the options panel: the alt page's intro, why the list is empty (Options.lua) -->
-  <Frame name="KeepOrSellNoteTemplate" inherits="SettingsListElementTemplate" mixin="KeepOrSellNoteMixin" virtual="true">
-    <Size x="280" y="40"/>
-    <Layers>
-      <Layer level="OVERLAY">
-        <FontString parentKey="Text" inherits="GameFontHighlightSmall" justifyH="LEFT" wordwrap="true">
-          <Anchors>
-            <Anchor point="LEFT" x="37"/>
-            <Anchor point="RIGHT" x="-10"/>
-          </Anchors>
-        </FontString>
-      </Layer>
-    </Layers>
-    <Scripts>
-      <OnLoad method="OnLoad"/>
-    </Scripts>
-  </Frame>
 </Ui>

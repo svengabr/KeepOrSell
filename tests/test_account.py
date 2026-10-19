@@ -98,13 +98,13 @@ class RecordTests(unittest.TestCase):
     def test_move_character_data(self):
         db = self.rt.eval("""{recipes = {['Drache-Realm'] = {[1] = {3}}}, opened = {['Drache-Realm'] = {Tailoring = true}},
           crafts = {['Drache-Realm'] = {}, ['Drache Offiziell-Realm'] = {kept = true}},
-          altIncluded = {['Drache-Realm'] = false}, baganatorSetup = {['Drache-Realm'] = true}}""")
+          altSettings = {['Drache-Realm'] = {included = false}}, baganatorSetup = {['Drache-Realm'] = true}}""")
         self.ns.MoveCharacterData(db, "Drache-Realm", "Drache Offiziell-Realm")
         self.assertIsNone(db.recipes["Drache-Realm"])
         self.assertEqual(db.recipes["Drache Offiziell-Realm"][1][1], 3)
         self.assertTrue(db.opened["Drache Offiziell-Realm"].Tailoring)
         self.assertTrue(db.crafts["Drache Offiziell-Realm"].kept)  # newer data stays
-        self.assertIs(db.altIncluded["Drache Offiziell-Realm"], False)
+        self.assertIs(db.altSettings["Drache Offiziell-Realm"].included, False)
         self.assertTrue(db.baganatorSetup["Drache Offiziell-Realm"])
         self.ns.MoveCharacterData(db, "Same-Realm", "Same-Realm")  # nothing to do
 
@@ -184,32 +184,54 @@ class AltIndexTests(unittest.TestCase):
     def test_index_without_own_record_is_empty(self):
         self.assertEqual(len(self.index(me="Nobody-Realm")), 0)
 
-    def filtered(self, item_id, **db):
-        base = {"accountMode": True, "altProfession": True, "altClassItems": True}
-        base.update(db)
-        result = self.ns.FilterAlts(self.raw[item_id], self.rt.table_from(base))
+    def filtered(self, item_id, settings="{}", account_mode=True):
+        db = self.rt.table_from({"accountMode": account_mode, "altSettings": self.rt.eval(settings)})
+        result = self.ns.FilterAlts(self.raw[item_id], db)
         return result and self.names(result)
 
-    def test_filter_alts_applies_exclusion_and_switches(self):
+    def test_filter_alts_reads_per_alt_settings(self):
         self.index()
-        excluded = self.rt.eval("{['Amy-Realm'] = false}")
-        self.assertEqual(self.filtered(3, altIncluded=excluded), ["Bob"])
-        excluded["Amy-Realm"] = True
-        self.assertEqual(self.filtered(3, altIncluded=excluded), ["Amy", "Bob"])
-        self.assertIsNone(self.filtered(3, altProfession=False))
-        self.assertEqual(self.filtered(17028, altProfession=False), ["Amy"])
-        self.assertIsNone(self.filtered(17028, altClassItems=False))
-        self.assertIsNone(self.filtered(3, accountMode=False))
+        self.assertEqual(self.filtered(3, "{['Amy-Realm'] = {included = false}}"), ["Bob"])
+        self.assertEqual(self.filtered(3, "{['Amy-Realm'] = {included = true}}"), ["Amy", "Bob"])
+        self.assertEqual(self.filtered(3, "{['Amy-Realm'] = {profession = false}}"), ["Bob"])
+        self.assertEqual(self.filtered(17028), ["Amy"])
+        self.assertEqual(self.filtered(17028, "{['Amy-Realm'] = {profession = false}}"), ["Amy"])
+        self.assertIsNone(self.filtered(17028, "{['Amy-Realm'] = {classItems = false}}"))
+        self.assertIsNone(self.filtered(3, account_mode=False))
         self.assertIsNone(self.ns.FilterAlts(None, self.rt.table_from({"accountMode": True})))
         self.assertEqual(self.names(self.raw[3]), ["Amy", "Bob"])  # index untouched
 
     def test_filter_alts_drops_the_switched_off_reason(self):
         self.rt.execute("""TEST_ALTS = {{key = 'Amy-Realm', name = 'Amy', professions = {'Tailoring'},
           profession = true, class = true}}""")
-        db = self.rt.table_from({"accountMode": True, "altProfession": False, "altClassItems": True})
+        db = self.rt.eval("{accountMode = true, altSettings = {['Amy-Realm'] = {profession = false}}}")
         alt = self.ns.FilterAlts(self.rt.eval("TEST_ALTS"), db)[1]
         self.assertEqual((len(alt.professions), alt.profession, alt["class"]), (0, False, True))
         self.assertEqual(self.rt.eval("#TEST_ALTS[1].professions"), 1)
+
+    def test_migrates_released_alt_reagents(self):
+        db = self.rt.eval("{altReagents = false, characters = {['Bob-Realm'] = {}}, recipes = {['Amy-Realm'] = {}}}")
+        self.ns.MigrateAltSettings(db)
+        self.assertIs(db.altSettings["Bob-Realm"].profession, False)
+        self.assertIs(db.altSettings["Amy-Realm"].profession, False)
+        self.assertIsNone(db.altSettings["Bob-Realm"].classItems)
+        self.assertIsNone(db.altReagents)
+
+    def test_migrates_branch_switches_and_exclusions(self):
+        db = self.rt.eval("""{altClassItems = false, altProfession = true, altIncluded = {['Bob-Realm'] = false},
+          characters = {['Bob-Realm'] = {}, ['Amy-Realm'] = {}}, altSettings = {['Amy-Realm'] = {classItems = true}}}""")
+        self.ns.MigrateAltSettings(db)
+        self.assertIs(db.altSettings["Bob-Realm"].included, False)
+        self.assertIs(db.altSettings["Bob-Realm"].classItems, False)
+        self.assertIsNone(db.altSettings["Bob-Realm"].profession)
+        self.assertIs(db.altSettings["Amy-Realm"].classItems, True)  # existing value wins
+        for key in ("altIncluded", "altClassItems", "altProfession"):
+            self.assertIsNone(db[key], key)
+
+    def test_migration_without_old_keys_changes_nothing(self):
+        db = self.rt.eval("{characters = {['Bob-Realm'] = {}}}")
+        self.ns.MigrateAltSettings(db)
+        self.assertTrue(db.altSettings is None or db.altSettings["Bob-Realm"] is None)
 
     def test_lookup_reads_the_saved_variables(self):
         self.rt.execute("""KeepOrSellDB.characters = {
@@ -218,6 +240,31 @@ class AltIndexTests(unittest.TestCase):
           KeepOrSellDB.recipes = {['Bob-Realm'] = {[1] = {3}}}""")
         self.assertEqual(self.names(self.ns.AltsNeedingItem(3)), ["Bob"])
         self.assertIsNone(self.ns.AltsNeedingItem(4))
+
+
+class AltRowsTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load()
+
+    def test_alt_rows(self):
+        characters = self.rt.eval("""{['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
+          ['Amy-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'PRIEST'},
+          ['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'MAGE'}}""")
+        professions = self.rt.eval("{['Amy-Realm'] = {[1] = 'Tailoring', [2] = 'Enchanting', [3] = 'Tailoring'}}")
+        settings = self.rt.eval("{['Bob-Realm'] = {included = false}}")
+        me = self.rt.eval("{key = 'Tester-Realm', faction = 'Alliance', realm = 'Realm'}")
+        rows = self.ns.AltRows(characters, professions, settings, me)
+        self.assertEqual([(r.name, r["class"], r.professions, r.included, r.profession, r.classItems)
+                          for r in rows.values()],
+                         [("Amy", "PRIEST", "Enchanting, Tailoring", True, True, True),
+                          ("Bob", "MAGE", None, False, True, True)])
+
+    def test_pool_text(self):
+        pool = lambda **kw: self.ns.PoolText(self.rt.table_from(kw))
+        self.assertEqual(pool(ruleset="PvP", faction="Horde"), "PvP · Horde")
+        self.assertEqual(pool(realm="Realm", faction="Horde"), "Realm · Horde")
+        self.rt.execute("FACTION_HORDE = 'Horde (de)'")
+        self.assertEqual(pool(ruleset="PvP", faction="Horde"), "PvP · Horde (de)")
 
 
 class AltCharactersTests(unittest.TestCase):

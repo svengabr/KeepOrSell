@@ -34,7 +34,7 @@ end
 
 -- Tables in KeepOrSellDB keyed by character
 local PER_CHARACTER = {"recipes", "upcoming", "crafts", "recipeProfession", "opened", "baganatorSetup", "characters",
-  "altIncluded"}
+  "altSettings"}
 
 -- Moves a character's data from oldKey to newKey in every per-character table; data already under newKey stays.
 -- Pure.
@@ -144,17 +144,18 @@ function ns.AltsNeedingItem(itemID)
   return altIndex[itemID]
 end
 
--- The alts that count with the player's options: account mode on, the alt ticked in the options
--- (db.altIncluded[key] ~= false) and its need switched on (altProfession, altClassItems). Returns copies
--- without the switched-off reason, or nil when none is left. Pure.
+-- The alts that count with the player's options: account mode on, and per alt (db.altSettings[key], a missing
+-- value means on) included and its need switched on (profession, classItems). Returns copies without the
+-- switched-off reason, or nil when none is left. Pure.
 function ns.FilterAlts(alts, db)
   if not (alts and db.accountMode) then return nil end
-  local included = db.altIncluded or {}
+  local settings = db.altSettings or {}
   local result = {}
   for _, alt in ipairs(alts) do
-    local profession = db.altProfession and alt.profession or false
-    local class = db.altClassItems and alt.class or false
-    if included[alt.key] ~= false and (profession or class) then
+    local s = settings[alt.key] or {}
+    local profession = alt.profession and s.profession ~= false or false
+    local class = alt.class and s.classItems ~= false or false
+    if s.included ~= false and (profession or class) then
       table.insert(result, {key = alt.key, name = alt.name, professions = profession and alt.professions or {},
         profession = profession, class = class})
     end
@@ -173,4 +174,57 @@ function ns.AltCharacters(characters, me)
   end
   table.sort(result, function(a, b) return a.name < b.name end)
   return result
+end
+
+-- Folds the account mode switches of older versions into db.altSettings, for every character known now (keys of
+-- characters and recipes): altReagents (0.18-0.19) and altProfession = false turn profession materials off,
+-- altClassItems = false class items, altIncluded[key] = false leaves the alt out. Values already in altSettings
+-- stay. The old keys are removed. Pure.
+function ns.MigrateAltSettings(db)
+  local profession = db.altReagents == false or db.altProfession == false
+  local classItems = db.altClassItems == false
+  local excluded = db.altIncluded or {}
+  local known = {}
+  for key in pairs(db.characters or {}) do known[key] = true end
+  for key in pairs(db.recipes or {}) do known[key] = true end
+  for key in pairs(excluded) do known[key] = true end
+  for key in pairs(known) do
+    local off = {profession = profession or nil, classItems = classItems or nil, included = excluded[key] == false or nil}
+    if next(off) then
+      db.altSettings = db.altSettings or {}
+      local s = db.altSettings[key] or {}
+      db.altSettings[key] = s
+      for field in pairs(off) do
+        if s[field] == nil then s[field] = false end
+      end
+    end
+  end
+  db.altReagents, db.altProfession, db.altClassItems, db.altIncluded = nil, nil, nil, nil
+end
+
+-- One row per alt for the options window: {key, name, class, professions = "A, B" or nil, included, profession,
+-- classItems}, sorted by name; professions are the distinct stored profession names of its recipes. Pure.
+function ns.AltRows(characters, recipeProfession, altSettings, me)
+  local rows = {}
+  for _, alt in ipairs(ns.AltCharacters(characters, me)) do
+    local seen, names = {}, {}
+    for _, name in pairs(recipeProfession and recipeProfession[alt.key] or {}) do
+      if not seen[name] then seen[name] = true; table.insert(names, name) end
+    end
+    table.sort(names)
+    local s = altSettings and altSettings[alt.key] or {}
+    table.insert(rows, {key = alt.key, name = alt.name, class = alt.class,
+      professions = #names > 0 and table.concat(names, ", ") or nil,
+      included = s.included ~= false, profession = s.profession ~= false, classItems = s.classItems ~= false})
+  end
+  return rows
+end
+
+local FACTION_NAMES = {Alliance = "FACTION_ALLIANCE", Horde = "FACTION_HORDE"}
+
+-- "PvP · Horde": the pool the alts share; the realm when the ruleset is unknown. Pure apart from the client's
+-- faction names (globals FACTION_ALLIANCE / FACTION_HORDE when they exist).
+function ns.PoolText(me)
+  local faction = me.faction and (_G[FACTION_NAMES[me.faction] or ""] or me.faction) or "?"
+  return ("%s · %s"):format(me.ruleset or me.realm or "?", faction)
 end

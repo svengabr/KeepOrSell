@@ -89,65 +89,6 @@ def load():
             source(f), ns)
     return rt, ns
 
-class AccountModeOptionsTests(unittest.TestCase):
-    CHARACTERS = """{['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
-      ['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'MAGE'},
-      ['Amy-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'PRIEST'},
-      ['Hordie-Realm'] = {faction = 'Horde', realm = 'Realm', class = 'ROGUE'}}"""
-
-    def open(self, characters):
-        self.rt, self.ns = load()
-        self.rt.execute("KeepOrSellDB = {characters = %s}" % characters)
-        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
-        self.calls = self.rt.eval("CALLS")
-        return list(self.calls.controls.values())
-
-    def test_alts_listed_after_the_switches(self):
-        controls = self.open(self.CHARACTERS)
-        i = controls.index("checkbox:altClassItems")
-        self.assertEqual(controls[i + 1:i + 3], ["checkbox:Amy-Realm", "checkbox:Bob-Realm"])
-        self.assertNotIn("checkbox:Hordie-Realm", controls)
-        self.assertNotIn("checkbox:Tester-Realm", controls)
-
-    def test_alt_checkbox_binds_alt_included(self):
-        self.open(self.CHARACTERS)
-        self.assertTrue(self.rt.eval("CALLS.settings['Bob-Realm'].tbl == KeepOrSellDB.altIncluded"))
-        s = self.calls.settings["Bob-Realm"]
-        self.assertEqual((s.varType, s.default), ("boolean", True))
-        self.calls.callbacks["KeepOrSell_alt_Bob-Realm"]()
-        self.assertEqual(self.ns.refreshed, 1)
-
-    def test_alts_from_the_old_factions_table_listed_on_first_load(self):
-        self.rt, self.ns = load()
-        self.rt.execute("KeepOrSellDB = {factions = {['Bob-Realm'] = 'Alliance', ['Tester-Realm'] = 'Alliance'}}")
-        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
-        self.assertIn("checkbox:Bob-Realm", list(self.rt.eval("CALLS").controls.values()))
-
-    def test_alts_on_their_own_page(self):
-        self.open(self.CHARACTERS)
-        self.assertEqual(self.calls.subcategoryName, "Alts")
-        self.assertEqual(self.calls.subcategoryParent.GetID(), 42)
-        self.assertEqual(self.calls.checkboxCategory["Bob-Realm"], "sub")
-        self.assertEqual(self.calls.checkboxCategory["altProfession"], "main")
-        intro = list(self.calls.subLayout.values())[0]
-        self.assertEqual((intro.template, intro.data.text), ("KeepOrSellNoteTemplate", self.ns.L.OPT_ALTS_INTRO))
-
-    def test_no_alts_shows_note(self):
-        self.open("{}")
-        notes = [i for i in self.calls.subLayout.values() if i.data.text == self.ns.L.OPT_ALT_NONE]
-        self.assertEqual(len(notes), 1)
-        self.assertEqual(notes[0].data.text, self.ns.L.OPT_ALT_NONE)
-
-    def test_sub_switches_grey_out_without_account_mode(self):
-        self.open(self.CHARACTERS)
-        for key in ("altProfession", "altClassItems", "Bob-Realm"):
-            self.assertTrue(self.rt.eval("ENABLED")(key), key)
-        self.rt.execute("KeepOrSellDB.accountMode = false")
-        for key in ("altProfession", "altClassItems", "Bob-Realm"):
-            self.assertFalse(self.rt.eval("ENABLED")(key), key)
-        self.assertTrue(self.rt.eval("ENABLED")("accountMode"))
-
-
 class OptionsTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load()
@@ -161,7 +102,7 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(list(self.calls.controls.values()), [
             "slider:factor", "slider:minProfit", "slider:maxAge", "checkbox:share", "checkbox:scrap", "checkbox:gear",
             "checkbox:plainGear", "checkbox:recipeJunk", "checkbox:profession", "checkbox:upcomingReagents", "checkbox:questie", "checkbox:disenchant", "checkbox:openable", "checkbox:keepClick",
-            "checkbox:accountMode", "checkbox:altProfession", "checkbox:altClassItems", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
+            "checkbox:accountMode", "checkbox:tooltip", "checkbox:hints", "checkbox:destroy",
             "checkbox:lootCoins", "checkbox:lossWarnings", "checkbox:bagValue", "checkbox:setSource"])
 
     def test_sections(self):
@@ -169,14 +110,12 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(headers, ["Auction house (Auctionator)", "Junk (Scrap)", "Keep", "Account mode", "Filter", "Display",
                                    "Dependencies"])
 
-    def test_alt_reagents_migrates_to_alt_profession(self):
-        self.rt.execute("KeepOrSellDB = {altReagents = false}")
+    def test_old_alt_switches_migrate_on_load(self):
+        self.rt.execute("KeepOrSellDB = {altReagents = false, characters = {['Bob-Realm'] = {faction = 'Alliance'}}}")
         self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
-        self.assertIs(self.rt.eval("KeepOrSellDB.altProfession"), False)
+        self.assertIs(self.rt.eval("KeepOrSellDB.altSettings['Bob-Realm'].profession"), False)
         self.assertIsNone(self.rt.eval("KeepOrSellDB.altReagents"))
         self.assertIs(self.rt.eval("KeepOrSellDB.accountMode"), True)
-        self.assertIs(self.rt.eval("KeepOrSellDB.altClassItems"), True)
-        self.assertEqual(len(self.rt.eval("KeepOrSellDB.altIncluded")), 0)
 
     def test_slider_labels(self):
         self.assertEqual(self.calls.sliders["minProfit"].label(0), "off")

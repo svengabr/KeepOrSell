@@ -183,9 +183,9 @@ class DecideTests(unittest.TestCase):
         self.assertEqual(self.kind(classID=7, alts=bob, bound=True, prices=self.CHEAP), "junk")
         self.db.profession = False
         self.assertEqual(self.kind(classID=7, alts=bob, prices=self.CHEAP), "alt")
-        self.db.altProfession = False
+        self.db.altSettings = self.rt.eval("{['Bob-Realm'] = {profession = false}}")
         self.assertEqual(self.kind(classID=7, alts=bob, prices=self.CHEAP), "junk")
-        self.db.altProfession = True
+        self.db.altSettings = self.rt.eval("{}")
         self.db.accountMode = False
         self.assertEqual(self.kind(classID=7, alts=bob, prices=self.CHEAP), "junk")
 

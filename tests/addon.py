@@ -58,7 +58,7 @@ Auctionator = {API = {v1 = {
 }}}
 KeepOrSellDB = {factor = 2, minProfit = 0, maxAge = 7, scrap = true, gear = true, plainGear = true,
   recipeJunk = true, profession = true, upcomingReagents = true, tooltip = true, hints = true, ahVisited = true, openable = true,
-  accountMode = true, altProfession = true, altClassItems = true}
+  accountMode = true}
 """
 
 CORE_FILES = ("Locales.lua", "Starts.lua", "NewItems.lua", "Keep.lua", "Objectives.lua", "Prices.lua", "Filter.lua", "TSM.lua", "Gear.lua", "Professions.lua", "Account.lua", "Questie.lua", "Classify.lua")
