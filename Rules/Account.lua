@@ -49,3 +49,89 @@ function ns.RecordCharacter()
     reagentEconomy = ns.HasReagentEconomy(),
   }
 end
+
+-- Adds why an alt needs itemID to result ({[itemID] = {[key] = alt}} while building).
+local function Need(result, itemID, key, name)
+  result[itemID] = result[itemID] or {}
+  local alt = result[itemID][key]
+  if not alt then
+    alt = {key = key, name = name, professions = {}, profession = false, class = false}
+    result[itemID][key] = alt
+  end
+  return alt
+end
+
+-- {[itemID] = {alt, ...}}: what the other characters of the account (same pool as meKey, see ns.SamePool) need.
+-- alt = {key, name, professions = {profession name, ...}, profession, class}: profession = a known, non-grey recipe
+-- still gains skill from it (professions names it when the recipe's profession is stored), class = a class item of
+-- the alt's class. recipes/crafts/recipeProfession are the per-character tables of Professions.lua. Lists sorted
+-- by name, professions sorted. Pure.
+function ns.AltIndex(characters, recipes, crafts, recipeProfession, meKey)
+  characters = characters or {}
+  local me = characters[meKey]
+  local building = {}
+  for key, record in pairs(characters) do
+    if key ~= meKey and ns.SamePool(me, record) then
+      local name = key:match("^(.-)%-") or key
+      -- recipes grouped by profession; false = recipes stored before professions were
+      local groups = {}
+      local owners = recipeProfession and recipeProfession[key] or {}
+      for recipeID, reagents in pairs(recipes and recipes[key] or {}) do
+        local profession = owners[recipeID] or false
+        groups[profession] = groups[profession] or {}
+        groups[profession][recipeID] = reagents
+      end
+      for profession, group in pairs(groups) do
+        for itemID in pairs(ns.ReagentIndex(group, crafts and crafts[key])) do
+          local alt = Need(building, itemID, key, name)
+          alt.profession = true
+          if profession then table.insert(alt.professions, profession) end
+        end
+      end
+      for _, itemID in ipairs(ns.ClassItemIDs(record.class, record.reagentEconomy)) do
+        Need(building, itemID, key, name).class = true
+      end
+    end
+  end
+  local result = {}
+  for itemID, byKey in pairs(building) do
+    local list = {}
+    for _, alt in pairs(byKey) do
+      table.sort(alt.professions)
+      table.insert(list, alt)
+    end
+    table.sort(list, function(a, b) return a.name < b.name end)
+    result[itemID] = list
+  end
+  return result
+end
+
+local altIndex -- built once per session: other characters only change in their own sessions
+
+-- The other characters of the account that need the item (see ns.AltIndex), or nil
+function ns.AltsNeedingItem(itemID)
+  if not (itemID and KeepOrSellDB) then return nil end
+  if not altIndex then
+    altIndex = ns.AltIndex(KeepOrSellDB.characters, KeepOrSellDB.recipes, KeepOrSellDB.crafts,
+      KeepOrSellDB.recipeProfession, ns.CharacterKey())
+  end
+  return altIndex[itemID]
+end
+
+-- The alts that count with the player's options: account mode on, the alt ticked in the options
+-- (db.altIncluded[key] ~= false) and its need switched on (altProfession, altClassItems). Returns copies
+-- without the switched-off reason, or nil when none is left. Pure.
+function ns.FilterAlts(alts, db)
+  if not (alts and db.accountMode) then return nil end
+  local included = db.altIncluded or {}
+  local result = {}
+  for _, alt in ipairs(alts) do
+    local profession = db.altProfession and alt.profession or false
+    local class = db.altClassItems and alt.class or false
+    if included[alt.key] ~= false and (profession or class) then
+      table.insert(result, {key = alt.key, name = alt.name, professions = profession and alt.professions or {},
+        profession = profession, class = class})
+    end
+  end
+  return #result > 0 and result or nil
+end

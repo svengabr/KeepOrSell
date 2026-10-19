@@ -71,5 +71,93 @@ class RecordTests(unittest.TestCase):
         self.assertEqual(len(self.ns.ClassItemIDs(None, False)), 0)
 
 
+class AltIndexTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load()
+
+    def index(self, me="Tester-Realm", amy_reagent_economy=False):
+        recipes = self.rt.eval("""{
+          ["Tester-Realm"] = {[1] = {4}},
+          ["Bob-Realm"] = {[1] = {3}, [2] = false},
+          ["Amy-Realm"] = {[1] = {3}, [5] = {20}},
+          ["Hordie-Realm"] = {[1] = {21}},
+          ["Far-Other"] = {[1] = {22}},
+        }""")
+        crafts = self.rt.eval("{['Bob-Realm'] = {[9] = {output = 3, reagents = {40}}}}")
+        professions = self.rt.eval("{['Bob-Realm'] = {[1] = 'Tailoring'}, ['Amy-Realm'] = {[1] = 'Tailoring'}}")
+        characters = self.rt.eval(f"""{{
+          ["Tester-Realm"] = {{faction = "Alliance", ruleset = "PvE", realm = "Realm", class = "DRUID"}},
+          ["Bob-Realm"] = {{faction = "Alliance", ruleset = "PvE", realm = "Realm", class = "WARRIOR"}},
+          ["Amy-Realm"] = {{faction = "Alliance", ruleset = "PvE", realm = "Realm", class = "PRIEST",
+                           reagentEconomy = {'true' if amy_reagent_economy else 'false'}}},
+          ["Hordie-Realm"] = {{faction = "Horde", ruleset = "PvE", realm = "Realm", class = "ROGUE"}},
+          ["Far-Other"] = {{faction = "Alliance", ruleset = "HC", realm = "Other", class = "MAGE"}},
+        }}""")
+        self.raw = self.ns.AltIndex(characters, recipes, crafts, professions, me)
+        return self.raw
+
+    def names(self, alts):
+        return [a.name for a in alts.values()]
+
+    def test_profession_needs_name_the_profession(self):
+        index = self.index()
+        self.assertEqual([(a.name, list(a.professions.values()), a.profession) for a in index[3].values()],
+                         [("Amy", ["Tailoring"], True), ("Bob", ["Tailoring"], True)])
+        self.assertEqual(self.names(index[40]), ["Bob"])  # crafted into silk first
+
+    def test_recipe_without_profession_counts_unnamed(self):
+        alt = self.index()[20][1]
+        self.assertEqual((alt.name, len(alt.professions), alt.profession), ("Amy", 0, True))
+
+    def test_class_items_follow_the_alts_class_and_reagent_economy(self):
+        candle = self.index()[17028][1]
+        self.assertEqual((candle.name, candle["class"], candle.profession), ("Amy", True, False))
+        self.assertNotIn(17028, self.index(amy_reagent_economy=True))
+        self.assertIn(17056, self.index(amy_reagent_economy=True))  # Light Feather stays
+
+    def test_left_out(self):
+        index = self.index()
+        for item_id in (4, 21, 22, 5530):  # own, other faction, other ruleset, Horde rogue's powder
+            self.assertNotIn(item_id, index)
+
+    def test_index_without_own_record_is_empty(self):
+        self.assertEqual(len(self.index(me="Nobody-Realm")), 0)
+
+    def filtered(self, item_id, **db):
+        base = {"accountMode": True, "altProfession": True, "altClassItems": True}
+        base.update(db)
+        result = self.ns.FilterAlts(self.raw[item_id], self.rt.table_from(base))
+        return result and self.names(result)
+
+    def test_filter_alts_applies_exclusion_and_switches(self):
+        self.index()
+        excluded = self.rt.eval("{['Amy-Realm'] = false}")
+        self.assertEqual(self.filtered(3, altIncluded=excluded), ["Bob"])
+        excluded["Amy-Realm"] = True
+        self.assertEqual(self.filtered(3, altIncluded=excluded), ["Amy", "Bob"])
+        self.assertIsNone(self.filtered(3, altProfession=False))
+        self.assertEqual(self.filtered(17028, altProfession=False), ["Amy"])
+        self.assertIsNone(self.filtered(17028, altClassItems=False))
+        self.assertIsNone(self.filtered(3, accountMode=False))
+        self.assertIsNone(self.ns.FilterAlts(None, self.rt.table_from({"accountMode": True})))
+        self.assertEqual(self.names(self.raw[3]), ["Amy", "Bob"])  # index untouched
+
+    def test_filter_alts_drops_the_switched_off_reason(self):
+        self.rt.execute("""TEST_ALTS = {{key = 'Amy-Realm', name = 'Amy', professions = {'Tailoring'},
+          profession = true, class = true}}""")
+        db = self.rt.table_from({"accountMode": True, "altProfession": False, "altClassItems": True})
+        alt = self.ns.FilterAlts(self.rt.eval("TEST_ALTS"), db)[1]
+        self.assertEqual((len(alt.professions), alt.profession, alt["class"]), (0, False, True))
+        self.assertEqual(self.rt.eval("#TEST_ALTS[1].professions"), 1)
+
+    def test_lookup_reads_the_saved_variables(self):
+        self.rt.execute("""KeepOrSellDB.characters = {
+          ['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
+          ['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'WARRIOR'}}
+          KeepOrSellDB.recipes = {['Bob-Realm'] = {[1] = {3}}}""")
+        self.assertEqual(self.names(self.ns.AltsNeedingItem(3)), ["Bob"])
+        self.assertIsNone(self.ns.AltsNeedingItem(4))
+
+
 if __name__ == "__main__":
     unittest.main()
