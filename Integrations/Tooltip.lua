@@ -123,6 +123,18 @@ local function UselessText(verdict)
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
+-- "Amy (Tailoring), Bob (Tailoring, class item)": who of the account needs the item and why. Pure.
+function ns.AltList(alts)
+  local parts = {}
+  for _, alt in ipairs(alts or {}) do
+    local why = {}
+    for _, profession in ipairs(alt.professions or {}) do table.insert(why, profession) end
+    if alt.class then table.insert(why, L.TIP_ALT_CLASS) end
+    table.insert(parts, #why > 0 and ("%s (%s)"):format(alt.name, table.concat(why, ", ")) or alt.name)
+  end
+  return table.concat(parts, ", ")
+end
+
 -- "filter 'Leveling'" for a verdict a filter rule made, "filter rule" when the filter has no name; nil otherwise
 local function FilterText(verdict, db)
   if verdict.reason ~= "filter" then return nil end
@@ -162,8 +174,9 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   elseif kind == "profession" and filterText then
     text = Headline(L.TIP_PROFESSION_GROUP, filterText)
   elseif kind == "profession" then
-    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING
-      or reason == "alt" and L.TIP_ALT:format(table.concat(verdict.alts or {}, ", ")) or L.TIP_PROFESSION
+    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING or L.TIP_PROFESSION
+  elseif kind == "alt" then
+    text = L.TIP_ALT:format(ns.AltList(verdict.alts))
   elseif kind == "ah" then
     text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict), filterText,
       PriceNote(prices, verdict, db))

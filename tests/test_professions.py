@@ -30,14 +30,6 @@ C_TradeSkillUI = {
 """
 
 
-class AltTooltipTests(unittest.TestCase):
-    def test_names_the_alts(self):
-        rt, ns = load(stubs=STUBS, files=__import__("addon").CORE_FILES + ("Tooltip.lua",))
-        text = ns.TooltipText(rt.eval("{kind = 'profession', reason = 'alt', alts = {'Amy', 'Bob'}}"), None,
-                              rt.eval("KeepOrSellDB"))
-        self.assertIn("Profession – still gives skill to Amy, Bob, mail it over", text)
-
-
 class ProfessionTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(stubs=STUBS)

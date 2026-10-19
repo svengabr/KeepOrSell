@@ -19,6 +19,26 @@ AH = {link3 = 1000, link4 = 15, link5 = 120}
 """
 
 
+class AltTooltipTests(unittest.TestCase):
+    ALTS = """{
+      {name = 'Amy', professions = {'Tailoring'}, profession = true, class = false},
+      {name = 'Bob', professions = {'Tailoring'}, profession = true, class = true},
+      {name = 'Cid', professions = {}, profession = true, class = false}}"""
+
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Tooltip.lua",), STUBS)
+
+    def test_alt_tooltip_names_alts_and_why(self):
+        verdict = self.rt.eval("{kind = 'alt', alts = %s}" % self.ALTS)
+        text = self.ns.TooltipText(verdict, None, self.rt.eval("KeepOrSellDB"))
+        self.assertIn("For alts: Amy (Tailoring), Bob (Tailoring, class item), Cid – mail it over", text)
+
+    def test_alt_rows_offer_the_best_way_as_otherwise(self):
+        rows = self.ns.TooltipRows(self.rt.eval("{kind = 'alt', ahTrusted = true, ahWorth = true}"),
+                                   self.rt.eval("{ah = 1000, vendor = 10}"))
+        self.assertIn("Otherwise", rows[1][1])
+
+
 class TooltipTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Tooltip.lua"), STUBS)

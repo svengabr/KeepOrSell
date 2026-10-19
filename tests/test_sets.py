@@ -33,6 +33,13 @@ class ItemSetTests(unittest.TestCase):
         self.rt.execute("KeepOrSellDB.recipes = {['Tester-Realm'] = {[100] = {4}}}")
         self.assertEqual(names(self.ns, 4), ["Profession"])
 
+    def test_item_for_an_alt(self):
+        self.rt.execute("""KeepOrSellDB.characters = {
+          ['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
+          ['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'WARRIOR'}}
+          KeepOrSellDB.recipes = {['Bob-Realm'] = {[100] = {4}}}""")
+        self.assertEqual(names(self.ns, 4), ["For alts"])
+
     def test_plain_item_has_no_set(self):
         self.assertEqual(names(self.ns, 4), [])
         self.assertEqual(names(self.ns, 9), [])
