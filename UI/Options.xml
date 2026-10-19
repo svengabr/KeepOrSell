@@ -17,4 +17,21 @@
       <OnLoad method="OnLoad"/>
     </Scripts>
   </Frame>
+  <!-- One line of small text in the options panel, e.g. why the alt list is empty (Options.lua) -->
+  <Frame name="KeepOrSellNoteTemplate" inherits="SettingsListElementTemplate" mixin="KeepOrSellNoteMixin" virtual="true">
+    <Size x="280" y="26"/>
+    <Layers>
+      <Layer level="OVERLAY">
+        <FontString parentKey="Text" inherits="GameFontHighlightSmall" justifyH="LEFT">
+          <Anchors>
+            <Anchor point="LEFT" x="37"/>
+            <Anchor point="RIGHT" x="-10"/>
+          </Anchors>
+        </FontString>
+      </Layer>
+    </Layers>
+    <Scripts>
+      <OnLoad method="OnLoad"/>
+    </Scripts>
+  </Frame>
 </Ui>

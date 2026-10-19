@@ -11,6 +11,7 @@ globals = {
   "SlashCmdList",
   "Scrap",              -- hooks Scrap.IsJunk
   "KeepOrSellDependencyMixin", -- mixin of the template in Options.xml
+  "KeepOrSellNoteMixin", -- mixin of the note template in Options.xml
   "StaticPopupDialogs", -- adds KEEPORSELL_CLEAR_FILTER
 }
 
@@ -25,6 +26,7 @@ read_globals = {
   "C_AddOns",
   "C_AuctionHouse",
   "C_ChatInfo",
+  "C_ClassColor",
   "C_Container",
   "C_GameRules",
   "C_InputInterfaceStyle",

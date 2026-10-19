@@ -135,3 +135,16 @@ function ns.FilterAlts(alts, db)
   end
   return #result > 0 and result or nil
 end
+
+-- {{key, name, class}, ...} sorted by name: the characters in the same pool as me ({key, faction, ruleset, realm}),
+-- without me; the options list them. Pure.
+function ns.AltCharacters(characters, me)
+  local result = {}
+  for key, record in pairs(characters or {}) do
+    if key ~= me.key and ns.SamePool(me, record) then
+      table.insert(result, {key = key, name = key:match("^(.-)%-") or key, class = record.class})
+    end
+  end
+  table.sort(result, function(a, b) return a.name < b.name end)
+  return result
+end

@@ -22,6 +22,7 @@ NOT_IN_DOCS = {
     "KeepOrSellDB": "our SavedVariables",
     "SLASH_KEEPORSELL1": "our slash command",
     "KeepOrSellDependencyMixin": "our mixin for the template in Options.xml",
+    "KeepOrSellNoteMixin": "our mixin for the note template in Options.xml",
     "Auctionator": "optional dependency, public API",
     "Baganator": "optional dependency, public API",
     "LibQuestieDB": "optional dependency (QuestieDB), public API in src/api.lua",

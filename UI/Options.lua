@@ -11,6 +11,47 @@ function ns.IsGamepadUI()
     and C_InputInterfaceStyle.GetCurrentStyle() == Enum.InputDeviceInterfaceType.Gamepad
 end
 
+KeepOrSellNoteMixin = {}
+
+-- One line of small text in the options list (Options.xml)
+function KeepOrSellNoteMixin:Init(initializer)
+  if not self.cbrHandles then SettingsListElementMixin.OnLoad(self) end
+  SettingsListElementMixin.Init(self, initializer)
+  self.Text:SetText(initializer.data.text)
+end
+
+-- Greys a control out while account mode is off; SetParentInitializer updates it live where the client has it
+local function UnderAccountMode(parent, initializer)
+  if not initializer then return end
+  local function enabled() return KeepOrSellDB.accountMode == true end
+  if parent and initializer.SetParentInitializer then initializer:SetParentInitializer(parent, enabled) end
+  if initializer.AddModifyPredicate then initializer:AddModifyPredicate(enabled) end
+end
+
+-- "Account mode": the master switch, one switch per kind of need, then the other characters of the account (same
+-- ruleset and faction), each ticked unless left out (KeepOrSellDB.altIncluded[key] = false)
+local function AccountMode(layout, Checkbox, Header)
+  Header(L.SECTION_ACCOUNT)
+  local master = Checkbox("accountMode", L.OPT_ACCOUNT_MODE, L.OPT_ACCOUNT_MODE_TIP, true)
+  UnderAccountMode(master, Checkbox("altProfession", L.OPT_ALT_PROFESSION, L.OPT_ALT_PROFESSION_TIP, true))
+  UnderAccountMode(master, Checkbox("altClassItems", L.OPT_ALT_CLASS_ITEMS, L.OPT_ALT_CLASS_ITEMS_TIP, true))
+  local me = {key = ns.CharacterKey(), faction = UnitFactionGroup and UnitFactionGroup("player"),
+    ruleset = ns.CurrentRuleset(), realm = GetRealmName()}
+  local alts = ns.AltCharacters(KeepOrSellDB.characters, me)
+  for _, alt in ipairs(alts) do
+    local variable = addonName .. "_alt_" .. alt.key
+    local color = alt.class and C_ClassColor and C_ClassColor.GetClassColor and C_ClassColor.GetClassColor(alt.class)
+    local name = color and color:WrapTextInColorCode(alt.name) or alt.name
+    local setting = Settings.RegisterAddOnSetting(category, variable, alt.key, KeepOrSellDB.altIncluded,
+      Settings.VarType.Boolean, name, true)
+    UnderAccountMode(master, Settings.CreateCheckbox(category, setting, L.OPT_ALT_TIP))
+    Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end)
+  end
+  if #alts == 0 and layout and Settings.CreateElementInitializer then
+    layout:AddInitializer(Settings.CreateElementInitializer("KeepOrSellNoteTemplate", {text = L.OPT_ALT_NONE}))
+  end
+end
+
 -- Registers the panel; db must already hold the defaults
 function ns.RegisterOptions(db, defaults)
   if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then return end
@@ -46,8 +87,10 @@ function ns.RegisterOptions(db, defaults)
 
   local function Checkbox(key, name, tooltip, refresh)
     local setting, variable = Add(key, Settings.VarType.Boolean, name)
-    NeedsAddon(key, Settings.CreateCheckbox(category, setting, Tooltip(key, tooltip)))
+    local initializer = Settings.CreateCheckbox(category, setting, Tooltip(key, tooltip))
+    NeedsAddon(key, initializer)
     if refresh then Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end) end
+    return initializer
   end
 
   local function Header(name)
@@ -78,7 +121,6 @@ function ns.RegisterOptions(db, defaults)
   Header(L.SECTION_KEEP)
   Checkbox("profession", L.OPT_PROFESSION, L.OPT_PROFESSION_TIP, true)
   Checkbox("upcomingReagents", L.OPT_UPCOMING, L.OPT_UPCOMING_TIP, true)
-  Checkbox("altReagents", L.OPT_ALT_REAGENTS, L.OPT_ALT_REAGENTS_TIP, true)
   Checkbox("questie", L.OPT_QUESTIE, L.OPT_QUESTIE_TIP, true)
   Checkbox("disenchant", L.OPT_DISENCHANT, L.OPT_DISENCHANT_TIP, true)
   Checkbox("openable", L.OPT_OPEN, L.OPT_OPEN_TIP, true)
@@ -87,6 +129,7 @@ function ns.RegisterOptions(db, defaults)
     layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_KEEP_FORGET, L.OPT_KEEP_FORGET_BUTTON,
       function() ns.ForgetKept() end, L.OPT_KEEP_FORGET_TIP, true))
   end
+  AccountMode(layout, Checkbox, Header)
   -- shareable filters (FilterWindow.lua); without a backup Undo says so in chat
   Header(L.OPT_FILTER_HEADER)
   if layout and CreateSettingsButtonInitializer then

@@ -159,5 +159,18 @@ class AltIndexTests(unittest.TestCase):
         self.assertIsNone(self.ns.AltsNeedingItem(4))
 
 
+class AltCharactersTests(unittest.TestCase):
+    def test_lists_the_pool_sorted_without_me(self):
+        rt, ns = load()
+        characters = rt.eval("""{['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
+          ['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'MAGE'},
+          ['Amy-Realm'] = {faction = 'Alliance', ruleset = 'PvE', realm = 'Realm', class = 'PRIEST'},
+          ['Hordie-Realm'] = {faction = 'Horde', realm = 'Realm', class = 'ROGUE'}}""")
+        me = rt.eval("{key = 'Tester-Realm', faction = 'Alliance', realm = 'Realm'}")
+        alts = ns.AltCharacters(characters, me)
+        self.assertEqual([(a.key, a.name, a["class"]) for a in alts.values()],
+                         [("Amy-Realm", "Amy", "PRIEST"), ("Bob-Realm", "Bob", "MAGE")])
+
+
 if __name__ == "__main__":
     unittest.main()
