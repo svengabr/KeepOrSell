@@ -448,7 +448,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.OPT_FILTER_IMPORT = "Geteilten Filter nutzen"
   L.OPT_FILTER_IMPORT_BUTTON = "Importieren"
   L.OPT_FILTER_IMPORT_TIP = "Füge einen geteilten Filter ein, prüfe, was er ändert, und übernimm ihn dann. Auch /kos import."
-  L.OPT_FILTER_UNDO = "Letzten Import rückgängig machen"
+  L.OPT_FILTER_UNDO = "Import rückgängig machen"
   L.OPT_FILTER_UNDO_BUTTON = "Rückgängig"
   L.OPT_FILTER_UNDO_TIP = "Stellt die Optionen und Regeln von vor dem letzten Import oder Leeren wieder her und entfernt die Behalten-Markierungen, die dieser Import hinzugefügt hat. Markierungen, die du seitdem gesetzt hast, bleiben."
   L.OPT_FILTER_CLEAR = "Regeln leeren"
