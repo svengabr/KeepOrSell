@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.18.1
 
 - The help in the bag window is now a small "? KoS" button instead of a lone question mark.
 
