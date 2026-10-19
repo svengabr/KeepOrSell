@@ -16,9 +16,9 @@ ns.FILTER_GROUPS = {keep = true, profession = true, ah = true, disenchant = true
 
 -- Options a filter may set, in display order. Numbers are clamped to min..max, toggles take on/off.
 ns.FILTER_OPTIONS = {
-  {key = "factor", kind = "number", min = ns.MIN_FACTOR, max = 10},
-  {key = "minProfit", kind = "number", min = 0, max = 100},
-  {key = "maxAge", kind = "number", min = 1, max = 21},
+  {key = "factor", kind = "number", min = ns.MIN_FACTOR, max = 10, decimals = 1},
+  {key = "minProfit", kind = "number", min = 0, max = 100, decimals = 0},
+  {key = "maxAge", kind = "number", min = 1, max = 21, decimals = 0},
   {key = "scrap", kind = "toggle"},
   {key = "profession", kind = "toggle"},
   {key = "gear", kind = "toggle"},
@@ -42,6 +42,13 @@ local function ParseInt(text, max)
   local n = tonumber(text)
   if n > max then return nil end
   return n
+end
+
+-- Removes every WoW escape sequence and control character, so a name printed in chat can't inject links or textures.
+local function StripEscapes(text)
+  text = text:gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|T.-|t", ""):gsub("|K.-|k", ""):gsub("|H.-|h", "")
+  text = text:gsub("|%a", ""):gsub("|", ""):gsub("%c", "")
+  return (text:match("^%s*(.-)%s*$"))
 end
 
 -- Strips BOM, color codes and comments, trims.
@@ -81,7 +88,7 @@ end
 function ns.ParseFilter(text)
   if type(text) ~= "string" then return nil, "noheader" end
   if #text > MAX_TEXT then return nil, "toolong" end
-  text = text:gsub("^\239\187\191", ""):gsub("\r", "")
+  text = text:gsub("^\239\187\191", ""):gsub("\r\n", "\n"):gsub("\r", "\n")
 
   local filter = {options = {}, keep = {}, items = {}, categories = {}}
   local report = {ignored = 0, ignoredLines = {}, truncated = false}
@@ -116,7 +123,7 @@ function ns.ParseFilter(text)
         local itemID = left:match("^item%s+(%d+)$")
         if itemID then
           local id = ParseInt(itemID, MAX_ID)
-          if id and ns.FILTER_GROUPS[right] then
+          if id and id >= 1 and ns.FILTER_GROUPS[right] then
             ok = true
             if filter.items[id] == nil and counts.items >= MAX_ITEMS then
               report.truncated, ok = true, false
@@ -139,6 +146,7 @@ function ns.ParseFilter(text)
         elseif left == "name" then
           -- keep the original case, from the cleaned line
           local name = line:match("^[^=]*=%s*(.-)$")
+          name = name and StripEscapes(name)
           if name and name ~= "" then
             filter.name = name:sub(1, MAX_NAME)
             ok = true
@@ -149,7 +157,7 @@ function ns.ParseFilter(text)
             token = token:match("^%s*(.-)%s*$")
             if token ~= "" then
               local id = ParseInt(token, MAX_ID)
-              if not id then valid = false break end
+              if not id or id < 1 then valid = false break end
               ids[#ids + 1] = id
             end
           end
@@ -171,6 +179,8 @@ function ns.ParseFilter(text)
           if option and option.kind == "number" then
             local n = right:match("^%-?%d+%.?%d*$") and tonumber(right)
             if n then
+              local mult = 10 ^ option.decimals
+              n = math.floor(n * mult + 0.5) / mult
               filter.options[option.key] = math.min(math.max(n, option.min), option.max)
               ok = true
             end
@@ -189,4 +199,82 @@ function ns.ParseFilter(text)
 
   if not headerSeen then return nil, "noheader" end
   return filter, report
+end
+
+local KEEP_PER_LINE = 20
+
+-- A " # text" comment from a name, or "". Control characters would break the one-statement-per-line format.
+local function Comment(text)
+  if type(text) ~= "string" then return "" end
+  text = text:gsub("%c", ""):match("^%s*(.-)%s*$")
+  if text == "" then return "" end
+  return "  # " .. text
+end
+
+-- Writes the filter text for a KeepOrSellDB-shaped table. names (optional) = {item = fn(id), class = fn(classID,
+-- subclassID)} only feed the trailing comments. withKeep == false leaves the keep marks out (nil includes them).
+function ns.SerializeFilter(db, names, withKeep)
+  db = db or {}
+  names = names or {}
+  local filter = db.filter or {}
+  local lines = {"KeepOrSell filter 1"}
+
+  if type(filter.name) == "string" then
+    local name = StripEscapes((filter.name:gsub("#", ""))):sub(1, MAX_NAME)
+    if name ~= "" then lines[#lines + 1] = "name = " .. name end
+  end
+
+  for _, option in ipairs(ns.FILTER_OPTIONS) do
+    local v = db[option.key]
+    if option.kind == "number" and type(v) == "number" then
+      lines[#lines + 1] = ("%s = %g"):format(option.key, v)
+    elseif option.kind == "toggle" and type(v) == "boolean" then
+      lines[#lines + 1] = ("%s = %s"):format(option.key, v and "on" or "off")
+    end
+  end
+
+  if withKeep ~= false and type(db.keep) == "table" then
+    local ids = {}
+    for id, marked in pairs(db.keep) do
+      if marked and type(id) == "number" then ids[#ids + 1] = id end
+    end
+    table.sort(ids)
+    for first = 1, #ids, KEEP_PER_LINE do
+      local chunk = {}
+      for i = first, math.min(first + KEEP_PER_LINE - 1, #ids) do chunk[#chunk + 1] = ("%d"):format(ids[i]) end
+      lines[#lines + 1] = "keep = " .. table.concat(chunk, ", ")
+    end
+  end
+
+  local ids = {}
+  for id, group in pairs(filter.items or {}) do
+    if type(id) == "number" and ns.FILTER_GROUPS[group] then ids[#ids + 1] = id end
+  end
+  table.sort(ids)
+  for _, id in ipairs(ids) do
+    local name = names.item and names.item(id)
+    lines[#lines + 1] = ("item %d = %s%s"):format(id, filter.items[id], Comment(name))
+  end
+
+  for _, rule in ipairs(filter.categories or {}) do
+    if type(rule.class) == "number" and ns.FILTER_GROUPS[rule.group] then
+      local left = ("class %d"):format(rule.class)
+      if rule.subclass then left = left .. (" subclass %d"):format(rule.subclass) end
+      if rule.qmin and rule.qmax then
+        left = left .. (rule.qmin == rule.qmax and " quality %d" or " quality %d-%d"):format(rule.qmin, rule.qmax)
+      end
+      local comment = ""
+      if names.class then
+        local className = names.class(rule.class)
+        if className and rule.subclass then
+          local subName = names.class(rule.class, rule.subclass)
+          if subName then className = className .. ": " .. subName end
+        end
+        comment = Comment(className)
+      end
+      lines[#lines + 1] = ("%s = %s%s"):format(left, rule.group, comment)
+    end
+  end
+
+  return table.concat(lines, "\n")
 end
