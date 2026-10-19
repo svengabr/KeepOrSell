@@ -44,7 +44,7 @@ class ShouldWarnTests(unittest.TestCase):
 
     def test_kept_verdicts_warn(self):
         for lua in ("{kind = 'quest'}", "{kind = 'profession'}", "{reason = 'kept'}", "{reason = 'classitem'}",
-                    "{reason = 'tool'}", "{reason = 'equipset'}"):
+                    "{reason = 'tool'}", "{reason = 'equipset'}", "{kind = 'alt'}"):
             self.assertTrue(self.warn(lua), lua)
 
     def test_disposable_verdicts_stay_quiet(self):
