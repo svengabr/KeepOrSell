@@ -1,4 +1,4 @@
--- A question mark in Baganator's bag window; hovering it lists KeepOrSell's shortcuts, a click opens the options.
+-- A "? KoS" button in Baganator's bag window; hovering it lists KeepOrSell's shortcuts, a click opens the options.
 local _, ns = ...
 local L = ns.L
 
@@ -9,7 +9,7 @@ function ns.HelpLines(db)
   if db.destroy then table.insert(lines, {L.HELP_DESTROY_KEY, L.HELP_DESTROY}) end
   table.insert(lines, {"/kos", L.HELP_OPTIONS})
   table.insert(lines, {"/kos kept", L.HELP_KEPT})
-  table.insert(lines, {"/kos keep <item>", L.HELP_KEEP_COMMAND})
+  table.insert(lines, {L.HELP_KEEP_COMMAND_KEY, L.HELP_KEEP_COMMAND})
   table.insert(lines, {"/kos setup", L.HELP_SETUP})
   return lines
 end
@@ -24,26 +24,18 @@ local function ShowTooltip(self)
   GameTooltip:Show()
 end
 
--- a plain "?" in the game font, so no texture has to exist on the client
+-- A small Blizzard button "? KoS", so it reads as a button and says whose help it is
 local function CreateButton()
-  local frame = CreateFrame("Button", nil, UIParent)
-  frame:SetSize(14, 20)
-  frame.Text = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-  frame.Text:SetPoint("CENTER")
-  frame.Text:SetText("?")
-  frame:SetScript("OnEnter", function(self)
-    self.Text:SetTextColor(1, 1, 1)
-    ShowTooltip(self)
-  end)
-  frame:SetScript("OnLeave", function(self)
-    self.Text:SetTextColor(1, 0.82, 0)
-    GameTooltip:Hide()
-  end)
+  local frame = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
+  frame:SetText(L.HELP_BUTTON)
+  frame:SetSize(frame:GetTextWidth() + 20, 20)
+  frame:SetScript("OnEnter", ShowTooltip)
+  frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
   frame:SetScript("OnClick", function() ns.OpenOptions() end)
   return frame
 end
 
--- Adds the question mark to Baganator's bag window; false when Baganator can't take it
+-- Adds the button to Baganator's bag window; false when Baganator can't take it
 function ns.RegisterHelp()
   local api = Baganator and Baganator.API
   if not (api and api.RegisterRegion) then return false end

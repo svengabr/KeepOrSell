@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- The help in the bag window is now a small "? KoS" button instead of a lone question mark.
+
 ## 0.18.0
 
 - Fishing poles (every one, whatever its name) now show "Keep – profession tool" in the tooltip, like mining picks and skinning knives.
