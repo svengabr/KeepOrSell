@@ -280,5 +280,111 @@ class SerializeTests(unittest.TestCase):
         self.assertIsNone(self.ns.FilterItemRule(self.rt.eval("{}"), 2589))
 
 
+APPLY_TEXT = """KeepOrSell filter 1
+name = Imported
+factor = 3
+scrap = off
+keep = 1, 2, 9
+item 100 = junk
+item 101 = ah
+class 7 = keep
+"""
+
+
+class ApplyTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Locales.lua", "Prices.lua", "Filter.lua"))
+        self.rt.globals().NS = self.ns
+        self.rt.globals().IMPORT = APPLY_TEXT
+        self.rt.execute("""
+          DB = {factor = 2, scrap = true, minProfit = 4, keep = {[9] = true},
+                filter = {name = "Old", items = {[5] = "keep"}, categories = {{class = 0, group = "junk"}}}}
+          FILTER, REPORT = NS.ParseFilter(IMPORT)
+        """)
+
+    def apply(self):
+        return self.rt.eval("(function() local a = NS.ApplyFilter(DB, FILTER) return a end)()")
+
+    def test_apply_merges_keep_and_replaces_rules(self):
+        added = self.apply()
+        self.assertEqual(self.lst(added), [1, 2])
+        db = self.rt.globals().DB
+        self.assertEqual(sorted(db.keep.keys()), [1, 2, 9])
+        self.assertEqual(db.filter.name, "Imported")
+        self.assertEqual(sorted(db.filter["items"].keys()), [100, 101])
+        self.assertIsNone(db.filter["items"][5])
+        self.assertEqual(len(db.filter.categories), 1)
+        self.assertEqual((db.factor, db.scrap, db.minProfit), (3, False, 4))  # absent option stays
+
+    def lst(self, t):
+        return [t[i] for i in range(1, len(t) + 1)]
+
+    def test_apply_writes_backup(self):
+        self.apply()
+        backup = self.rt.globals().DB.filterBackup
+        self.assertEqual(self.lst(backup.addedKeep), [1, 2])
+        self.assertIn("name = Old", backup.text)
+        self.assertIn("factor = 2", backup.text)
+        self.assertIn("scrap = on", backup.text)
+        self.assertIn("item 5 = keep", backup.text)
+        self.assertNotIn("keep = 9", backup.text)
+
+    def test_undo_restores_options_and_rules(self):
+        self.apply()
+        self.assertTrue(self.rt.eval("NS.UndoFilter(DB)"))
+        db = self.rt.globals().DB
+        self.assertEqual((db.factor, db.scrap, db.minProfit), (2, True, 4))
+        self.assertEqual(db.filter.name, "Old")
+        self.assertEqual(list(db.filter["items"].keys()), [5])
+        self.assertEqual(db.filter.categories[1]["class"], 0)
+        self.assertIsNone(db.filterBackup)
+        self.assertEqual(sorted(db.keep.keys()), [9])
+
+    def test_undo_keeps_marks_set_after_import(self):
+        self.apply()
+        self.rt.execute("DB.keep[3] = true")
+        self.assertTrue(self.rt.eval("NS.UndoFilter(DB)"))
+        self.assertEqual(sorted(self.rt.globals().DB.keep.keys()), [3, 9])
+
+    def test_clear_rules_is_undoable(self):
+        self.rt.execute("NS.ClearFilterRules(DB)")
+        db = self.rt.globals().DB
+        self.assertEqual(len(list(db.filter["items"].keys())), 0)
+        self.assertEqual(len(db.filter.categories), 0)
+        self.assertIsNone(db.filter.name)
+        self.assertEqual((db.factor, sorted(db.keep.keys())), (2, [9]))
+        self.assertTrue(self.rt.eval("NS.UndoFilter(DB)"))
+        db = self.rt.globals().DB
+        self.assertEqual(db.filter.name, "Old")
+        self.assertEqual(list(db.filter["items"].keys()), [5])
+        self.assertEqual(sorted(db.keep.keys()), [9])
+
+    def test_undo_without_backup_returns_false(self):
+        self.assertFalse(self.rt.eval("NS.UndoFilter(DB)"))
+
+    def test_undo_removes_rules_when_backup_had_none(self):
+        self.rt.execute("DB.filter = {}")
+        self.apply()
+        self.assertTrue(self.rt.eval("NS.UndoFilter(DB)"))
+        db = self.rt.globals().DB
+        self.assertIsNone(db.filter.name)
+        self.assertEqual(len(list(db.filter["items"].keys())), 0)
+        self.assertEqual(len(db.filter.categories), 0)
+
+    def test_summary_lines(self):
+        text = "KeepOrSell filter 1\nfactor = 3\nkeep = 1, 9\nitem 100 = junk\nitem 101 = ah\nxx\nyy\n"
+        self.rt.globals().IMPORT = text
+        self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT); REPORT.ignoredLines = {3, 17}; REPORT.ignored = 2")
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertEqual(lines, ["factor: 2 → 3", "1 keep marks added", "2 item rules (1 junk)",
+                                 "2 lines ignored (3, 17)"])
+
+    def test_summary_omits_unchanged_options(self):
+        self.rt.globals().IMPORT = "KeepOrSell filter 1\nfactor = 2\nscrap = off\ncolor = x\nclass 7 = keep"
+        self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertEqual(lines, ["scrap: on → off", "1 category rules", "1 lines ignored (4)"])
+
+
 if __name__ == "__main__":
     unittest.main()

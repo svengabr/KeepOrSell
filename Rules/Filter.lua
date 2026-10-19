@@ -301,3 +301,98 @@ function ns.SerializeFilter(db, names, withKeep)
 
   return table.concat(lines, "\n")
 end
+
+local function CopyRules(filter)
+  local items, categories = {}, {}
+  for id, group in pairs(filter.items or {}) do items[id] = group end
+  for i, rule in ipairs(filter.categories or {}) do
+    local copy = {}
+    for k, v in pairs(rule) do copy[k] = v end
+    categories[i] = copy
+  end
+  return items, categories
+end
+
+local function ApplyRules(db, filter)
+  db.filter = db.filter or {}
+  db.filter.name = filter.name
+  db.filter.items, db.filter.categories = CopyRules(filter)
+  for key, value in pairs(filter.options or {}) do db[key] = value end
+end
+
+-- Applies a parsed filter: first writes the undo backup, then replaces name, item and category rules, sets the
+-- options the filter lists and merges its keep marks. Returns the sorted list of keep IDs newly marked.
+function ns.ApplyFilter(db, filter)
+  db.keep = db.keep or {}
+  local addedKeep = {}
+  for id in pairs(filter.keep or {}) do
+    if not db.keep[id] then addedKeep[#addedKeep + 1] = id end
+  end
+  table.sort(addedKeep)
+  db.filterBackup = {text = ns.SerializeFilter(db, nil, false), addedKeep = addedKeep}
+  ApplyRules(db, filter)
+  for _, id in ipairs(addedKeep) do db.keep[id] = true end
+  -- the backup owns its own copy, so a later change to the list can't alter it
+  local copy = {}
+  for i, id in ipairs(addedKeep) do copy[i] = id end
+  db.filterBackup.addedKeep = copy
+  return addedKeep
+end
+
+-- Restores the options and rules from the backup and removes exactly the keep marks the import added; marks the
+-- player set afterwards stay. Returns false when there is no backup.
+function ns.UndoFilter(db)
+  local backup = db.filterBackup
+  if type(backup) ~= "table" or type(backup.text) ~= "string" then return false end
+  local filter = ns.ParseFilter(backup.text)
+  if not filter then return false end
+  ApplyRules(db, filter)
+  for _, id in ipairs(backup.addedKeep or {}) do
+    if db.keep then db.keep[id] = nil end
+  end
+  db.filterBackup = nil
+  return true
+end
+
+-- Empties the item and category rules and the name (undoable); options and keep marks stay.
+function ns.ClearFilterRules(db)
+  db.filterBackup = {text = ns.SerializeFilter(db, nil, false), addedKeep = {}}
+  db.filter = db.filter or {}
+  db.filter.items, db.filter.categories, db.filter.name = {}, {}, nil
+end
+
+local function OptionText(option, value)
+  if option.kind == "toggle" then return value and "on" or "off" end
+  return ("%g"):format(value)
+end
+
+-- Plain lines saying what applying the filter would change in db. Call before ApplyFilter. Pure.
+function ns.FilterSummary(db, filter, report)
+  local L = ns.L
+  local lines = {}
+  for _, option in ipairs(ns.FILTER_OPTIONS) do
+    local new = filter.options and filter.options[option.key]
+    if new ~= nil and new ~= db[option.key] then
+      local old = db[option.key]
+      lines[#lines + 1] = L.FILTER_SUM_OPTION:format(option.key,
+        old == nil and "-" or OptionText(option, old), OptionText(option, new))
+    end
+  end
+  local added = 0
+  for id in pairs(filter.keep or {}) do
+    if not (db.keep and db.keep[id]) then added = added + 1 end
+  end
+  if added > 0 then lines[#lines + 1] = L.FILTER_SUM_KEEP:format(added) end
+  local items, junk = 0, 0
+  for _, group in pairs(filter.items or {}) do
+    items = items + 1
+    if group == "junk" then junk = junk + 1 end
+  end
+  if items > 0 then lines[#lines + 1] = L.FILTER_SUM_ITEMS:format(items, junk) end
+  local categories = #(filter.categories or {})
+  if categories > 0 then lines[#lines + 1] = L.FILTER_SUM_CATEGORIES:format(categories) end
+  if report and report.ignored and report.ignored > 0 then
+    lines[#lines + 1] = L.FILTER_SUM_IGNORED:format(report.ignored, table.concat(report.ignoredLines or {}, ", "))
+  end
+  return lines
+end

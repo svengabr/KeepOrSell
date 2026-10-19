@@ -128,6 +128,13 @@ class OptionsTests(unittest.TestCase):
         self.assertEqual(list(self.rt.eval("KeepOrSellDB.sharedPrices").keys()), ["Realm-Horde"])
         self.assertIsNotNone(self.rt.eval("KeepOrSellDB.fullScans"))
 
+    def test_filter_storage_initialised(self):
+        self.rt.execute("KeepOrSellDB = {filter = {name = 'x'}}")
+        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertEqual(self.rt.eval("KeepOrSellDB.filter.name"), "x")
+        self.assertIsNotNone(self.rt.eval("KeepOrSellDB.filter.items"))
+        self.assertIsNotNone(self.rt.eval("KeepOrSellDB.filter.categories"))
+
     def test_settings_bound_to_saved_variables(self):
         factor = self.calls.settings["factor"]
         self.assertTrue(self.rt.eval("CALLS.settings.factor.tbl == KeepOrSellDB"))
