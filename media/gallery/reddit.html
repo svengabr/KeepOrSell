@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KeepOrSell – Reddit before/after</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=block">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* Before/after image for the Reddit post, same layout as the Forever Loot Sparkles and Minimap Target ones */
+  body { background: #0f1218; }
+  .head {
+    position: absolute; top: 46px; left: 0; right: 0; text-align: center;
+    font-family: "Friz", serif; font-size: 56px; color: #fff; text-shadow: 0 3px 10px #000;
+  }
+  .head small { display: block; margin-top: 8px; font-family: "Inter", sans-serif; font-size: 28px; color: var(--muted); }
+  .panel {
+    position: absolute; top: 210px; bottom: 44px; width: 896px;
+    border: 4px solid #4a4f5e; border-radius: 6px; overflow: hidden;
+    background: radial-gradient(ellipse at 40% 35%, #262a33, #14161b 75%);
+  }
+  .panel.off { left: 44px; }
+  .panel.on { right: 44px; border-color: var(--gold); }
+  .label {
+    position: absolute; top: 22px; left: 22px; z-index: 5;
+    font: 800 46px/1 "Inter", sans-serif; padding: 12px 22px 14px; border-radius: 12px;
+    background: rgba(0, 0, 0, 0.75); color: #d6d8de;
+  }
+  .on .label { color: var(--gold); }
+
+  .panel .bag { position: absolute; width: auto; padding: 20px 24px 22px; }
+  .panel .bag .slot { width: 64px; height: 64px; }
+  .panel .bag .slot .count { font-size: 23px; }
+  .panel .bag .row { gap: 10px; }
+  .panel .bag .group { margin-top: 8px; }
+  .panel .bag .group h3 { font-size: 24px; margin-bottom: 7px; }
+  .panel .bag .footer { font-size: 24px; margin-top: 16px; padding-top: 12px; }
+  .panel .bag .footer .slot { width: 50px; height: 50px; }
+
+  .off .bag { left: 50%; top: 170px; transform: translateX(-50%); }
+  .off .bag .row { width: 724px; gap: 12px; }
+  .off .bag .slot { width: 80px; height: 80px; }
+  .off .bag .slot .count { font-size: 27px; }
+  .question {
+    position: absolute; left: 0; right: 0; bottom: 150px; text-align: center;
+    font-family: "Friz", serif; font-size: 40px; color: #c9c5bb; text-shadow: 2px 2px 0 #000;
+  }
+  .question small { display: block; margin-top: 10px; font-family: "Inter", sans-serif; font-size: 24px; color: var(--muted); }
+
+  .on .bag { left: 40px; top: 108px; }
+  .on .bag .group { margin-top: 4px; }
+  .on .bag .title { margin-bottom: 4px; }
+  .on .bag .group h3 { margin-bottom: 5px; }
+  .on .tooltip {
+    position: absolute; right: 30px; top: 330px; width: 430px; z-index: 4;
+    font-size: 23px; padding: 16px 20px 18px;
+  }
+  .on .tooltip .name { font-size: 27px; }
+  .on .tooltip .gap { height: 10px; }
+  .hover { box-shadow: 0 0 0 3px #0070dd, 0 0 0 5px #fff, 0 10px 30px rgba(0, 0, 0, 0.6) !important; }
+</style>
+</head>
+<body>
+<div class="head">KeepOrSell<small>Sorts your bags into Quest, Profession, AuctionHouse, Disenchant and Junk · for Baganator</small></div>
+
+<div class="panel off">
+  <div class="label">Without</div>
+  <div class="bag">
+    <div class="title">Bags</div>
+    <div class="row">
+      <div class="slot q3"><img src="icons/inv_pants_03.jpg" alt=""></div>
+      <div class="slot"><img src="icons/inv_fabric_linen_01.jpg" alt=""><span class="count">20</span></div>
+      <div class="slot"><img src="icons/inv_misc_food_14.jpg" alt=""><span class="count">2</span></div>
+      <div class="slot q2"><img src="icons/inv_sword_04.jpg" alt=""></div>
+      <div class="slot"><img src="icons/inv_misc_organ_04.jpg" alt=""><span class="count">3</span></div>
+      <div class="slot"><img src="icons/inv_fabric_silk_01.jpg" alt=""><span class="count">20</span></div>
+      <div class="slot"><img src="icons/inv_bracer_03.jpg" alt=""></div>
+      <div class="slot"><img src="icons/inv_ingot_02.jpg" alt=""><span class="count">12</span></div>
+      <div class="slot q2"><img src="icons/inv_jewelry_ring_13.jpg" alt=""></div>
+      <div class="slot"><img src="icons/inv_potion_52.jpg" alt=""><span class="count">4</span></div>
+      <div class="slot"><img src="icons/inv_misc_cape_07.jpg" alt=""></div>
+      <div class="slot q2"><img src="icons/inv_scroll_06.jpg" alt=""></div>
+      <div class="slot"><img src="icons/inv_misc_leatherscrap_03.jpg" alt=""><span class="count">7</span></div>
+      <div class="slot q2"><img src="icons/inv_axe_20.jpg" alt=""></div>
+      <div class="slot"><img src="icons/inv_fabric_wool_03.jpg" alt=""></div>
+      <div class="slot q3"><img src="icons/inv_wand_04.jpg" alt=""></div>
+    </div>
+  </div>
+  <div class="question">Keep it? Sell it? Auction it?<small>…hover every single item and guess</small></div>
+</div>
+
+<div class="panel on">
+  <div class="label">With KeepOrSell</div>
+  <div class="bag">
+    <div class="title">Bags</div>
+    <div class="group"><h3 style="color: var(--group-quest)">Quest</h3><div class="row"><div class="slot"><img src="icons/inv_misc_organ_04.jpg" alt=""><span class="count">3</span></div><div class="slot"><img src="icons/inv_fabric_wool_03.jpg" alt=""></div></div></div>
+    <div class="group"><h3 style="color: var(--group-profession)">Profession</h3><div class="row"><div class="slot"><img src="icons/inv_misc_leatherscrap_03.jpg" alt=""><span class="count">7</span></div><div class="slot"><img src="icons/inv_ingot_02.jpg" alt=""><span class="count">12</span></div><div class="slot"><img src="icons/inv_fabric_linen_01.jpg" alt=""><span class="count">20</span></div><div class="slot q2"><img src="icons/inv_scroll_06.jpg" alt=""></div></div></div>
+    <div class="group"><h3 style="color: var(--group-ah)">AuctionHouse</h3><div class="row"><div class="slot"><img src="icons/inv_potion_52.jpg" alt=""><span class="count">4</span></div><div class="slot"><img src="icons/inv_fabric_silk_01.jpg" alt=""><span class="count">20</span></div><div class="slot q3"><img src="icons/inv_wand_04.jpg" alt=""></div></div></div>
+    <div class="group"><h3 style="color: var(--group-disenchant)">Disenchant</h3><div class="row"><div class="slot q2"><img src="icons/inv_sword_04.jpg" alt=""></div><div class="slot q2"><img src="icons/inv_axe_20.jpg" alt=""></div><div class="slot q2"><img src="icons/inv_jewelry_ring_13.jpg" alt=""></div></div></div>
+    <div class="group"><h3 style="color: var(--group-junk)">Junk</h3><div class="row"><div class="slot"><img src="icons/inv_misc_food_14.jpg" alt=""><span class="count">2</span></div><div class="slot"><img src="icons/inv_misc_cape_07.jpg" alt=""></div><div class="slot q3 hover"><img src="icons/inv_pants_03.jpg" alt=""></div><div class="slot"><img src="icons/inv_bracer_03.jpg" alt=""></div></div></div>
+    <div class="footer"><div class="slot destroy"><img src="icons/inv_misc_food_14.jpg" alt=""></div><span>Junk <span class="m">18<i class="c s"></i> 33<i class="c cu"></i></span> · AH <span class="m">2<i class="c g"></i> 44<i class="c s"></i></span></span></div>
+  </div>
+  <div class="tooltip">
+    <div class="name q-rare">Chausses of Westfall</div>
+    <div>Soulbound</div>
+    <div class="row"><span>Legs</span><span class="red">Mail</span></div>
+    <div>173 Armor</div>
+    <div>Sell Price: <span class="m">17<i class="c s"></i> 27<i class="c cu"></i></span></div>
+    <div class="gap"></div>
+    <div><span class="kos">KeepOrSell:</span> Junk – your class can't use it, soulbound</div>
+  </div>
+</div>
+</body>
+</html>

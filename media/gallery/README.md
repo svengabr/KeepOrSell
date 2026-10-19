@@ -9,6 +9,9 @@ Render all pages to JPG (or a single one with `sh render.sh 02-auction-house.htm
 sh render.sh
 ```
 
+`reddit.html` is the before/after image for the Reddit post (same layout as Forever Loot Sparkles and Forever Minimap
+Target), not part of the CurseForge gallery.
+
 Not in the repo (Blizzard assets, git-ignored), fetch them before rendering:
 
 - `fonts/FRIZQT__.TTF`: `curl -L -o fonts/FRIZQT__.TTF https://wago.tools/api/casc/615960`
