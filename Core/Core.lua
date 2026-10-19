@@ -5,7 +5,7 @@ local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, bagValue = true, share = true,
   disenchant = true, openable = true, keepClick = true, lootCoins = true, upcomingReagents = true,
-  lossWarnings = true, altReagents = true,
+  lossWarnings = true, accountMode = true, altProfession = true, altClassItems = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -47,6 +47,11 @@ local reagentEconomy
 frame:SetScript("OnEvent", function(_, event, arg1, ...)
   if event == "ADDON_LOADED" and arg1 == addonName then
     KeepOrSellDB = KeepOrSellDB or {}
+    -- before account mode the alts' reagents had their own switch
+    if KeepOrSellDB.altReagents ~= nil then
+      if KeepOrSellDB.altProfession == nil then KeepOrSellDB.altProfession = KeepOrSellDB.altReagents end
+      KeepOrSellDB.altReagents = nil
+    end
     for k, v in pairs(DEFAULTS) do
       if KeepOrSellDB[k] == nil then KeepOrSellDB[k] = v end
     end
@@ -54,6 +59,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     KeepOrSellDB.sharedPrices = KeepOrSellDB.sharedPrices or {}
     KeepOrSellDB.fullScans = KeepOrSellDB.fullScans or {}
     KeepOrSellDB.filter = KeepOrSellDB.filter or {}
+    KeepOrSellDB.altIncluded = KeepOrSellDB.altIncluded or {} -- [character key] = false: left out of account mode
     KeepOrSellDB.filter.items = KeepOrSellDB.filter.items or {}
     KeepOrSellDB.filter.categories = KeepOrSellDB.filter.categories or {}
     -- 0.8.0/0.8.1 kept shared prices by item ID for all realms; without a realm they can't be trusted

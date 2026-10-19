@@ -96,6 +96,15 @@ class OptionsTests(unittest.TestCase):
         headers = [i.header for i in self.calls.layout.values() if i.header]
         self.assertEqual(headers, ["Auction house (Auctionator)", "Junk (Scrap)", "Keep", "Filter", "Display", "Dependencies"])
 
+    def test_alt_reagents_migrates_to_alt_profession(self):
+        self.rt.execute("KeepOrSellDB = {altReagents = false}")
+        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertIs(self.rt.eval("KeepOrSellDB.altProfession"), False)
+        self.assertIsNone(self.rt.eval("KeepOrSellDB.altReagents"))
+        self.assertIs(self.rt.eval("KeepOrSellDB.accountMode"), True)
+        self.assertIs(self.rt.eval("KeepOrSellDB.altClassItems"), True)
+        self.assertEqual(len(self.rt.eval("KeepOrSellDB.altIncluded")), 0)
+
     def test_slider_labels(self):
         self.assertEqual(self.calls.sliders["minProfit"].label(0), "off")
         self.assertEqual(self.calls.sliders["minProfit"].label(5), "5 s")

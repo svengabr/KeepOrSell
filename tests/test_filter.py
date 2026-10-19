@@ -70,6 +70,16 @@ class FilterTests(unittest.TestCase):
         self.assertIsNone(f.options.factor)
         self.assertEqual(report.ignored, 1)
 
+    def test_old_alt_reagents_key_imports(self):
+        f, report = self.parse("KeepOrSell filter 1\naltReagents = off\n")
+        self.assertIs(f.options.altProfession, False)
+        self.assertIsNone(f.options.altReagents)
+        self.assertEqual(report.ignored, 0)
+
+    def test_account_mode_options(self):
+        f, _ = self.parse("KeepOrSell filter 1\naccountMode = off\naltClassItems = on\naltProfession = off\n")
+        self.assertEqual((f.options.accountMode, f.options.altClassItems, f.options.altProfession), (False, True, False))
+
     def test_toggle_values(self):
         f, _ = self.parse("KeepOrSell filter 1\nscrap = off\ngear = 1\nquestie = TRUE\nopenable = 0\nplainGear = false\n")
         self.assertIs(f.options.scrap, False)
@@ -136,7 +146,8 @@ class FilterTests(unittest.TestCase):
             self.assertTrue(self.ns.FILTER_GROUPS[g])
         keys = [self.ns.FILTER_OPTIONS[i].key for i in range(1, len(self.ns.FILTER_OPTIONS) + 1)]
         self.assertEqual(keys[:3], ["factor", "minProfit", "maxAge"])
-        self.assertEqual(len(keys), 13)
+        self.assertEqual(len(keys), 15)
+        self.assertEqual(keys[-3:], ["accountMode", "altProfession", "altClassItems"])
 
     def test_long_name_cut(self):
         f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 100 + "\n")
@@ -199,7 +210,8 @@ local db = {
   keep = {[4306] = true, [2589] = true, [10] = true},
   factor = 2.5, minProfit = 5, maxAge = 7,
   scrap = true, profession = false, gear = true, plainGear = false, recipeJunk = true,
-  questie = true, disenchant = false, openable = true, upcomingReagents = false, altReagents = true,
+  questie = true, disenchant = false, openable = true, upcomingReagents = false, accountMode = true, altProfession = false, altClassItems = true,
+  altIncluded = {["Bob-Realm"] = false}, characters = {["Bob-Realm"] = {faction = "Alliance", class = "MAGE"}},
 }
 return db
 """
@@ -211,6 +223,12 @@ class SerializeTests(unittest.TestCase):
 
     def db(self):
         return self.rt.execute(DB)
+
+    def test_export_has_no_character_names(self):
+        text = self.ns.SerializeFilter(self.db())
+        self.assertNotIn("Bob", text)
+        self.assertIn("accountMode = on", text)
+        self.assertNotIn("altReagents", text)
 
     def test_round_trip(self):
         db = self.db()

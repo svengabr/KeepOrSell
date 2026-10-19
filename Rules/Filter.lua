@@ -28,11 +28,15 @@ ns.FILTER_OPTIONS = {
   {key = "disenchant", kind = "toggle"},
   {key = "openable", kind = "toggle"},
   {key = "upcomingReagents", kind = "toggle"},
-  {key = "altReagents", kind = "toggle"},
+  {key = "accountMode", kind = "toggle"},
+  {key = "altProfession", kind = "toggle"},
+  {key = "altClassItems", kind = "toggle"},
 }
 
 local OPTION_BY_KEY = {}
 for _, o in ipairs(ns.FILTER_OPTIONS) do OPTION_BY_KEY[o.key:lower()] = o end
+-- filters written before account mode: altReagents became altProfession
+OPTION_BY_KEY.altreagents = OPTION_BY_KEY.altprofession
 
 local TOGGLE_VALUES = {on = true, ["true"] = true, ["1"] = true, off = false, ["false"] = false, ["0"] = false}
 
