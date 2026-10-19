@@ -11,7 +11,7 @@ from pathlib import Path
 import lupa.lua51 as lua51
 
 from addon import SOURCE_DIRS
-from wowapi import api, is_function
+from wowapi import UNDOCUMENTED_ENUMS, api, is_function
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = sorted(p for d in SOURCE_DIRS for p in (ROOT / d).glob("*.lua"))
@@ -125,6 +125,8 @@ class ForeverApiTests(unittest.TestCase):
         missing = []
         for name, text in self.sources.items():
             for enum, key in re.findall(r"\bEnum\.(\w+)(?:\.(\w+))?", text):
+                if enum in UNDOCUMENTED_ENUMS:
+                    continue
                 if enum not in enums:
                     missing.append(f"{name}: Enum.{enum}")
                 elif key and key not in enums[enum]:

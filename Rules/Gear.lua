@@ -117,6 +117,16 @@ function ns.IsClassItem(classFile, itemID, reagentFree)
   return not (reagentFree and VENDOR_REAGENTS[itemID])
 end
 
+-- Every item ID ns.IsClassItem accepts for the class, sorted; {} for unknown classes. Pure.
+function ns.ClassItemIDs(classFile, reagentFree)
+  local ids = {}
+  for itemID in pairs(classFile and CLASS_ITEMS[classFile] or {}) do
+    if ns.IsClassItem(classFile, itemID, reagentFree) then table.insert(ids, itemID) end
+  end
+  table.sort(ids)
+  return ids
+end
+
 local CONSUMABLE = 0 -- Enum.ItemClass
 local NO_MANA = Set("WARRIOR", "ROGUE")
 ns.DRINK_SPELL = 430 -- "Drink": restores mana only; food and drink together is "Refreshment"

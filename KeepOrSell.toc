@@ -25,6 +25,7 @@ Integrations\TSM.lua
 Rules\Share.lua
 Rules\Gear.lua
 Rules\Professions.lua
+Rules\Account.lua
 Rules\Questie.lua
 Rules\Disenchant.lua
 Rules\Filter.lua

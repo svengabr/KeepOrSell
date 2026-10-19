@@ -70,6 +70,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.HookKeepClick()
     ns.HookLossWarnings()
   elseif event == "PLAYER_LOGIN" then
+    ns.RecordCharacter()
     ns.Refresh()
     ns.RegisterBaganator()
     ns.HookTooltip()
@@ -113,6 +114,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     local known = ns.HasReagentEconomy()
     if known ~= reagentEconomy then
       reagentEconomy = known
+      ns.RecordCharacter()
       ns.SettingsChanged()
     end
   elseif event == "SKILL_LINES_CHANGED" then
