@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.19.0
 
 - Shareable filters: `/kos export` shows your setup (decision options, keep marks, item and category rules) as plain text to copy, `/kos import` takes someone else's. A check shows what would change before you apply it, and "Undo last import" in the options takes it back. The text is data only and never runs; lines the addon doesn't understand are dropped and counted.
 - Filter rules: `item 2592 = junk` names one item (as strong as Scrap's own list), `class 7 subclass 5 quality 0-1 = junk` a whole category. A category rule never junks green or better wearable gear or items Forever added, and junks other items only when they are grey, white bound items with a vendor price, or items with a known, recent price below the auction threshold. `/kos rule <item> <group|clear>` sets an item rule, `/kos rules` lists them, and the tooltip says when a filter rule decided.
