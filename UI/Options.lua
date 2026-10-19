@@ -35,8 +35,10 @@ local function AccountMode(layout, Checkbox, Header)
   local master = Checkbox("accountMode", L.OPT_ACCOUNT_MODE, L.OPT_ACCOUNT_MODE_TIP, true)
   UnderAccountMode(master, Checkbox("altProfession", L.OPT_ALT_PROFESSION, L.OPT_ALT_PROFESSION_TIP, true))
   UnderAccountMode(master, Checkbox("altClassItems", L.OPT_ALT_CLASS_ITEMS, L.OPT_ALT_CLASS_ITEMS_TIP, true))
-  local me = {key = ns.CharacterKey(), faction = UnitFactionGroup and UnitFactionGroup("player"),
-    ruleset = ns.CurrentRuleset(), realm = GetRealmName()}
+  -- the same record ns.AltIndex matches with (ns.RecordCharacter ran just before)
+  local key = ns.CharacterKey()
+  local own = KeepOrSellDB.characters and KeepOrSellDB.characters[key] or {}
+  local me = {key = key, faction = own.faction, ruleset = own.ruleset, realm = own.realm}
   local alts = ns.AltCharacters(KeepOrSellDB.characters, me)
   for _, alt in ipairs(alts) do
     local variable = addonName .. "_alt_" .. alt.key

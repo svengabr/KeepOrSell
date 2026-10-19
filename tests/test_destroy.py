@@ -201,6 +201,16 @@ class LootWorthMoreTests(unittest.TestCase):
         loot(self.rt, (2, 1), (4, 1))  # sealed letter, a quest item worth nothing
         self.assertEqual(self.best(), "link2")
 
+    def test_item_for_an_alt_always_worth_it(self):
+        self.rt.execute("ITEMS[2][5] = 0; ITEMS[2][2] = 7")  # a worthless trade good an alt needs
+        self.rt.execute("""KeepOrSellDB.characters = {['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
+          ['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm'}}
+          KeepOrSellDB.recipes = {['Bob-Realm'] = {[1] = {2}}}""")
+        self.ns.RecordCharacter()  # login: the alt index is rebuilt
+        self.ns.ClearCache()
+        loot(self.rt, (2, 1), (4, 1))
+        self.assertEqual(self.best(), "link2")
+
     def test_no_junk_no_hint(self):
         loot(self.rt, (4, 1))
         self.assertIsNone(self.ns.LootWorthMore(self.ns.LootItems(), None))

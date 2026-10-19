@@ -64,6 +64,29 @@ class RecordTests(unittest.TestCase):
         self.ns.RecordCharacter()
         self.assertEqual(self.rt.eval("KeepOrSellDB.characters['Tester-Realm'].faction"), "Alliance")
 
+    def test_current_ruleset_unknown_without_rule_keys(self):
+        self.rt.execute(GAME_RULES + "ACTIVE_RULE = 1; Enum.GameRule = {}")
+        self.assertIsNone(self.ns.CurrentRuleset())
+
+    def test_record_character_keeps_ruleset_when_unknown(self):
+        self.rt.execute("KeepOrSellDB.characters = {['Tester-Realm'] = {faction = 'Alliance', ruleset = 'PvP'}}")
+        self.ns.RecordCharacter()
+        self.assertEqual(self.rt.eval("KeepOrSellDB.characters['Tester-Realm'].ruleset"), "PvP")
+
+    def test_migrated_alt_matches_by_realm_of_its_key(self):
+        self.rt.execute("function UnitFactionGroup() return 'Alliance' end")
+        self.rt.execute("KeepOrSellDB.factions = {['Bob-Realm'] = 'Alliance'}; KeepOrSellDB.recipes = {['Bob-Realm'] = {[1] = {3}}}")
+        self.ns.RecordCharacter()
+        self.assertEqual([a.name for a in self.ns.AltsNeedingItem(3).values()], ["Bob"])
+
+    def test_record_character_rebuilds_the_index(self):
+        self.rt.execute("function UnitFactionGroup() return 'Alliance' end")
+        self.rt.execute("""KeepOrSellDB.characters = {['Bob-Realm'] = {faction = 'Alliance', realm = 'Realm'}}
+          KeepOrSellDB.recipes = {['Bob-Realm'] = {[1] = {3}}}""")
+        self.assertIsNone(self.ns.AltsNeedingItem(3))  # own record not written yet
+        self.ns.RecordCharacter()
+        self.assertEqual([a.name for a in self.ns.AltsNeedingItem(3).values()], ["Bob"])
+
     def test_class_item_ids(self):
         self.assertEqual(list(self.ns.ClassItemIDs("PRIEST", False).values()), [17028, 17029, 17056])
         self.assertEqual(list(self.ns.ClassItemIDs("PRIEST", True).values()), [17056])

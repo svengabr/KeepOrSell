@@ -64,7 +64,7 @@ local function WorthMore(item, target)
   return item.keep or item.value > target.value
 end
 
--- loot: list of {slot, link, count, value, keep, fits}; keep = KeepOrSell would keep it (quest, profession),
+-- loot: list of {slot, link, count, value, keep, fits}; keep = KeepOrSell would keep it (quest, profession, for alts),
 -- fits = it needs no free slot. Returns the loot item worth destroying target for, or nil. Pure.
 function ns.LootWorthMore(loot, target)
   if not target then return nil end
@@ -123,7 +123,7 @@ function ns.LootItems()
       local kind = ns.Classify(itemID, link).kind
       table.insert(items, {
         slot = slot, link = link, count = count, value = math.max(prices.ah or 0, prices.vendor or 0) * count,
-        keep = kind == "quest" or kind == "profession", fits = ns.LootFits(itemID, count),
+        keep = kind == "quest" or kind == "profession" or kind == "alt", fits = ns.LootFits(itemID, count),
       })
     end
   end

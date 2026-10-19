@@ -109,6 +109,12 @@ class AccountModeOptionsTests(unittest.TestCase):
         self.calls.callbacks["KeepOrSell_alt_Bob-Realm"]()
         self.assertEqual(self.ns.refreshed, 1)
 
+    def test_alts_from_the_old_factions_table_listed_on_first_load(self):
+        self.rt, self.ns = load()
+        self.rt.execute("KeepOrSellDB = {factions = {['Bob-Realm'] = 'Alliance', ['Tester-Realm'] = 'Alliance'}}")
+        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertIn("checkbox:Bob-Realm", list(self.rt.eval("CALLS").controls.values()))
+
     def test_no_alts_shows_note(self):
         self.open("{}")
         notes = [i for i in self.calls.layout.values() if i.template == "KeepOrSellNoteTemplate"]

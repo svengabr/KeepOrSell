@@ -70,6 +70,8 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     KeepOrSellDB.factor = math.max(KeepOrSellDB.factor, ns.MIN_FACTOR)
     -- with the gamepad UI on, closing Blizzard's settings window after an addon page showed can get blocked
     -- and loop the "blocked" popup until the game freezes (reported by LootTriage); /kos says why instead
+    -- the options list the other characters of the account, so the own record must exist first
+    ns.RecordCharacter()
     if not ns.IsGamepadUI() then ns.RegisterOptions(KeepOrSellDB, DEFAULTS) end
     -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()

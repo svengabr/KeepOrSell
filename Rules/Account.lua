@@ -15,7 +15,10 @@ end
 -- Enum.GameRule is missing from the generated API docs; Syndicator uses it the same way.
 function ns.CurrentRuleset()
   if not (RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled()) then return nil end
-  if not (C_GameRules and C_GameRules.IsGameRuleActive and Enum and Enum.GameRule) then return nil end
+  local rules = Enum and Enum.GameRule
+  if not (C_GameRules and C_GameRules.IsGameRuleActive and rules) then return nil end
+  -- without the rules the answer would always be "PvE" and pool Hardcore with normal characters: unknown instead
+  if not (rules.PvPRuleset or rules.RPRuleset or rules.HardcoreRuleset) then return nil end
   return ns.RulesetName(function(key)
     return Enum.GameRule[key] ~= nil and C_GameRules.IsGameRuleActive(Enum.GameRule[key]) == true
   end)
@@ -29,7 +32,11 @@ function ns.SamePool(me, other)
   return me.realm ~= nil and me.realm == other.realm
 end
 
--- Writes the current character's record; older versions kept only the faction in KeepOrSellDB.factions.
+local altIndex -- built once per session: other characters only change in their own sessions
+
+-- Writes the current character's record; older versions kept only the faction in KeepOrSellDB.factions (the
+-- realm comes from the key "Name-Realm"). Runs at ADDON_LOADED and again at PLAYER_LOGIN; values the client can't
+-- tell yet keep the stored ones.
 function ns.RecordCharacter()
   if not KeepOrSellDB then return end
   local characters = KeepOrSellDB.characters or {}
@@ -37,6 +44,7 @@ function ns.RecordCharacter()
   for key, faction in pairs(KeepOrSellDB.factions or {}) do
     characters[key] = characters[key] or {}
     characters[key].faction = characters[key].faction or faction
+    characters[key].realm = characters[key].realm or key:match("%-(.+)$")
   end
   KeepOrSellDB.factions = nil
   local key = ns.CharacterKey()
@@ -44,10 +52,11 @@ function ns.RecordCharacter()
   characters[key] = {
     faction = UnitFactionGroup and UnitFactionGroup("player") or old.faction,
     class = select(2, UnitClass("player")),
-    ruleset = ns.CurrentRuleset(),
+    ruleset = ns.CurrentRuleset() or old.ruleset,
     realm = GetRealmName(),
     reagentEconomy = ns.HasReagentEconomy(),
   }
+  altIndex = nil -- built without the own record so far
 end
 
 -- Adds why an alt needs itemID to result ({[itemID] = {[key] = alt}} while building).
@@ -105,8 +114,6 @@ function ns.AltIndex(characters, recipes, crafts, recipeProfession, meKey)
   end
   return result
 end
-
-local altIndex -- built once per session: other characters only change in their own sessions
 
 -- The other characters of the account that need the item (see ns.AltIndex), or nil
 function ns.AltsNeedingItem(itemID)
