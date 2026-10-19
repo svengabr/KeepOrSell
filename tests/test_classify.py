@@ -376,9 +376,38 @@ class DecideTests(unittest.TestCase):
         verdict = self.decide(prices=self.CHEAP, **self.LINEN)
         self.assertEqual((verdict.kind, verdict.reason, verdict.rule), ("junk", "filter", "category"))
         self.assertEqual(self.kind(**dict(self.LINEN, quality=0)), "junk")
-        self.assertEqual(self.kind(bound=True, **self.LINEN), "junk")
+        self.assertEqual(self.kind(bound=True, prices={"vendor": 100}, **self.LINEN), "junk")
         # worth auctioning: the junk rule doesn't apply
         self.assertEqual(self.kind(prices=self.FRESH_AH, **self.LINEN), "ah")
+
+    def test_category_junk_bound_needs_low_quality_and_vendor_price(self):
+        # the Hearthstone: class 15, white, bound, no vendor price
+        hearthstone = {"itemID": 6948, "classID": 15, "subclassID": 0, "quality": 1, "bound": True}
+        self.set_filter(categories=['{class = 15, qmin = 0, qmax = 1, group = "junk"}'])
+        verdict = self.decide(**hearthstone)
+        self.assertNotEqual(verdict.kind, "junk")
+        self.assertNotEqual(verdict.reason, "filter")
+        # a white bound item the vendor pays for may go
+        verdict = self.decide(prices={"vendor": 5}, **hearthstone)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.rule), ("junk", "filter", "category"))
+        # a grey bound item without vendor price stays too
+        self.assertNotEqual(self.kind(**dict(hearthstone, quality=0)), "junk")
+        # a broad rule never hands bound rare non-gear to the vendor
+        self.set_filter(categories=['{class = 0, group = "junk"}'])
+        rare = {"itemID": 500, "classID": 0, "subclassID": 0, "quality": 3, "bound": True}
+        verdict = self.decide(prices={"vendor": 2500}, **rare)
+        self.assertNotEqual(verdict.kind, "junk")
+        self.assertNotEqual(verdict.reason, "filter")
+
+    def test_bound_item_with_ah_item_rule_falls_to_category_rule(self):
+        # a bound item can't be auctioned, so its "ah" item rule doesn't apply; the category rule decides next
+        self.set_filter(items={2589: "ah"}, categories=['{class = 7, group = "junk"}'])
+        verdict = self.decide(bound=True, prices={"vendor": 100}, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.rule), ("junk", "filter", "category"))
+        # without a vendor price neither rule applies and the built-in logic decides
+        verdict = self.decide(bound=True, **self.LINEN)
+        self.assertNotEqual(verdict.kind, "junk")
+        self.assertNotEqual(verdict.reason, "filter")
 
     def test_category_junk_waits_for_price(self):
         self.set_filter(categories=['{class = 7, group = "junk"}'])

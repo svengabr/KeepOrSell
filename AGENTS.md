@@ -77,7 +77,7 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
   the Disenchant group instead when disenchanting is worth more (never junk). The only exception to
   "when in doubt": grey/white gear without an auction price counts as not worth it once the player has visited
   the AH with Auctionator (`KeepOrSellDB.ahVisited`).
-- **Filter rules** (`KeepOrSellDB.filter`): item rules are as strong as Scrap's own list; only quest checks, keep marks, equipment sets, items to open, tools and class items beat them. Category rules may only junk grey or bound items, or items with a known, recent price below the auction threshold, never green+ wearable gear or items Forever added (`ns.IsNewItem`). Filter text is data only: never execute it, validate every line.
+- **Filter rules** (`KeepOrSellDB.filter`): item rules are as strong as Scrap's own list; only quest checks, keep marks, equipment sets, items to open, tools and class items beat them. Category rules may only junk grey, white bound items with a vendor price, or items with a known, recent price below the auction threshold (a bound item above white or without a vendor price falls back to the built-in logic), never green+ wearable gear or items Forever added (`ns.IsNewItem`). Filter text is data only: never execute it, validate every line.
 - **New texts** always go into `Locales.lua`, in English and German.
 - Keep pure logic (without WoW frames) in its own functions so it stays testable.
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:` …).

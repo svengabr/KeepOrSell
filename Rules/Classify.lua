@@ -50,8 +50,9 @@ end
 
 -- The verdict of a filter rule (Filter.lua) naming group for the item, or nil when the rule doesn't apply and the
 -- built-in logic decides. rule = "item" | "category". Existing toggles gate rules of their group; a category
--- rule only makes junk what "when in doubt, keep" allows: grey, bound, or a known recent price not worth
--- auctioning, never green-or-better wearable gear.
+-- rule only makes junk what "when in doubt, keep" allows: grey, white bound items with a vendor price, or a known
+-- recent price not worth auctioning; never green-or-better wearable gear, never a bound item above white or one
+-- the vendor pays nothing for.
 local function RuleVerdict(group, rule, facts, db, priceClass, priceReason, isGear)
   if not group then return nil end
   local verdict = {reason = "filter", rule = rule, priceReason = priceReason}
@@ -70,7 +71,12 @@ local function RuleVerdict(group, rule, facts, db, priceClass, priceReason, isGe
   elseif group == "junk" then
     -- green or better, or quality not known yet
     if isGear and (facts.quality == nil or facts.quality >= 2) then return nil end
-    if facts.quality == 0 or facts.bound or priceClass == "vendor" then
+    if facts.bound then
+      -- can't be auctioned: only grey or white with a vendor price may go (never the Hearthstone)
+      local vendor = (facts.prices or {}).vendor
+      if not (facts.quality and facts.quality <= 1 and vendor and vendor > 0) then return nil end
+      verdict.kind = "junk"
+    elseif facts.quality == 0 or priceClass == "vendor" then
       verdict.kind = "junk"
     elseif priceClass == nil then
       verdict.needsPrice = true
