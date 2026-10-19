@@ -124,11 +124,15 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   local text
   if kind == "quest" and reason == "questie" then
     local q = verdict.quest
-    text = q.level and q.level > 0 and L.TIP_QUESTIE:format(q.name, q.level) or L.TIP_QUESTIE_SCALING:format(q.name)
+    -- a repeatable quest's own level says nothing about when it is worth doing
+    text = q.repeatable and L.TIP_QUESTIE_REPEATABLE:format(q.name)
+      or q.level and q.level > 0 and L.TIP_QUESTIE:format(q.name, q.level) or L.TIP_QUESTIE_SCALING:format(q.name)
   elseif kind == "quest" and reason == "questitem" and verdict.quest then
     local q = verdict.quest
     if q.done then
       text = L.TIP_QUEST_ITEM_DONE:format(q.name)
+    elseif q.repeatable then
+      text = L.TIP_QUEST_ITEM_FOR_REPEATABLE:format(q.name)
     else
       text = q.level and q.level > 0 and L.TIP_QUEST_ITEM_FOR:format(q.name, q.level)
         or L.TIP_QUEST_ITEM_FOR_SCALING:format(q.name)

@@ -132,6 +132,8 @@ local L = {
   TIP_QUEST_ITEM_USELESS = "\"%s\" already done",
   TIP_QUESTIE = "Quest – needed for \"%s\" (level %d)",
   TIP_QUESTIE_SCALING = "Quest – needed for \"%s\"",
+  TIP_QUESTIE_REPEATABLE = "Quest – needed for repeatable quest \"%s\"",
+  TIP_QUEST_ITEM_FOR_REPEATABLE = "Quest – quest item for repeatable quest \"%s\"",
   TIP_PROFESSION = "Profession – a known recipe still gives skill points",
   TIP_RECIPE = "Profession – recipe for your profession, not learned yet",
   TIP_AH = "Auction house",
@@ -313,6 +315,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_QUEST_ITEM_USELESS = "„%s“ schon erledigt"
   L.TIP_QUESTIE = "Quest – benötigt für „%s“ (Stufe %d)"
   L.TIP_QUESTIE_SCALING = "Quest – benötigt für „%s“"
+  L.TIP_QUESTIE_REPEATABLE = "Quest – benötigt für die wiederholbare Quest „%s“"
+  L.TIP_QUEST_ITEM_FOR_REPEATABLE = "Quest – Questgegenstand für die wiederholbare Quest „%s“"
   L.TIP_PROFESSION = "Beruf – ein bekanntes Rezept gibt noch Skillpunkte"
   L.TIP_RECIPE = "Beruf – Rezept für deinen Beruf, noch nicht gelernt"
   L.TIP_AH = "Auktionshaus"

@@ -5,6 +5,7 @@ local CONTRACT = 2   -- QuestieDB contract version this file was written against
 local LEVEL_RANGE = 5
 local ITEM_OBJECTIVES = 3 -- objectives = {creature, object, item, reputation, killCredit, spell}
 local ITEM_STARTERS = 3   -- startedBy = {creature, object, item}
+local REPEATABLE_BIT = 1  -- specialFlags: the quest can be handed in again and again
 
 local function HasBit(mask, index)
   return math.floor(mask / 2 ^ (index - 1)) % 2 == 1
@@ -28,27 +29,33 @@ local function RaceAllowed(mask, player)
   return false
 end
 
--- quests: {id, name, level, requiredLevel, races, classes, exclusiveTo}; level -1 scales with the player
+-- quests: {id, name, level, requiredLevel, races, classes, exclusiveTo, repeatable}; level -1 scales with
+-- the player
 -- player: {level, race, faction, class, completed = function(questID)}
 -- Returns the open quest within range (default LEVEL_RANGE) of the player's level that is closest in level,
--- or nil. Pure.
+-- or nil. A repeatable quest (cloth turn-ins …) is never done and counts from its required level on, with no
+-- upper cap; a regular quest in range comes first. Pure.
 function ns.PickQuestieQuest(quests, player, range)
   range = range or LEVEL_RANGE
-  local best, bestDistance
+  local best, bestDistance, repeatable
   for _, q in ipairs(quests) do
-    local level = q.level
-    if level == -1 then level = player.level end
-    if not level or level <= 0 then level = q.requiredLevel end
-    local distance = level and math.abs(level - player.level)
-    local open = distance and distance <= range
-      and RaceAllowed(q.races, player) and Allowed(q.classes, player.class)
-      and not player.completed(q.id)
-    for _, other in ipairs(q.exclusiveTo or {}) do
-      if open and player.completed(other) then open = false end
+    local allowed = RaceAllowed(q.races, player) and Allowed(q.classes, player.class)
+    if q.repeatable then
+      local opens = range == math.huge or player.level >= (q.requiredLevel or 0)
+      if allowed and opens and not repeatable then repeatable = q end
+    else
+      local level = q.level
+      if level == -1 then level = player.level end
+      if not level or level <= 0 then level = q.requiredLevel end
+      local distance = level and math.abs(level - player.level)
+      local open = distance and distance <= range and allowed and not player.completed(q.id)
+      for _, other in ipairs(q.exclusiveTo or {}) do
+        if open and player.completed(other) then open = false end
+      end
+      if open and (not best or distance < bestDistance) then best, bestDistance = q, distance end
     end
-    if open and (not best or distance < bestDistance) then best, bestDistance = q, distance end
   end
-  return best
+  return best or repeatable
 end
 
 -- For an item of the quest item class: the quest it belongs to, at any level. Prefers an open quest
@@ -135,10 +142,12 @@ end
 local function Lookup(lib, itemID, pick)
   local Quest, quests = lib.Quest, {}
   for _, questID in ipairs(index[itemID] or {}) do
+    local flags = Quest.specialFlags and Quest.specialFlags(questID)
     table.insert(quests, {
       id = questID, name = Quest.name(questID), level = Quest.questLevel(questID),
       requiredLevel = Quest.requiredLevel(questID), races = Quest.requiredRaces(questID),
       classes = Quest.requiredClasses(questID), exclusiveTo = Quest.exclusiveTo(questID),
+      repeatable = type(flags) == "number" and HasBit(flags, REPEATABLE_BIT),
     })
   end
   local player = {
@@ -156,7 +165,7 @@ local function Find(itemID, pick)
   if not (lib and C_QuestLog and C_QuestLog.IsQuestFlaggedCompleted) then return nil end
   -- in doubt the item just isn't protected; a database error must not break the bags
   local ok, q = pcall(Lookup, lib, itemID, pick)
-  return ok and q and q.name and {name = q.name, level = q.level, done = q.done} or nil
+  return ok and q and q.name and {name = q.name, level = q.level, done = q.done, repeatable = q.repeatable} or nil
 end
 
 -- {name, level} of an upcoming quest that needs the item, or nil (also without QuestieDB)

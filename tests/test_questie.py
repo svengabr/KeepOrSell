@@ -39,7 +39,7 @@ LibQuestieDB = {
   Quest = {GetAllIds = function() return IDS end},
 }
 for _, key in ipairs({"name", "questLevel", "requiredLevel", "requiredRaces", "requiredClasses", "objectives",
-                      "requiredSourceItems", "exclusiveTo", "startedBy", "sourceItemId"}) do
+                      "requiredSourceItems", "exclusiveTo", "startedBy", "sourceItemId", "specialFlags"}) do
   LibQuestieDB.Quest[key] = field(key)
 end
 -- item 12 "Okra" is of the quest item class (12); quest 500 "Westfall Stew" (level 14) wants it
@@ -57,6 +57,11 @@ QUESTS[700] = {name = "Into the Wilds", questLevel = 40, requiredLevel = 35, req
                requiredClasses = 0, objectives = {nil, nil, {{4}}}, sourceItemId = 21}
 IDS[#IDS + 1] = 600
 IDS[#IDS + 1] = 700
+-- item 22 "Runecloth": quest 800 "Runecloth Donation" (level 60, opens at 15) is repeatable (special flag bit 1)
+ITEMS[22] = {"Runecloth", 7, 5, "", 40}
+QUESTS[800] = {name = "Runecloth Donation", questLevel = 60, requiredLevel = 15, requiredRaces = 0,
+               requiredClasses = 0, objectives = {nil, nil, {{22}}}, specialFlags = 3}
+IDS[#IDS + 1] = 800
 KeepOrSellDB.questie = true
 """
 
@@ -64,7 +69,11 @@ KeepOrSellDB.questie = true
 def quest(rt, **fields):
     defaults = {"id": 1, "name": "Q", "level": 20, "races": 0, "classes": 0}
     defaults.update(fields)
-    body = ", ".join("%s = %s" % (k, repr(v) if isinstance(v, str) else v) for k, v in defaults.items())
+    def lua(v):
+        if isinstance(v, bool):
+            return "true" if v else "false"
+        return repr(v) if isinstance(v, str) else v
+    body = ", ".join("%s = %s" % (k, lua(v)) for k, v in defaults.items())
     return rt.eval("{%s}" % body.replace("'", '"'))
 
 
@@ -119,6 +128,24 @@ class PickTests(unittest.TestCase):
         near = quest(self.rt, id=2, name="Near", level=19)
         self.assertEqual(self.pick(far, near).name, "Near")
 
+    def test_repeatable_counts_from_its_required_level_without_upper_cap(self):
+        # a level 60 cloth turn-in that opens at 18: far above the window, still wanted
+        q = quest(self.rt, level=60, requiredLevel=18, repeatable=True)
+        self.assertEqual(self.pick(q).name, "Q")
+        self.assertIsNone(self.pick(quest(self.rt, level=60, requiredLevel=21, repeatable=True)))
+
+    def test_repeatable_ignores_completed(self):
+        self.assertIsNotNone(self.pick(quest(self.rt, id=99, level=20, requiredLevel=10, repeatable=True)))
+
+    def test_repeatable_still_checks_race_and_class(self):
+        self.assertIsNone(self.pick(quest(self.rt, races=2 ** 1, requiredLevel=10, repeatable=True)))
+
+    def test_regular_quest_in_window_beats_repeatable(self):
+        repeat = quest(self.rt, id=1, name="Repeat", level=60, requiredLevel=10, repeatable=True)
+        regular = quest(self.rt, id=2, name="Regular", level=22)
+        self.assertEqual(self.pick(repeat, regular).name, "Regular")
+        self.assertEqual(self.pick(regular, repeat).name, "Regular")
+
 
 class PickQuestItemTests(unittest.TestCase):
     def setUp(self):
@@ -143,6 +170,11 @@ class PickQuestItemTests(unittest.TestCase):
     def test_other_race_only(self):
         self.assertIsNone(self.pick_item(quest(self.rt, races=2 ** 1)))
 
+    def test_repeatable_quest_item_at_any_level(self):
+        q = self.pick_item(quest(self.rt, level=60, requiredLevel=55, repeatable=True))
+        self.assertEqual(q.name, "Q")
+        self.assertFalse(q.done)
+
 
 class LookupTests(unittest.TestCase):
     def setUp(self):
@@ -161,6 +193,13 @@ class LookupTests(unittest.TestCase):
         self.assertIsNone(self.ns.GetQuestieQuest(4))
         self.rt.execute("COMPLETED[401] = true")
         self.assertIsNone(self.ns.GetQuestieQuest(3))
+
+    def test_repeatable_flag_from_special_flags(self):
+        q = self.ns.GetQuestieQuest(22)
+        self.assertEqual((q.name, q.repeatable), ("Runecloth Donation", True))
+
+    def test_not_repeatable_without_the_flag(self):
+        self.assertFalse(self.ns.GetQuestieQuest(4).repeatable)
 
     def test_level_up_moves_the_window(self):
         self.rt.execute("PLAYER_LEVEL = 28")
@@ -343,6 +382,15 @@ class TooltipTextTests(unittest.TestCase):
     def test_done_quest_item_junk(self):
         text = self.text("{kind = 'junk', reason = 'questitem_done', quest = {name = 'Westfall Stew', done = true}, bound = true}")
         self.assertIn('Junk – "Westfall Stew" already done, soulbound', text)
+
+    def test_repeatable_quest_says_so(self):
+        text = self.text("{kind = 'quest', reason = 'questie', quest = {name = 'Runecloth', level = 60, repeatable = true}}")
+        self.assertIn('Quest – needed for repeatable quest "Runecloth"', text)
+        self.assertNotIn("level", text)
+
+    def test_repeatable_quest_item_says_so(self):
+        text = self.text("{kind = 'quest', reason = 'questitem', quest = {name = 'Bones', level = 55, repeatable = true}}")
+        self.assertIn('Quest – quest item for repeatable quest "Bones"', text)
 
     def test_quest_item_without_questie(self):
         self.assertIn("Quest – quest item", self.text("{kind = 'quest', reason = 'questitem'}"))
