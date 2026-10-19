@@ -477,6 +477,7 @@ class CommandTests(unittest.TestCase):
         self.rt.eval("""function(ns)
           ns.SettingsChanged = function() ns.changed = (ns.changed or 0) + 1 end
           ns.ShowFilterWindow = function(mode) ns.shown = mode end
+          ns.RefreshOptionsWindow = function() ns.windowRefreshed = (ns.windowRefreshed or 0) + 1 end
           KeepOrSellDB.filter = {items = {}, categories = {}}
         end""")(self.ns)
         self.db = self.rt.eval("KeepOrSellDB")
@@ -488,6 +489,12 @@ class CommandTests(unittest.TestCase):
 
     def printed(self):
         return list(self.rt.eval("PRINTED").values())
+
+    def test_filter_change_refreshes_open_window(self):
+        f = self.parse("KeepOrSell filter 1\nscrap = off\n")
+        self.ns.ApplyFilterCommand(f)
+        self.assertEqual(self.ns.windowRefreshed, 1)
+        self.assertIs(self.db.scrap, False)
 
     def test_rule_command_sets_and_clears(self):
         ok, err = self.rule(self.ns, self.db, 4, "junk")

@@ -10,7 +10,6 @@ globals = {
   "SLASH_KEEPORSELL1",
   "SlashCmdList",
   "Scrap",              -- hooks Scrap.IsJunk
-  "KeepOrSellDependencyMixin", -- mixin of the template in Options.xml
   "StaticPopupDialogs", -- adds KEEPORSELL_CLEAR_FILTER
 }
 
@@ -42,7 +41,6 @@ read_globals = {
   "CreateFrame",
   "CursorHasItem",
   "DeleteCursorItem",
-  "CreateSettingsListSectionHeaderInitializer",
   "Enum",
   "GetCursorInfo",
   "GetLootSlotInfo",
@@ -97,10 +95,7 @@ read_globals = {
   "StaticPopup_Show",
   "UIErrorsFrame",
   "ItemRefTooltip",
-  "MinimalSliderWithSteppersMixin",
   "Settings",
-  "SettingsListElementMixin",
-  "SettingsPanel",
   "TooltipDataProcessor",
   "UIParent",
 

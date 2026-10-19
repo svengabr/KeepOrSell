@@ -31,6 +31,7 @@ local ScheduleHints = OncePerFrame(function()
   ns.UpdateHints()
   ns.UpdateDestroy()
   ns.UpdateBagValue()
+  ns.UpdateHelp()
 end)
 
 local HINT_DELAY = 5 -- seconds after login, so bags and item data are loaded
@@ -68,7 +69,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     -- the options list the other characters of the account, so the own record must exist first
     ns.RecordCharacter()
     ns.MigrateAltSettings(KeepOrSellDB)
-    if not ns.IsGamepadUI() then ns.RegisterOptions(KeepOrSellDB, DEFAULTS) end
+    if not ns.IsGamepadUI() then ns.RegisterOptions() end
     -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()
     ns.HookKeepClick()
@@ -172,6 +173,6 @@ SlashCmdList.KEEPORSELL = function(msg)
   if msg and msg:lower():match("^%s*setup%s*$") then
     ns.ShowSetup()
   elseif not ns.HandleFilterCommand(msg) and not ns.HandleKeepCommand(msg) then
-    ns.OpenOptions()
+    ns.ToggleOptionsWindow()
   end
 end

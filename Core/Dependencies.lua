@@ -1,4 +1,4 @@
--- Which optional addons are installed and running, for the options panel
+-- Which optional addons are installed and running, for the options window
 local _, ns = ...
 local L = ns.L
 
@@ -63,15 +63,4 @@ local STATUS = {
 function ns.DependencyText(dep)
   local color, key = unpack(STATUS[ns.GetDependencyStatus(dep.name)])
   return ("|c%s%s|r · %s"):format(color, L[key], dep.use)
-end
-
--- Mixin for KeepOrSellDependencyTemplate (Options.xml): one row per dependency
-KeepOrSellDependencyMixin = {}
-
-function KeepOrSellDependencyMixin:Init(initializer)
-  -- normally set up by OnLoad (Options.xml); without it Init and Release break the whole list
-  if not self.cbrHandles then SettingsListElementMixin.OnLoad(self) end
-  SettingsListElementMixin.Init(self, initializer)
-  -- status is read whenever the row is shown, so enabling an addon shows up after /reload
-  self.Status:SetText(ns.DependencyText(initializer.data))
 end

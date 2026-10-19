@@ -1,6 +1,6 @@
 -- Shareable filters for the player: the export/import window, /kos export|import|rule|rules, and the actions
 -- behind the filter buttons in the options (undo, clear). The text format and the rules live in Filter.lua.
-local addonName, ns = ...
+local _, ns = ...
 local L = ns.L
 
 local PREFIX = "|cffffd200KeepOrSell:|r "
@@ -28,18 +28,9 @@ function ns.CheckFilterText(db, text)
   return filter, ns.FilterSummary(db, filter, report)
 end
 
--- An open options panel keeps showing the old slider and checkbox values after an import changed them;
--- NotifyUpdate makes each setting read KeepOrSellDB again. A closed panel reads them when it opens.
-local function RefreshOptionsPanel()
-  if not (SettingsPanel and SettingsPanel:IsShown() and Settings and Settings.GetSetting) then return end
-  for _, option in ipairs(ns.FILTER_OPTIONS) do
-    local setting = Settings.GetSetting(addonName .. "_" .. option.key)
-    if setting and setting.NotifyUpdate then setting:NotifyUpdate() end
-  end
-end
-
+-- An open options window would keep showing the old values after an import changed them
 local function Changed()
-  RefreshOptionsPanel()
+  if ns.RefreshOptionsWindow then ns.RefreshOptionsWindow() end
   ns.SettingsChanged()
 end
 

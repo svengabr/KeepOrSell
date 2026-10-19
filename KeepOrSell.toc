@@ -32,7 +32,6 @@ Rules\Filter.lua
 Rules\Classify.lua
 Core\Dependencies.lua
 UI\OptionSections.lua
-UI\Options.xml
 Integrations\Scrap.lua
 Integrations\Baganator.lua
 Integrations\Tooltip.lua

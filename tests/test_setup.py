@@ -102,6 +102,13 @@ class WindowTests(unittest.TestCase):
         self.assertEqual(self.rt.eval("UISpecialFrames[1]"), "KeepOrSellTestFrame")
         self.assertIsNotNone(self.ns.Style.Box(frame, 0.08, 0.7))
 
+    def test_setup_offers_the_options(self):
+        self.rt.eval("function(ns) ns.ShowOptionsWindow = function() OPENED = true end end")(self.ns)
+        self.ns.ShowSetup()
+        button = self.ns.SetupOptionsButton()
+        button.OnClick(button)
+        self.assertTrue(self.rt.eval("OPENED"))
+
     def test_builds_and_shows(self):
         self.ns.ShowSetup()
         frame = self.rt.eval("UISpecialFrames[1]")

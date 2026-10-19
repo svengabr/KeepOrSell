@@ -336,9 +336,14 @@ local function CreateSetupFrame()
 
   local close = Button(frame, L.SETUP_CLOSE, function() frame:Hide() end)
   close:SetPoint("BOTTOMRIGHT", -14, 12)
+  frame.Options = Button(frame, L.OPT_WINDOW_OPEN, function() ns.ShowOptionsWindow() end)
+  frame.Options:SetPoint("RIGHT", close, "LEFT", -8, 0)
 
   frame:SetScript("OnShow", Refresh)
 end
+
+-- The button that opens the options window (tests)
+function ns.SetupOptionsButton() return frame and frame.Options end
 
 function ns.ShowSetup()
   if not frame then CreateSetupFrame() end
