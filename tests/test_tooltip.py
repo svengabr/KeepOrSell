@@ -62,6 +62,11 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("AH.link4 = 40; KeepOrSellDB.minProfit = 1")
         self.assertIn("(less than 100c profit)", self.show(4))
 
+    def test_junk_names_deposit(self):
+        # 40c passes the factor, but an unsold auction loses the 1s minimum deposit
+        self.rt.execute("AH.link4 = 40")
+        self.assertIn("Junk – (an unsold auction costs 100c deposit)", self.show(4))
+
     def test_open(self):
         verdict = self.rt.eval('{kind = "open"}')
         db = self.rt.eval("KeepOrSellDB")

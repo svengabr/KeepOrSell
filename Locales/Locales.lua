@@ -151,6 +151,7 @@ local L = {
   TIP_BOUND = "soulbound",
   TIP_BELOW_FACTOR = "(below %gx vendor price)",
   TIP_BELOW_PROFIT = "(less than %s profit)",
+  TIP_BELOW_DEPOSIT = "(an unsold auction costs %s deposit)",
   TIP_PLAIN = "plain gear",
   TIP_TOOL = "profession tool",
   TIP_CLASS_ITEM = "your class needs it",
@@ -399,6 +400,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_BOUND = "seelengebunden"
   L.TIP_BELOW_FACTOR = "(unter %gx Händlerpreis)"
   L.TIP_BELOW_PROFIT = "(weniger als %s Gewinn)"
+  L.TIP_BELOW_DEPOSIT = "(eine unverkaufte Auktion kostet %s Einzahlung)"
   L.TIP_PLAIN = "einfache Ausrüstung"
   L.TIP_TOOL = "Berufswerkzeug"
   L.TIP_CLASS_ITEM = "braucht deine Klasse"

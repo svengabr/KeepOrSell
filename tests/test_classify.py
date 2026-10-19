@@ -505,7 +505,8 @@ class ClassRestrictionTests(unittest.TestCase):
         self.assertFalse(self.ns.ItemFacts(14, "link14").unusable)
 
     def test_other_class_item_to_ah_or_junk(self):
-        self.rt.execute('AH.link12 = 100')
+        # 2s: still more than the vendor pays when one auction doesn't sell and the 1s deposit is lost
+        self.rt.execute('AH.link12 = 200')
         self.assertEqual(self.ns.Classify(12, "link12").kind, "ah")
         self.rt.execute('AH.link12 = 16')
         self.ns.ClearCache()  # new prices arrive with a refresh

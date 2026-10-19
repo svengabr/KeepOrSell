@@ -28,9 +28,43 @@ class ClassifyTests(unittest.TestCase):
         self.assertEqual(self.ns.ClassifyPrice(1000, 100, 2, 850), "ah")
         self.assertEqual(self.ns.ClassifyPrice(1000, 100, 2, 851), ("vendor", "minprofit"))
 
+    def test_unsold_auction_must_still_beat_vendor(self):
+        # 1s deposit lost once: 300 x 0.95 - 100 = 185 is more than 100, 200 x 0.95 - 100 = 90 is not
+        self.assertEqual(self.ns.ClassifyPrice(300, 100, 2, 0, 100), "ah")
+        self.assertEqual(self.ns.ClassifyPrice(200, 100, 2, 0, 100), ("vendor", "deposit"))
+        # without a vendor price there is no measured deposit and no vendor to compare with
+        self.assertEqual(self.ns.ClassifyPrice(200, None, 2, 0, None), "ah")
+
     def test_min_profit_without_vendor_price_keeps(self):
         # can't be sold to a vendor either
         self.assertIsNone(self.ns.ClassifyPrice(50, 0, 2, 100))
+
+
+class DepositTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Prices.lua",), base=False)
+
+    def test_measured_on_forever(self):
+        # Moss Agate, 4s vendor: 1s at 2 and 8 hours (minimum), 2s 40c at 24 hours
+        self.assertEqual(self.ns.AuctionDeposit(400, 1, 2), 100)
+        self.assertEqual(self.ns.AuctionDeposit(400, 1, 8), 100)
+        self.assertEqual(self.ns.AuctionDeposit(400, 1, 24), 240)
+        # Wild Leather Leggings, 15s 32c vendor: 76c per 2 hours, rounded down before multiplying
+        self.assertEqual(self.ns.AuctionDeposit(1532, 1, 8), 304)
+
+    def test_counts_the_whole_stack(self):
+        self.assertEqual(self.ns.AuctionDeposit(1000, 20, 8), 4000)
+
+    def test_without_vendor_price(self):
+        self.assertIsNone(self.ns.AuctionDeposit(None, 1, 8))
+        self.assertIsNone(self.ns.AuctionDeposit(0, 1, 8))
+
+    def test_one_item_for_eight_hours(self):
+        self.assertEqual(self.ns.ItemDeposit(13), 100)  # Linen Cloth
+        self.assertEqual(self.ns.ItemDeposit(1532), 304)
+        self.assertIsNone(self.ns.ItemDeposit(None))
+        self.assertAlmostEqual(self.ns.ItemDeposit(13, 21), 100 / 21)
+        self.assertEqual(self.ns.ItemDeposit(13, 0), 100)
 
 
 class PricesTests(unittest.TestCase):
@@ -50,7 +84,19 @@ class PricesTests(unittest.TestCase):
         # below 1.1x the 5% AH cut can make the vendor pay more (Auctionator warns then)
         self.db.factor = 1
         self.assertEqual(self.classify(ah=105, vendor=100), ("vendor", "factor"))
-        self.assertEqual(self.classify(ah=110, vendor=100), ("ah", None))
+        # 110 passes the factor; the deposit is the next rule that fails
+        self.assertEqual(self.classify(ah=110, vendor=100), ("vendor", "deposit"))
+
+    def test_deposit_of_one_item(self):
+        # Linen Cloth: 13c vendor, 27c on the AH, 1s deposit for one: an unsold auction costs more than it brings
+        self.assertEqual(self.classify(ah=27, vendor=13), ("vendor", "deposit"))
+        self.assertEqual(self.classify(ah=200, vendor=13), ("ah", None))
+
+    def test_deposit_shared_by_all_copies(self):
+        # 21 Linen Cloth in one auction cost 1s too (measured): under 5c per item, so 27c is worth it again
+        self.assertEqual(self.classify(ah=27, vendor=13, count=21), ("ah", None))
+        # 3 copies: 33c each, still more than the AH brings over the vendor
+        self.assertEqual(self.classify(ah=27, vendor=13, count=3), ("vendor", "deposit"))
 
     def test_stale_price_kept(self):
         self.assertEqual(self.classify(ah=300, vendor=100, age=8, hasAge=True), (None, "stale"))

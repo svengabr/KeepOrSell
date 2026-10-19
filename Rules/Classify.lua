@@ -121,7 +121,7 @@ end
 -- For "disenchant" also {disenchant, bound, forSkill}: forSkill = worth it only for the skill points.
 -- Kept wearable gear also gets {disenchant}. Every verdict gets {bound, ahTrusted, ahWorth, deValue} for the
 -- tooltip rows comparing the ways to get rid of the item: ahTrusted = the auction price is known and recent,
--- ahWorth = it passes the factor and minimum profit, deValue = what disenchanting brings (enchanters only).
+-- ahWorth = it passes the factor, minimum profit and deposit, deValue = what disenchanting brings (enchanters only).
 -- needsPrice = the item stays only because its auction price is missing or too old.
 -- reason = "filter" with rule = "item" | "category": a rule of the player's filter (db.filter) decided; an item
 -- rule comes after the safeguards (quest, keep marks, equipment sets, items to open, tools, class items) and
@@ -390,6 +390,8 @@ function ns.Classify(itemID, itemLink, location)
   if now - cacheTime > CACHE_SECONDS then cache, cacheTime = {}, now end
   local key = tostring(itemLink or itemID) .. (IsBound(itemLink, location) and "|bound" or "")
     .. (InEquipmentSet(location) and "|set" or "")
+    -- the deposit per item depends on how many copies go into one auction
+    .. "|" .. tostring(C_Item and C_Item.GetItemCount and C_Item.GetItemCount(itemLink or itemID) or 1)
   if cache[key] then return cache[key] end
   local facts = ns.ItemFacts(itemID, itemLink, location)
   local verdict = ns.Decide(facts, KeepOrSellDB)

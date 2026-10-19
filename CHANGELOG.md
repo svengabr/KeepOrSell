@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.19.1
+
+- The auction house deposit now counts: an item only goes to the AuctionHouse group when it still beats the vendor after the AH cut even if one auction doesn't sell and the deposit is lost (8 hours, all copies in your bags in one auction). The 1 silver minimum deposit is per auction: a single Linen Cloth at 27 copper isn't worth it, 21 of them are. Items where the deposit eats the gain now go to the vendor, and the tooltip names the deposit.
+- The hint about items that don't stack no longer lists items you carry on purpose: class items such as Soul Shards, profession tools and items you marked to keep.
+
 ## 0.19.0
 
 - Shareable filters: `/kos export` shows your setup (decision options, keep marks, item and category rules) as plain text to copy, `/kos import` takes someone else's. A check shows what would change before you apply it, and "Undo last import" in the options takes it back. The text is data only and never runs; lines the addon doesn't understand are dropped and counted.
