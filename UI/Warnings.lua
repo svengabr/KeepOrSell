@@ -1,14 +1,16 @@
 -- Warns in chat and on screen when the player deletes or sells an item KeepOrSell would keep: a quest item,
--- a reagent, a keep mark, a class item or tool, gear saved in an equipment set. Only reads the game's own
+-- a reagent, a keep mark or filter keep rule, a class item or tool, gear saved in an equipment set. Only reads the game's own
 -- calls (post-hooks), never blocks them.
 local _, ns = ...
 local L = ns.L
 
 local KEPT_REASONS = {kept = true, classitem = true, tool = true, equipset = true}
 
--- true if losing an item with this verdict deserves a warning. Pure.
+-- true if losing an item with this verdict deserves a warning. A filter keep rule counts like a keep mark: it
+-- is the only filter verdict without a group (a category junk rule waiting for a price has needsPrice). Pure.
 function ns.ShouldWarnLoss(verdict)
   if not verdict then return false end
+  if verdict.reason == "filter" and not verdict.kind and not verdict.needsPrice then return true end
   return verdict.kind == "quest" or verdict.kind == "profession" or KEPT_REASONS[verdict.reason] == true
 end
 

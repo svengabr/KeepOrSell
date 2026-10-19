@@ -14,7 +14,8 @@ function ns.IsKept(itemID)
   return itemID ~= nil and KeepOrSellDB ~= nil and KeepOrSellDB.keep ~= nil and KeepOrSellDB.keep[itemID] == true
 end
 
-local function ItemText(itemID)
+-- The item's link when cached, else "item:<id>"; shared with /kos rules (FilterWindow.lua)
+function ns.ItemText(itemID)
   return select(2, (C_Item.GetItemInfo or GetItemInfo)(itemID)) or ("item:" .. itemID)
 end
 
@@ -22,7 +23,7 @@ end
 function ns.SetKept(itemID, keep)
   if not itemID then return end
   List()[itemID] = keep and true or nil
-  print(PREFIX .. (keep and L.KEEP_ON or L.KEEP_OFF):format(ItemText(itemID)))
+  print(PREFIX .. (keep and L.KEEP_ON or L.KEEP_OFF):format(ns.ItemText(itemID)))
   ns.SettingsChanged()
   if GameTooltip and GameTooltip:IsShown() and GameTooltip.RefreshData then GameTooltip:RefreshData() end
 end
@@ -39,7 +40,7 @@ end
 
 function ns.PrintKept()
   local links = {}
-  for itemID in pairs(List()) do table.insert(links, ItemText(itemID)) end
+  for itemID in pairs(List()) do table.insert(links, ns.ItemText(itemID)) end
   table.sort(links)
   print(PREFIX .. (#links > 0 and L.KEEP_LIST:format(table.concat(links, " ")) or L.KEEP_LIST_EMPTY))
 end
@@ -64,7 +65,8 @@ function ns.HookKeepClick()
   if HandleModifiedItemClick then hooksecurefunc("HandleModifiedItemClick", OnModifiedItemClick) end
 end
 
-local function ItemID(text)
+-- The item ID in an item link or a bare number, else nil; shared with /kos rule (FilterWindow.lua)
+function ns.ItemIDFromText(text)
   local id = text and (text:match("item:(%d+)") or text:match("^%s*(%d+)%s*$"))
   return id and tonumber(id)
 end
@@ -78,7 +80,7 @@ function ns.HandleKeepCommand(msg)
     return true
   end
   if cmd ~= "keep" and cmd ~= "unkeep" then return false end
-  local itemID = ItemID(rest)
+  local itemID = ns.ItemIDFromText(rest)
   if itemID then
     ns.SetKept(itemID, cmd == "keep")
   else

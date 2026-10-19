@@ -10,6 +10,8 @@ function ns.HelpLines(db)
   table.insert(lines, {"/kos", L.HELP_OPTIONS})
   table.insert(lines, {"/kos kept", L.HELP_KEPT})
   table.insert(lines, {L.HELP_KEEP_COMMAND_KEY, L.HELP_KEEP_COMMAND})
+  table.insert(lines, {"/kos export", L.HELP_EXPORT})
+  table.insert(lines, {"/kos import", L.HELP_IMPORT})
   table.insert(lines, {"/kos setup", L.HELP_SETUP})
   return lines
 end

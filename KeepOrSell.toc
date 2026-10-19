@@ -42,5 +42,6 @@ UI\Destroy.lua
 UI\LootCoins.lua
 UI\Warnings.lua
 UI\BagValue.lua
+UI\FilterWindow.lua
 UI\Options.lua
 Core\Core.lua

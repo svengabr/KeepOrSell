@@ -386,5 +386,142 @@ class ApplyTests(unittest.TestCase):
         self.assertEqual(lines, ["scrap: on → off", "1 category rules", "1 lines ignored (4)"])
 
 
+COMMAND_STUBS = """
+PRINTED = {}
+function print(text) PRINTED[#PRINTED + 1] = text end
+POPUPS = {}
+StaticPopupDialogs = {}
+function StaticPopup_Show(which) POPUPS[#POPUPS + 1] = which end
+C_Item.GetItemClassInfo = function(class) return ({[7] = "Trade Goods"})[class] end
+C_Item.GetItemSubClassInfo = function(class, sub) return ({[5] = "Cloth"})[sub] end
+"""
+
+
+class CommandTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(("Locales.lua", "Keep.lua", "Prices.lua", "Filter.lua", "FilterWindow.lua"),
+                                COMMAND_STUBS)
+        self.L = self.ns.L
+        self.rt.eval("""function(ns)
+          ns.SettingsChanged = function() ns.changed = (ns.changed or 0) + 1 end
+          ns.ShowFilterWindow = function(mode) ns.shown = mode end
+          KeepOrSellDB.filter = {items = {}, categories = {}}
+        end""")(self.ns)
+        self.db = self.rt.eval("KeepOrSellDB")
+        # always two results, also when the Lua function returns only true
+        self.rule = self.rt.eval("function(ns, db, id, word) local ok, err = ns.FilterRuleCommand(db, id, word) return ok, err end")
+
+    def parse(self, text):
+        return self.ns.ParseFilter(text)[0]
+
+    def printed(self):
+        return list(self.rt.eval("PRINTED").values())
+
+    def test_rule_command_sets_and_clears(self):
+        ok, err = self.rule(self.ns, self.db, 4, "junk")
+        self.assertTrue(ok)
+        self.assertEqual(self.db.filter["items"][4], "junk")
+        ok, err = self.rule(self.ns, self.db, 4, "clear")
+        self.assertTrue(ok)
+        self.assertIsNone(self.db.filter["items"][4])
+        ok, err = self.rule(self.ns, self.db, 4, "quest")
+        self.assertFalse(ok)
+        self.assertEqual(err, "group")
+        self.assertIsNone(self.db.filter["items"][4])
+
+    def test_rule_command_takes_any_case_and_creates_storage(self):
+        db = self.rt.eval("{}")
+        self.assertTrue(self.rule(self.ns, db, 4, "AH")[0])
+        self.assertEqual(db.filter["items"][4], "ah")
+        self.assertEqual(self.rule(self.ns, db, None, "junk")[1], "item")
+
+    def test_slash_routes(self):
+        self.assertTrue(self.ns.HandleFilterCommand("export"))
+        self.assertEqual(self.ns.shown, "export")
+        self.assertTrue(self.ns.HandleFilterCommand(" IMPORT "))
+        self.assertEqual(self.ns.shown, "import")
+        self.assertFalse(self.ns.HandleFilterCommand("keep 4"))
+        self.assertFalse(self.ns.HandleFilterCommand(""))
+        self.assertFalse(self.ns.HandleFilterCommand(None))
+
+    def test_slash_rule_with_link(self):
+        self.assertTrue(self.ns.HandleFilterCommand("rule |cffffffff|Hitem:4::::|h[Linen Cloth]|h|r junk"))
+        self.assertEqual(self.db.filter["items"][4], "junk")
+        self.assertEqual(self.ns.changed, 1)
+        self.assertIn("link4", self.printed()[-1])
+        self.assertTrue(self.ns.HandleFilterCommand("rule 4 clear"))
+        self.assertIsNone(self.db.filter["items"][4])
+
+    def test_slash_rule_bad_input_shows_usage(self):
+        for msg in ("rule 4 quest", "rule junk", "rule", "rule [Linen] junk"):
+            self.assertTrue(self.ns.HandleFilterCommand(msg), msg)
+            self.assertIn(self.L.FILTER_RULE_USAGE, self.printed()[-1], msg)
+        self.assertIsNone(self.db.filter["items"][4])
+        self.assertIsNone(self.ns.changed)
+
+    def test_slash_rules_lists_items_and_categories(self):
+        self.rt.execute("""KeepOrSellDB.filter = {name = "Leveling", items = {[4] = "junk", [3] = "ah", [999] = "junk"},
+          categories = {{class = 7, subclass = 5, qmin = 0, qmax = 1, group = "junk"}, {class = 0, group = "keep"}}}""")
+        self.assertTrue(self.ns.HandleFilterCommand("rules"))
+        text = "\n".join(self.printed())
+        self.assertIn("Leveling", text)
+        self.assertIn("link4", text)
+        self.assertIn("link3", text)
+        self.assertIn("item:999", text)  # not cached
+        self.assertIn("Trade Goods: Cloth", text)
+        self.assertIn("class 0", text)  # no class name known
+
+    def test_slash_rules_empty(self):
+        self.assertTrue(self.ns.HandleFilterCommand("rules"))
+        self.assertIn(self.L.FILTER_RULES_EMPTY, self.printed()[-1])
+
+    def test_undo_without_backup_says_so(self):
+        self.ns.UndoFilterCommand()
+        self.assertIn(self.L.FILTER_NO_UNDO, self.printed()[-1])
+        self.assertIsNone(self.ns.changed)
+
+    def test_undo_restores_and_refreshes(self):
+        self.rt.execute("KeepOrSellDB.filter.items[4] = 'junk'; KeepOrSellDB.factor = 2")
+        filt = self.parse("KeepOrSell filter 1\nfactor = 5\nitem 3 = ah")
+        self.ns.ApplyFilter(self.db, filt)
+        self.ns.UndoFilterCommand()
+        self.assertEqual(self.db.factor, 2)
+        self.assertEqual(self.db.filter["items"][4], "junk")
+        self.assertEqual(self.ns.changed, 1)
+        self.assertIn(self.L.FILTER_UNDONE, self.printed()[-1])
+
+    def test_clear_asks_first(self):
+        self.rt.execute("KeepOrSellDB.filter.items[4] = 'junk'")
+        self.ns.ClearFilterCommand()
+        self.assertEqual(self.rt.eval("POPUPS[1]"), "KEEPORSELL_CLEAR_FILTER")
+        self.assertEqual(self.db.filter["items"][4], "junk")
+        dialog = self.rt.eval("StaticPopupDialogs.KEEPORSELL_CLEAR_FILTER")
+        self.assertEqual(dialog.text, self.L.FILTER_CLEAR_CONFIRM)
+        dialog.OnAccept()
+        self.assertIsNone(self.db.filter["items"][4])
+        self.assertEqual(self.ns.changed, 1)
+        self.assertIsNotNone(self.db.filterBackup)
+
+    def test_check_text(self):
+        filt, lines = self.ns.CheckFilterText(self.db, "KeepOrSell filter 1\nitem 4 = junk")
+        self.assertIsNotNone(filt)
+        self.assertIn("1 item rules (1 junk)", list(lines.values()))
+        for text, err in (("hello", "FILTER_ERR_NOHEADER"), ("KeepOrSell filter 9", "FILTER_ERR_VERSION")):
+            filt, message = self.ns.CheckFilterText(self.db, text)
+            self.assertIsNone(filt)
+            self.assertEqual(message, self.L[err])
+
+    def test_apply_text(self):
+        filt = self.parse("KeepOrSell filter 1\nname = Leveling\nitem 4 = junk")
+        self.ns.ApplyFilterCommand(filt)
+        self.assertEqual(self.db.filter["items"][4], "junk")
+        self.assertEqual(self.ns.changed, 1)
+        self.assertIn("Leveling", self.printed()[-1])
+
+    def test_apply_unnamed_filter(self):
+        self.ns.ApplyFilterCommand(self.parse("KeepOrSell filter 1\nitem 4 = junk"))
+        self.assertIn(self.L.FILTER_APPLIED_UNNAMED, self.printed()[-1])
+
+
 if __name__ == "__main__":
     unittest.main()

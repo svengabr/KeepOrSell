@@ -11,6 +11,7 @@ globals = {
   "SlashCmdList",
   "Scrap",              -- hooks Scrap.IsJunk
   "KeepOrSellDependencyMixin", -- mixin of the template in Options.xml
+  "StaticPopupDialogs", -- adds KEEPORSELL_CLEAR_FILTER
 }
 
 read_globals = {
@@ -79,6 +80,7 @@ read_globals = {
   "BackdropTemplateMixin",
   "ButtonFrameTemplate_HideButtonBar",
   "ButtonFrameTemplate_HidePortrait",
+  "ChatFontNormal",
   "CreateSettingsButtonInitializer",
   "UISpecialFrames",
   "GameTooltip",
@@ -86,6 +88,8 @@ read_globals = {
   "LootFrame",
   "MerchantFrame",
   "ScrollUtil",
+  "ScrollingEdit_OnCursorChanged",
+  "ScrollingEdit_OnUpdate",
   "StaticPopup_Show",
   "UIErrorsFrame",
   "ItemRefTooltip",
@@ -101,5 +105,7 @@ read_globals = {
   "ITEM_OPENABLE",
   "ITEM_SPELL_KNOWN",
   "LOCKED",
+  "NO",
   "NUM_BAG_SLOTS",
+  "YES",
 }

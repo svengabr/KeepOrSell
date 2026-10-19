@@ -71,8 +71,8 @@ def load():
       ns.UpdateBagValue = function() ns.valueUpdated = (ns.valueUpdated or 0) + 1 end
       ns.RefreshBaganator = function() ns.refreshed = (ns.refreshed or 0) + 1 end
     end""")(ns)
-    for f in ("Locales.lua", "Keep.lua", "Prices.lua", "Share.lua", "Dependencies.lua", "Options.lua", "Warnings.lua",
-              "Core.lua"):
+    for f in ("Locales.lua", "Keep.lua", "Prices.lua", "Share.lua", "Filter.lua", "Dependencies.lua", "FilterWindow.lua",
+              "Options.lua", "Warnings.lua", "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             source(f), ns)
     return rt, ns
@@ -94,7 +94,7 @@ class OptionsTests(unittest.TestCase):
 
     def test_sections(self):
         headers = [i.header for i in self.calls.layout.values() if i.header]
-        self.assertEqual(headers, ["Auction house (Auctionator)", "Junk (Scrap)", "Keep", "Display", "Dependencies"])
+        self.assertEqual(headers, ["Auction house (Auctionator)", "Junk (Scrap)", "Keep", "Filter", "Display", "Dependencies"])
 
     def test_slider_labels(self):
         self.assertEqual(self.calls.sliders["minProfit"].label(0), "off")
@@ -192,7 +192,7 @@ class OptionsTests(unittest.TestCase):
         self.assertNotIn("Needs", self.calls.tooltips["scrap"])
 
     def test_dependency_list(self):
-        layout = list(self.calls.layout.values())[4:]
+        layout = list(self.calls.layout.values())[5:]
         self.assertEqual(layout[0].header, "Dependencies")
         self.assertEqual([i.data.name for i in layout[1:]], ["Auctionator", "TradeSkillMaster", "Baganator", "Scrap", "Questie"])
         self.assertEqual(layout[1].template, "KeepOrSellDependencyTemplate")
@@ -218,6 +218,29 @@ class OptionsTests(unittest.TestCase):
         rt.execute("BUTTONS['Kept items']()")
         self.assertIsNone(rt.eval("next(KeepOrSellDB.keep)"))
         self.assertIn("Forgot 1", rt.eval("PRINTED[1]"))
+
+    def test_options_has_filter_buttons(self):
+        rt, ns = load()
+        rt.execute("""
+          BUTTONS = {}
+          function CreateSettingsButtonInitializer(name, text, click, tip, tags) BUTTONS[name] = click return {} end
+          KeepOrSellDB = {}
+        """)
+        rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        L = ns.L
+        buttons = rt.eval("BUTTONS")
+        for key in ("OPT_FILTER_EXPORT", "OPT_FILTER_IMPORT", "OPT_FILTER_UNDO", "OPT_FILTER_CLEAR"):
+            self.assertIsNotNone(L[key], key)
+            self.assertIsNotNone(buttons[L[key]], key)
+        rt.eval("function(ns) ns.ShowFilterWindow = function(mode) ns.shown = mode end end")(ns)
+        buttons[L.OPT_FILTER_IMPORT]()
+        self.assertEqual(ns.shown, "import")
+
+    def test_slash_filter_commands(self):
+        self.rt.eval("function(ns) ns.ShowFilterWindow = function(mode) ns.shown = mode end end")(self.ns)
+        self.rt.execute("SlashCmdList.KEEPORSELL('export')")
+        self.assertEqual(self.ns.shown, "export")
+        self.assertIsNone(self.calls.opened)
 
     def test_slash_keep(self):
         self.rt.execute("""

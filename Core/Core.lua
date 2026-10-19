@@ -160,11 +160,12 @@ frame:RegisterEvent("AUCTION_HOUSE_CLOSED")
 if C_AuctionHouse and C_AuctionHouse.ReplicateItems then frame:RegisterEvent("REPLICATE_ITEM_LIST_UPDATE") end
 
 SLASH_KEEPORSELL1 = "/kos"
--- /kos opens the options, /kos setup the setup window, /kos keep|unkeep <item> and /kos kept the keep marks
+-- /kos opens the options, /kos setup the setup window, /kos export|import the filter window, /kos rule <item>
+-- <group|clear> and /kos rules the filter rules, /kos keep|unkeep <item> and /kos kept the keep marks
 SlashCmdList.KEEPORSELL = function(msg)
   if msg and msg:lower():match("^%s*setup%s*$") then
     ns.ShowSetup()
-  elseif not ns.HandleKeepCommand(msg) then
+  elseif not ns.HandleFilterCommand(msg) and not ns.HandleKeepCommand(msg) then
     ns.OpenOptions()
   end
 end
