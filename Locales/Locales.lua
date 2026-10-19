@@ -245,6 +245,8 @@ local L = {
   TIP_ALT = "For alts: %s – mail it over",
   TIP_ALT_CLASS = "class item",
   SECTION_ACCOUNT = "Account mode",
+  SUBPAGE_ALTS = "Alts",
+  OPT_ALTS_INTRO = "Your other characters on this ruleset and faction. Items they need go to the group \"For alts\"; untick one to leave it out.",
   OPT_ACCOUNT_MODE = "Think of my other characters",
   OPT_ACCOUNT_MODE_TIP = "Items another of your characters on this ruleset and faction needs go to the group \"For alts\", so you can mail them over. Each character has to log in once with KeepOrSell.",
   OPT_ALT_PROFESSION = "Profession materials",
@@ -502,6 +504,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_ALT = "Für Twinks: %s – per Post schicken"
   L.TIP_ALT_CLASS = "Klassenitem"
   L.SECTION_ACCOUNT = "Account-Modus"
+  L.SUBPAGE_ALTS = "Twinks"
+  L.OPT_ALTS_INTRO = "Deine anderen Charaktere auf diesem Ruleset und dieser Fraktion. Was sie brauchen, kommt in die Gruppe „Für Twinks“; abwählen, um einen auszulassen."
   L.OPT_ACCOUNT_MODE = "An meine Twinks denken"
   L.OPT_ACCOUNT_MODE_TIP = "Items, die ein anderer deiner Charaktere auf diesem Ruleset und dieser Fraktion braucht, kommen in die Gruppe „Für Twinks“, damit du sie per Post schicken kannst. Jeder Charakter muss sich einmal mit KeepOrSell einloggen."
   L.OPT_ALT_PROFESSION = "Berufsmaterial"

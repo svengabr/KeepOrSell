@@ -28,8 +28,9 @@ local function UnderAccountMode(parent, initializer)
   if initializer.AddModifyPredicate then initializer:AddModifyPredicate(enabled) end
 end
 
--- "Account mode": the master switch, one switch per kind of need, then the other characters of the account (same
--- ruleset and faction), each ticked unless left out (KeepOrSellDB.altIncluded[key] = false)
+-- "Account mode": the master switch and one switch per kind of need. The other characters of the account (same
+-- ruleset and faction) get their own page below KeepOrSell, each ticked unless left out
+-- (KeepOrSellDB.altIncluded[key] = false); clients without subpages list them here.
 local function AccountMode(layout, Checkbox, Header)
   Header(L.SECTION_ACCOUNT)
   local master = Checkbox("accountMode", L.OPT_ACCOUNT_MODE, L.OPT_ACCOUNT_MODE_TIP, true)
@@ -40,17 +41,25 @@ local function AccountMode(layout, Checkbox, Header)
   local own = KeepOrSellDB.characters and KeepOrSellDB.characters[key] or {}
   local me = {key = key, faction = own.faction, ruleset = own.ruleset, realm = own.realm}
   local alts = ns.AltCharacters(KeepOrSellDB.characters, me)
+  local page, pageLayout = category, layout
+  if Settings.RegisterVerticalLayoutSubcategory then
+    page, pageLayout = Settings.RegisterVerticalLayoutSubcategory(category, L.SUBPAGE_ALTS)
+    if pageLayout and Settings.CreateElementInitializer then
+      pageLayout:AddInitializer(Settings.CreateElementInitializer("KeepOrSellNoteTemplate", {text = L.OPT_ALTS_INTRO}))
+    end
+  end
   for _, alt in ipairs(alts) do
     local variable = addonName .. "_alt_" .. alt.key
     local color = alt.class and C_ClassColor and C_ClassColor.GetClassColor and C_ClassColor.GetClassColor(alt.class)
     local name = color and color:WrapTextInColorCode(alt.name) or alt.name
-    local setting = Settings.RegisterAddOnSetting(category, variable, alt.key, KeepOrSellDB.altIncluded,
+    local setting = Settings.RegisterAddOnSetting(page, variable, alt.key, KeepOrSellDB.altIncluded,
       Settings.VarType.Boolean, name, true)
-    UnderAccountMode(master, Settings.CreateCheckbox(category, setting, L.OPT_ALT_TIP))
+    -- a parent on another page can't grey it out live; the predicate is checked when the page shows
+    UnderAccountMode(page == category and master or nil, Settings.CreateCheckbox(page, setting, L.OPT_ALT_TIP))
     Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end)
   end
-  if #alts == 0 and layout and Settings.CreateElementInitializer then
-    layout:AddInitializer(Settings.CreateElementInitializer("KeepOrSellNoteTemplate", {text = L.OPT_ALT_NONE}))
+  if #alts == 0 and pageLayout and Settings.CreateElementInitializer then
+    pageLayout:AddInitializer(Settings.CreateElementInitializer("KeepOrSellNoteTemplate", {text = L.OPT_ALT_NONE}))
   end
 end
 

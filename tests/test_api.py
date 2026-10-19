@@ -20,6 +20,7 @@ SOURCES = sorted(p for d in SOURCE_DIRS for p in (ROOT / d).glob("*.lua"))
 NOT_IN_DOCS = {
     # SavedVariables, slash command and optional third-party addons
     "KeepOrSellDB": "our SavedVariables",
+    "Constants": "generated constants table (CharacterNameSeparatorConsts, used by Syndicator on Forever); guarded",
     "SLASH_KEEPORSELL1": "our slash command",
     "KeepOrSellDependencyMixin": "our mixin for the template in Options.xml",
     "KeepOrSellNoteMixin": "our mixin for the note template in Options.xml",

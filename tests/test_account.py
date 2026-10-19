@@ -87,6 +87,44 @@ class RecordTests(unittest.TestCase):
         self.ns.RecordCharacter()
         self.assertEqual([a.name for a in self.ns.AltsNeedingItem(3).values()], ["Bob"])
 
+    def test_character_key_has_the_surname_on_forever(self):
+        self.rt.execute("function UnitName() return 'Drache', 'Offiziell' end")
+        self.assertEqual(self.ns.CharacterKey(), "Drache-Realm")  # no regional names: second value isn't a surname
+        self.rt.execute("RegionalUniqueNamesEnabled = function() return true end")
+        self.assertEqual(self.ns.CharacterKey(), "Drache Offiziell-Realm")
+        self.rt.execute("function UnitName() return 'Drache', nil end")
+        self.assertEqual(self.ns.CharacterKey(), "Drache-Realm")
+
+    def test_move_character_data(self):
+        db = self.rt.eval("""{recipes = {['Drache-Realm'] = {[1] = {3}}}, opened = {['Drache-Realm'] = {Tailoring = true}},
+          crafts = {['Drache-Realm'] = {}, ['Drache Offiziell-Realm'] = {kept = true}},
+          altIncluded = {['Drache-Realm'] = false}, baganatorSetup = {['Drache-Realm'] = true}}""")
+        self.ns.MoveCharacterData(db, "Drache-Realm", "Drache Offiziell-Realm")
+        self.assertIsNone(db.recipes["Drache-Realm"])
+        self.assertEqual(db.recipes["Drache Offiziell-Realm"][1][1], 3)
+        self.assertTrue(db.opened["Drache Offiziell-Realm"].Tailoring)
+        self.assertTrue(db.crafts["Drache Offiziell-Realm"].kept)  # newer data stays
+        self.assertIs(db.altIncluded["Drache Offiziell-Realm"], False)
+        self.assertTrue(db.baganatorSetup["Drache Offiziell-Realm"])
+        self.ns.MoveCharacterData(db, "Same-Realm", "Same-Realm")  # nothing to do
+
+    def test_record_character_moves_data_to_the_full_name(self):
+        self.rt.execute("""function UnitName() return 'Drache', 'Offiziell' end
+          RegionalUniqueNamesEnabled = function() return true end
+          KeepOrSellDB.recipes = {['Drache-Realm'] = {[1] = {3}}}
+          KeepOrSellDB.characters = {['Drache-Realm'] = {faction = 'Horde'}}""")
+        self.ns.RecordCharacter()
+        self.assertEqual(self.rt.eval("KeepOrSellDB.recipes['Drache Offiziell-Realm'][1][1]"), 3)
+        self.assertIsNone(self.rt.eval("KeepOrSellDB.recipes['Drache-Realm']"))
+        self.assertIsNone(self.rt.eval("KeepOrSellDB.characters['Drache-Realm']"))
+        self.assertEqual(self.rt.eval("KeepOrSellDB.characters['Drache Offiziell-Realm'].faction"), "Horde")
+
+    def test_full_names_listed(self):
+        characters = self.rt.eval("""{['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm'},
+          ['Drache Offiziell-Realm'] = {faction = 'Alliance', realm = 'Realm'}}""")
+        me = self.rt.eval("{key = 'Tester-Realm', faction = 'Alliance', realm = 'Realm'}")
+        self.assertEqual(self.ns.AltCharacters(characters, me)[1].name, "Drache Offiziell")
+
     def test_class_item_ids(self):
         self.assertEqual(list(self.ns.ClassItemIDs("PRIEST", False).values()), [17028, 17029, 17056])
         self.assertEqual(list(self.ns.ClassItemIDs("PRIEST", True).values()), [17056])

@@ -32,6 +32,23 @@ function ns.SamePool(me, other)
   return me.realm ~= nil and me.realm == other.realm
 end
 
+-- Tables in KeepOrSellDB keyed by character
+local PER_CHARACTER = {"recipes", "upcoming", "crafts", "recipeProfession", "opened", "baganatorSetup", "characters",
+  "altIncluded"}
+
+-- Moves a character's data from oldKey to newKey in every per-character table; data already under newKey stays.
+-- Pure.
+function ns.MoveCharacterData(db, oldKey, newKey)
+  if oldKey == newKey then return end
+  for _, name in ipairs(PER_CHARACTER) do
+    local t = db[name]
+    if type(t) == "table" and t[oldKey] ~= nil then
+      if t[newKey] == nil then t[newKey] = t[oldKey] end
+      t[oldKey] = nil
+    end
+  end
+end
+
 local altIndex -- built once per session: other characters only change in their own sessions
 
 -- Writes the current character's record; older versions kept only the faction in KeepOrSellDB.factions (the
@@ -48,6 +65,8 @@ function ns.RecordCharacter()
   end
   KeepOrSellDB.factions = nil
   local key = ns.CharacterKey()
+  -- versions before the surname kept this character under its first name only
+  ns.MoveCharacterData(KeepOrSellDB, ns.CharacterKey(true), key)
   local old = characters[key] or {}
   characters[key] = {
     faction = UnitFactionGroup and UnitFactionGroup("player") or old.faction,

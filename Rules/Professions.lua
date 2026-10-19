@@ -60,9 +60,17 @@ end
 
 local index, upcomingIndex -- {[itemID] = true}, rebuilt after a change
 
--- "Name-Realm", for data KeepOrSell keeps per character
-function ns.CharacterKey()
-  return (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
+-- "Name-Realm", for data KeepOrSell keeps per character. Forever's characters have a surname (UnitName returns
+-- it second while regional unique names are on): "Drache Offiziell-Realm". firstNameOnly gives the key older
+-- versions used.
+function ns.CharacterKey(firstNameOnly)
+  local name, surname = UnitName("player")
+  name = name or "?"
+  if not firstNameOnly and surname and surname ~= "" and RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled() then
+    local separators = Constants and Constants.CharacterNameSeparatorConsts
+    name = name .. (separators and separators.CHARACTERNAME_SURNAME_SEPARATOR or " ") .. surname
+  end
+  return name .. "-" .. (GetRealmName() or "?")
 end
 
 local function CharacterTable(name)

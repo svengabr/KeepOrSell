@@ -39,6 +39,7 @@ read_globals = {
   "C_TooltipInfo",
   "C_TradeSkillUI",
   "ClearCursor",
+  "Constants",
   "CreateFrame",
   "CursorHasItem",
   "DeleteCursorItem",

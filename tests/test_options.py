@@ -5,7 +5,10 @@ from addon import source
 from wowapi import runtime
 
 STUBS = """
-CALLS = {settings = {}, controls = {}, callbacks = {}, sliders = {}, initializers = {}, tooltips = {}, layout = {}}
+CALLS = {settings = {}, controls = {}, callbacks = {}, sliders = {}, initializers = {}, tooltips = {}, layout = {},
+  subLayout = {}, checkboxCategory = {}}
+local subcategory = {GetID = function() return 43 end}
+local subLayout = {AddInitializer = function(_, init) table.insert(CALLS.subLayout, init) end}
 local category = {GetID = function() return 42 end}
 local layout = {AddInitializer = function(_, init) table.insert(CALLS.layout, init) end}
 local function Initializer(key)
@@ -26,6 +29,10 @@ C_AddOns = {
 Settings = {
   VarType = {Boolean = "boolean", Number = "number"},
   RegisterVerticalLayoutCategory = function(name) CALLS.categoryName = name return category, layout end,
+  RegisterVerticalLayoutSubcategory = function(parent, name)
+    CALLS.subcategoryName, CALLS.subcategoryParent = name, parent
+    return subcategory, subLayout
+  end,
   CreateElementInitializer = function(template, data) return {template = template, data = data} end,
   RegisterAddOnSetting = function(cat, variable, key, tbl, varType, name, default)
     local s = {variable = variable, key = key, tbl = tbl, varType = varType, default = default}
@@ -43,6 +50,7 @@ Settings = {
   end,
   CreateCheckbox = function(cat, setting, tooltip)
     table.insert(CALLS.controls, "checkbox:" .. setting.key)
+    CALLS.checkboxCategory[setting.key] = cat == subcategory and "sub" or "main"
     CALLS.tooltips[setting.key] = tooltip
     return Initializer(setting.key)
   end,
@@ -115,9 +123,18 @@ class AccountModeOptionsTests(unittest.TestCase):
         self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
         self.assertIn("checkbox:Bob-Realm", list(self.rt.eval("CALLS").controls.values()))
 
+    def test_alts_on_their_own_page(self):
+        self.open(self.CHARACTERS)
+        self.assertEqual(self.calls.subcategoryName, "Alts")
+        self.assertEqual(self.calls.subcategoryParent.GetID(), 42)
+        self.assertEqual(self.calls.checkboxCategory["Bob-Realm"], "sub")
+        self.assertEqual(self.calls.checkboxCategory["altProfession"], "main")
+        intro = list(self.calls.subLayout.values())[0]
+        self.assertEqual((intro.template, intro.data.text), ("KeepOrSellNoteTemplate", self.ns.L.OPT_ALTS_INTRO))
+
     def test_no_alts_shows_note(self):
         self.open("{}")
-        notes = [i for i in self.calls.layout.values() if i.template == "KeepOrSellNoteTemplate"]
+        notes = [i for i in self.calls.subLayout.values() if i.data.text == self.ns.L.OPT_ALT_NONE]
         self.assertEqual(len(notes), 1)
         self.assertEqual(notes[0].data.text, self.ns.L.OPT_ALT_NONE)
 
