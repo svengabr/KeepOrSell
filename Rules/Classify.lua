@@ -336,6 +336,7 @@ function ns.ItemFacts(itemID, itemLink, location)
   local playerClass = UnitClass and select(2, UnitClass("player"))
   local questOnly = ns.IsQuestOnlyItem(itemID)
   local fromTooltip = TooltipFacts(itemID)
+  local quality = Quality(itemID, itemLink)
   return {
     quest = ns.GetObjectiveState(itemID),
     questie = ns.GetQuestieQuest(itemID),
@@ -347,14 +348,14 @@ function ns.ItemFacts(itemID, itemLink, location)
     itemID = itemID,
     classID = classID,
     subclassID = subclassID,
-    quality = Quality(itemID, itemLink),
+    quality = quality,
     equipLoc = equipLoc,
     tool = ns.IsProfessionTool(itemID, classID, subclassID),
     classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass
       or ns.IsUselessDrink(playerClass, classID, ItemSpellName(itemID), DrinkName()) or false,
     altReagent = ns.AltsNeedingReagent(itemID),
-    plain = ns.IsPlainGear(Quality(itemID, itemLink), classID, subclassID, equipLoc),
+    plain = ns.IsPlainGear(quality, classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
     reagent = ns.IsSkillUpReagent(itemID),
     upcoming = ns.IsUpcomingReagent(itemID),
