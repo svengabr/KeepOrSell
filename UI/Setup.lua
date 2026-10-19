@@ -86,14 +86,10 @@ function ns.SetupBaganator()
 end
 
 -- Window ---------------------------------------------------------------------------------------------------
--- Built from Blizzard's own textures (atlases, icons, Morpheus font), nothing is shipped with the addon.
--- Atlases are checked first; a missing one falls back to a plain line.
-
-local ICONS = "Interface\\Icons\\"
-local LOGO = "Interface\\AddOns\\KeepOrSell\\Icon"
-local HEADER_FONT = "Fonts\\MORPHEUS.TTF"
-local GOLD = {0.79, 0.64, 0.29}
-local PARCHMENT = {0.95, 0.89, 0.71}
+-- The look (boxes, headings, buttons, the window itself) comes from UI/Style.lua.
+local Style = ns.Style
+local ICONS, HEADER_FONT, GOLD, PARCHMENT = Style.ICONS, Style.HEADER_FONT, Style.GOLD, Style.PARCHMENT
+local Box, Heading, Button = Style.Box, Style.Heading, Style.Button
 
 -- title, short text on the tile, long text in its tooltip, icon
 local STEPS = {
@@ -126,47 +122,6 @@ local INNER = RIGHT_W - 24
 local frame
 local manualView = false -- the import failed, show the way by hand
 
-local BACKDROP = {
-  bgFile = "Interface\\Buttons\\WHITE8x8",
-  edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-  edgeSize = 12,
-  insets = {left = 3, right = 3, top = 3, bottom = 3},
-}
-
--- Dark box with a gold-tinted border, like the panels of the quest log
-local function Box(parent, shade, border)
-  local box = CreateFrame("Frame", nil, parent, BackdropTemplateMixin and "BackdropTemplate" or nil)
-  if box.SetBackdrop then
-    box:SetBackdrop(BACKDROP)
-    box:SetBackdropColor(shade, shade * 0.85, shade * 0.6, 0.95)
-    box:SetBackdropBorderColor(GOLD[1] * border, GOLD[2] * border, GOLD[3] * border)
-  end
-  return box
-end
-
-local function SetAtlasOr(texture, atlas, r, g, b)
-  if C_Texture and C_Texture.GetAtlasExists and C_Texture.GetAtlasExists(atlas) then
-    texture:SetAtlas(atlas)
-  else
-    texture:SetColorTexture(r, g, b, 0.8)
-  end
-end
-
--- Heading in the quest book font with an ornamental divider below; y counts from the top of the
--- parent, or from the bottom of below when given
-local function Heading(parent, text, size, y, below)
-  local label = parent:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-  label:SetFont(HEADER_FONT, size, "")
-  label:SetTextColor(unpack(PARCHMENT))
-  if below then label:SetPoint("TOP", below, "BOTTOM", 0, y) else label:SetPoint("TOP", 0, y) end
-  label:SetText(text)
-  local divider = parent:CreateTexture(nil, "ARTWORK")
-  SetAtlasOr(divider, "Campaign-QuestLog-LoreDivider", unpack(GOLD))
-  divider:SetSize(parent:GetWidth() - 40, size > 16 and 10 or 6)
-  divider:SetPoint("TOP", label, "BOTTOM", 0, -2)
-  return label
-end
-
 local function Icon(parent, file, size, quality)
   local border = parent:CreateTexture(nil, "BORDER")
   border:SetSize(size + 2, size + 2)
@@ -177,14 +132,6 @@ local function Icon(parent, file, size, quality)
   icon:SetTexture(ICONS .. file)
   icon:SetTexCoord(0.07, 0.93, 0.07, 0.93) -- cut the icon's own frame
   return border
-end
-
-local function Button(parent, text, onClick)
-  local button = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
-  button:SetText(text)
-  button:SetSize(120, 22)
-  button:SetScript("OnClick", onClick)
-  return button
 end
 
 local function ShowTileTooltip(tile)
@@ -367,31 +314,8 @@ local function Refresh()
 end
 
 local function CreateSetupFrame()
-  frame = CreateFrame("Frame", "KeepOrSellSetupFrame", UIParent, "ButtonFrameTemplate")
-  frame:Hide()
+  frame = Style.Window("KeepOrSellSetupFrame", L.SETUP_TITLE, WIDTH, HEIGHT)
   frame.tiles = {}
-  -- our logo in the round portrait, like Blizzard's own windows
-  if frame.SetPortraitToAsset then
-    frame:SetPortraitToAsset(LOGO)
-    -- cut the square icon down to the round emblem (Icon.tga: centre 32/32, teal disc r 18 of 64), with room
-    -- for the portrait ring, so the emblem fills it and sits in its middle
-    if frame.SetPortraitTexCoord then frame:SetPortraitTexCoord(9.5 / 64, 54.5 / 64, 9.5 / 64, 54.5 / 64) end
-  elseif ButtonFrameTemplate_HidePortrait then
-    ButtonFrameTemplate_HidePortrait(frame)
-  end
-  if ButtonFrameTemplate_HideButtonBar then ButtonFrameTemplate_HideButtonBar(frame) end
-  if frame.Inset then frame.Inset:Hide() end
-  if frame.SetTitle then frame:SetTitle(L.SETUP_TITLE) end
-  frame:SetSize(WIDTH, HEIGHT)
-  frame:SetFrameStrata("DIALOG") -- above the options panel it can be opened from
-  frame:SetToplevel(true)
-  frame:SetPoint("CENTER")
-  frame:EnableMouse(true)
-  frame:SetMovable(true)
-  frame:RegisterForDrag("LeftButton")
-  frame:SetScript("OnDragStart", frame.StartMoving)
-  frame:SetScript("OnDragStop", frame.StopMovingOrSizing)
-  table.insert(UISpecialFrames, "KeepOrSellSetupFrame") -- Esc closes it
 
   local left = Box(frame, 0.08, 0.7)
   left:SetSize(LEFT_W, PANEL_H)

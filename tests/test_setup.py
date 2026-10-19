@@ -4,7 +4,7 @@ import unittest
 
 from addon import CORE_FILES, load
 
-FILES = CORE_FILES + ("Dependencies.lua", "Setup.lua")
+FILES = CORE_FILES + ("Dependencies.lua", "Style.lua", "Setup.lua")
 
 
 def steps_by_key(ns, rt, **state):
@@ -94,6 +94,13 @@ UISpecialFrames = {}
 class WindowTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(FILES + ("Baganator.lua",), FRAMES)
+
+    def test_shared_window_style(self):
+        frame = self.ns.Style.Window("KeepOrSellTestFrame", "Title", 760, 486)
+        self.assertIsNotNone(frame)
+        self.assertFalse(frame.IsShown(frame))
+        self.assertEqual(self.rt.eval("UISpecialFrames[1]"), "KeepOrSellTestFrame")
+        self.assertIsNotNone(self.ns.Style.Box(frame, 0.08, 0.7))
 
     def test_builds_and_shows(self):
         self.ns.ShowSetup()
