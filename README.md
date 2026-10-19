@@ -18,6 +18,7 @@ Your bag items end up in these groups:
 - **Profession**: materials for recipes that still give skill points, whether you know them already or can still learn them, plus those recipes themselves. Keep it, even if the AH pays well.
 - **AuctionHouse**: sells for at least twice the vendor price on the AH. Put it up for sale.
 - **Junk**: grey items, cheap trade goods nobody needs, gear your class can't ever wear, recipes you already know. Scrap sells it at the next vendor.
+- **For alts**: profession materials and class items another of your characters needs (same ruleset and faction). Mail them over. Your own needs come first.
 - **Disenchant** (enchanters only): green, blue and purple gear you'd otherwise sell, when its materials are worth more than the vendor or the AH pays. Soulbound gear you can't auction lands here too. The tooltip shows the average value and what you'll likely get, e.g. "80% Lesser Magic Essence ×1–2".
 
 Hover over any item and the tooltip tells you which group it's in and why, for example "Auction house: AH 1g 20s, vendor 15s". For gear you can wear it also says what it would bring once you no longer need it: disenchanting, the auction house or the vendor, whichever pays most.
@@ -43,7 +44,7 @@ Want to keep something KeepOrSell would sell? **Alt+Right-click** it in your bag
 - **Bag value**: a small line shows what your junk and your auction items are worth, e.g. "Junk 1g 20s · AH 15g".
 - **Hints**: if KeepOrSell needs something from you (like a fresh AH scan), a little button shows up in your bag window.
 - **Warnings**: destroy or sell something KeepOrSell would keep (a quest item, a reagent, an item you marked) and a warning in chat says why.
-- **Alts**: reagents that still give skill points to another of your characters land in Profession, with their name in the tooltip. Mail them over.
+- **Account mode**: KeepOrSell thinks of your other characters too. Reagents that still give one of them skill points and the class items of their class (candles, poisons, totems …) go to "For alts", with their name in the tooltip. Each character logs in once with KeepOrSell; in the options you can leave single characters out.
 - **Price sharing**: in a group, everyone with KeepOrSell keeps each other's auction prices fresh. Whoever has the newer price shares it.
 
 ![Bag tools](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/07-bag-tools.jpg)
@@ -88,7 +89,7 @@ That's it. The groups show up in Baganator inside the equipment sets category. W
 
 Esc → Options → AddOns → **KeepOrSell**, or just type `/kos`.
 
-You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials (also those for recipes you haven't learned yet), disenchanting, Questie, Alt+Right-click to keep, tooltip, hints, destroy button, loot coins, bag value, price sharing. One button forgets every item you marked to keep. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
+You can change how much more the AH price has to be (default 2×), set a minimum profit, ignore old prices (default: older than 7 days) and turn each part on or off: junk rules, profession materials (also those for recipes you haven't learned yet), account mode (what your other characters need, each character can be left out), disenchanting, Questie, Alt+Right-click to keep, tooltip, hints, destroy button, loot coins, bag value, price sharing. One button forgets every item you marked to keep. Options that need an addon you don't have are greyed out, and at the bottom you can see which of the addons are installed.
 
 If you mark something as "not junk" in Scrap, KeepOrSell won't argue.
 
@@ -108,11 +109,12 @@ Schon mal beim Händler gestanden und dich gefragt, ob das komische Item in der 
 - **Beruf**: Material für Rezepte, die noch Skillpunkte geben, egal ob du sie schon kannst oder noch lernen kannst, und diese Rezepte selbst. Behalten, auch wenn das AH gut zahlt.
 - **Auktionshaus**: bringt im AH mindestens das Doppelte vom Händlerpreis. Reinstellen.
 - **Schrott**: graues Zeug, billige Handwerkswaren, Ausrüstung, die deine Klasse nie tragen kann, Rezepte, die du schon kennst. Scrap verkauft das beim nächsten Händler.
+- **Für Twinks**: Berufsmaterial und Klassenitems, die ein anderer deiner Charaktere braucht (gleiches Ruleset, gleiche Fraktion). Per Post schicken. Was du selbst brauchst, geht vor.
 - **Entzaubern** (nur für Verzauberer): grüne, blaue und lila Ausrüstung, die du sonst verkaufen würdest, wenn ihre Materialien mehr bringen als Händler oder AH. Auch seelengebundene Ausrüstung, die nicht ins AH darf. Der Tooltip zeigt den Durchschnittswert und was wahrscheinlich rauskommt.
 
 Fahr mit der Maus über ein Item, und der Tooltip sagt dir, wo es hingehört und warum. Bei Ausrüstung, die du tragen kannst, steht dazu, was sie dir bringt, falls du sie nicht mehr brauchst: Entzaubern, Auktionshaus oder Händler, je nachdem, was am meisten bringt. Im Zweifel bleibt ein Item in der Tasche: Ohne Auktionspreis wird nichts zu Schrott, und grüne oder bessere Ausrüstung, die du tragen kannst, sowieso nie, genauso wenig wie alles aus einem Ausrüstungsset. Willst du etwas behalten, das KeepOrSell verkaufen würde? **Alt+Rechtsklick** darauf in der Tasche, dann bleibt es, auch ohne Scrap. Kürzel vergessen? Der **? KoS**-Knopf im Baganator-Taschenfenster zeigt sie beim Drüberfahren. Nochmal klicken hebt es auf, `/kos kept` listet alles Markierte.
 
-**Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items, nie aus Berufstaschen). Sind die Taschen beim Looten voll, markiert eine Goldmünze die Beute, die mehr wert ist als der Schrott, den sie ersetzen würde; der Tooltip der Beute sagt, was du dafür zerstören solltest, und der Knopf leuchtet. Beute, die noch auf einen Stapel passt, bekommt keine Münze. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise. Zerstörst oder verkaufst du etwas, das KeepOrSell behalten würde, sagt eine Warnung im Chat, warum. Zutaten, die einem anderen deiner Charaktere noch Skillpunkte geben, landen in Beruf, mit seinem Namen im Tooltip.
+**Extras:** Ein Knopf im Taschenfenster zerstört mit jedem Klick den billigsten Schrott, falls die Taschen voll sind und kein Händler in der Nähe ist (nie seltene oder bessere Items, nie aus Berufstaschen). Sind die Taschen beim Looten voll, markiert eine Goldmünze die Beute, die mehr wert ist als der Schrott, den sie ersetzen würde; der Tooltip der Beute sagt, was du dafür zerstören solltest, und der Knopf leuchtet. Beute, die noch auf einen Stapel passt, bekommt keine Münze. Daneben siehst du, was dein Schrott und deine AH-Items wert sind. In der Gruppe teilen sich alle mit KeepOrSell gegenseitig die frischeren Auktionspreise. Zerstörst oder verkaufst du etwas, das KeepOrSell behalten würde, sagt eine Warnung im Chat, warum. Im Account-Modus denkt KeepOrSell auch an deine Twinks: Zutaten, die einem von ihnen noch Skillpunkte geben, und Klassenitems seiner Klasse (Kerzen, Gifte, Totems …) landen in „Für Twinks“, mit seinem Namen im Tooltip. Jeder Charakter loggt sich dafür einmal mit KeepOrSell ein; in den Optionen kannst du einzelne auslassen.
 
 **Du brauchst:** Baganator und Auctionator (einmal das AH scannen). Scrap und Questie sind optional. Mit Questie werden Quest-Items zu Schrott, sobald alle ihre Quests erledigt sind – auch Items, die eine Quest starten (etwa die Bibliotheksbücher) oder die dir eine Quest gibt. Solange die Quest offen ist, bleiben sie in der Gruppe Quest.
 

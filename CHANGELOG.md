@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Account mode: items another of your characters needs go to a new group "For alts", so you can collect them and mail them over. It counts profession materials that still give that character skill points and the class items of its class (candles, poisons, totems …), even when the AH would pay well. Your own needs always come first, and soulbound items never count. The tooltip names who needs it and why, e.g. "For alts: Amy (Tailoring), Bob (class item)".
+- Alts are matched by ruleset and faction (on Forever the ruleset is the server), not by realm name. Each character has to log in once with this version.
+- New options section "Account mode": a master switch, "Profession materials", "Class items", and a list of your other characters where you can untick one (a bank character, an abandoned alt). The old option "Reagents for your other characters" became "Profession materials"; your setting carries over, and old filter texts with `altReagents` still import.
+
 ## 0.19.1
 
 - The auction house deposit now counts: an item only goes to the AuctionHouse group when it still beats the vendor after the AH cut even if one auction doesn't sell and the deposit is lost (8 hours, all copies in your bags in one auction). The 1 silver minimum deposit is per auction: a single Linen Cloth at 27 copper isn't worth it, 21 of them are. Items where the deposit eats the gain now go to the vendor, and the tooltip names the deposit.
