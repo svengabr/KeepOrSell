@@ -166,6 +166,8 @@ local L = {
   FILTER_SUM_ITEMS = "%d item rules (%d junk)",
   FILTER_SUM_CATEGORIES = "%d category rules",
   FILTER_SUM_IGNORED = "%d lines ignored (%s)",
+  FILTER_SUM_REPLACES = "Replaces your %d item rules and %d category rules",
+  FILTER_SUM_TRUNCATED = "Some rules or keep marks were over the limit and dropped",
   TIP_PROFESSION_GROUP = "Profession",
   KEEP_ON = "%s is kept from now on: never junk, auction house or disenchant.",
   KEEP_OFF = "%s is sorted like any other item again.",
@@ -412,6 +414,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.FILTER_SUM_ITEMS = "%d Itemregeln (%d Schrott)"
   L.FILTER_SUM_CATEGORIES = "%d Kategorieregeln"
   L.FILTER_SUM_IGNORED = "%d Zeilen ignoriert (%s)"
+  L.FILTER_SUM_REPLACES = "Ersetzt deine %d Itemregeln und %d Kategorieregeln"
+  L.FILTER_SUM_TRUNCATED = "Einige Regeln oder Behalten-Markierungen lagen über dem Limit und wurden verworfen"
   L.TIP_PROFESSION_GROUP = "Beruf"
   L.KEEP_ON = "%s wird ab jetzt behalten: nie Schrott, Auktionshaus oder Entzaubern."
   L.KEEP_OFF = "%s wird wieder wie jedes andere Item sortiert."

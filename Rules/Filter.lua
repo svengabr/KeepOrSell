@@ -367,11 +367,17 @@ local function OptionText(option, value)
 end
 
 -- Plain lines saying what applying the filter would change in db. Call before ApplyFilter. Pure.
--- The strongest changes come first (item rules with their junk count, category rules, keep marks, ignored lines);
+-- The strongest changes come first (the player's own rules being replaced, item rules with their junk count,
+-- category rules, keep marks, rules over the limit, ignored lines);
 -- all option changes share the last line, so a filter changing many options can't push the rules out of view.
 function ns.FilterSummary(db, filter, report)
   local L = ns.L
   local lines = {}
+  -- applying replaces all of the player's own rules, even with a filter that brings none
+  local own = db.filter or {}
+  local ownItems, ownCategories = 0, #(own.categories or {})
+  for _ in pairs(own.items or {}) do ownItems = ownItems + 1 end
+  if ownItems + ownCategories > 0 then lines[#lines + 1] = L.FILTER_SUM_REPLACES:format(ownItems, ownCategories) end
   local items, junk = 0, 0
   for _, group in pairs(filter.items or {}) do
     items = items + 1
@@ -385,6 +391,7 @@ function ns.FilterSummary(db, filter, report)
     if not (db.keep and db.keep[id]) then added = added + 1 end
   end
   if added > 0 then lines[#lines + 1] = L.FILTER_SUM_KEEP:format(added) end
+  if report and report.truncated then lines[#lines + 1] = L.FILTER_SUM_TRUNCATED end
   if report and report.ignored and report.ignored > 0 then
     lines[#lines + 1] = L.FILTER_SUM_IGNORED:format(report.ignored, table.concat(report.ignoredLines or {}, ", "))
   end

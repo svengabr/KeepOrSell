@@ -376,22 +376,50 @@ class ApplyTests(unittest.TestCase):
         self.rt.globals().IMPORT = text
         self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT); REPORT.ignoredLines = {3, 17}; REPORT.ignored = 2")
         lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
-        self.assertEqual(lines, ["2 item rules (1 junk)", "1 keep marks added", "2 lines ignored (3, 17)",
-                                 "factor: 2 → 3"])
+        self.assertEqual(lines, ["Replaces your 1 item rules and 1 category rules", "2 item rules (1 junk)",
+                                 "1 keep marks added", "2 lines ignored (3, 17)", "factor: 2 → 3"])
 
     def test_summary_omits_unchanged_options(self):
         self.rt.globals().IMPORT = "KeepOrSell filter 1\nfactor = 2\nscrap = off\ncolor = x\nclass 7 = keep"
         self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
         lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
-        self.assertEqual(lines, ["1 category rules", "1 lines ignored (4)", "scrap: on → off"])
+        self.assertEqual(lines, ["Replaces your 1 item rules and 1 category rules", "1 category rules",
+                                 "1 lines ignored (4)", "scrap: on → off"])
 
     def test_summary_puts_rules_first_and_options_on_one_line(self):
         self.rt.globals().IMPORT = ("KeepOrSell filter 1\nfactor = 3\nminProfit = 9\nscrap = off\nmaxAge = 3\n"
                                     "item 100 = junk\nclass 7 = keep\nkeep = 1")
         self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
         lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
-        self.assertEqual(lines, ["1 item rules (1 junk)", "1 category rules", "1 keep marks added",
+        self.assertEqual(lines, ["Replaces your 1 item rules and 1 category rules", "1 item rules (1 junk)",
+                                 "1 category rules", "1 keep marks added",
                                  "factor: 2 → 3, minProfit: 4 → 9, maxAge: - → 3, scrap: on → off"])
+
+    def test_summary_warns_when_own_rules_are_replaced(self):
+        # an options-only filter still drops the player's own rules on apply: never "changes nothing"
+        self.rt.globals().IMPORT = "KeepOrSell filter 1\nfactor = 2"
+        self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertEqual(lines, ["Replaces your 1 item rules and 1 category rules"])
+        self.rt.execute("DB.filter = {items = {[5] = 'keep', [6] = 'junk'}, categories = {}}")
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertEqual(lines, ["Replaces your 2 item rules and 0 category rules"])
+        # nothing to replace: no line
+        for lua in ("DB.filter = {items = {}, categories = {}}", "DB.filter = nil"):
+            self.rt.execute(lua)
+            self.assertEqual(self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)")), [])
+
+    def test_summary_says_when_limits_dropped_lines(self):
+        self.rt.execute("DB.filter = nil")
+        text = "KeepOrSell filter 1\n" + "".join("item %d = junk\n" % i for i in range(1, 1003))
+        self.rt.globals().IMPORT = text
+        self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
+        self.assertTrue(self.rt.eval("REPORT.truncated"))
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertIn("Some rules or keep marks were over the limit and dropped", lines)
+        self.rt.execute("REPORT.truncated = false")
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertNotIn("Some rules or keep marks were over the limit and dropped", lines)
 
 
 COMMAND_STUBS = """
