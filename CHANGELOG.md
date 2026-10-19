@@ -4,8 +4,11 @@
 
 - Account mode: items another of your characters needs go to a new group "For alts", so you can collect them and mail them over. It counts profession materials that still give that character skill points and the class items of its class (candles, poisons, totems …), even when the AH would pay well. Your own needs always come first, and soulbound items never count. The tooltip names who needs it and why, e.g. "For alts: Amy (Tailoring), Bob (class item)".
 - Alts are matched by ruleset and faction (on Forever the ruleset is the server), not by realm name. Each character has to log in once with this version.
-- New options section "Account mode": a master switch, "Profession materials" and "Class items". Your other characters are listed with their full name on their own page "Alts" below KeepOrSell, where you can untick one (a bank character, an abandoned alt).
-- KeepOrSell now tells characters apart by first name and surname. Before, two characters with the same first name shared their remembered recipes; each character moves its data over on its next login. The old option "Reagents for your other characters" became "Profession materials"; your setting carries over, and old filter texts with `altReagents` still import.
+- A table of your alts in the options: each one with its full name in its class colour, its professions, and switches for profession materials, class items and whether it counts at all (a bank character, an abandoned alt).
+- KeepOrSell now tells characters apart by first name and surname. Before, two characters with the same first name shared their remembered recipes; each character moves its data over on its next login.
+- The old option "Reagents for your other characters" is now the per-alt switch "Profession materials": if you had it off, it stays off for every character KeepOrSell knew when you updated. Filter texts no longer carry it (the alts are private), so an old filter's `altReagents` line is skipped.
+- KeepOrSell has its own options window, in the style of the setup window: sections in a sidebar on the left, the options side by side on the right. `/kos` opens and closes it, and so do the "? KoS" button and the setup window. Esc → Options → AddOns → KeepOrSell now holds a button that opens it. It also works with the gamepad UI.
+- New option "\"? KoS\" button in the bags" (Display) hides that button if your bag window is crowded.
 
 ## 0.19.1
 
