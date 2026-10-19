@@ -180,7 +180,6 @@ end
 -- multi-line edit box, UIPanelButtonTemplate buttons.
 
 local WIDTH, HEIGHT = 520, 440
-local MAX_LETTERS = 65536
 
 local frame
 
@@ -243,15 +242,15 @@ local function CreateFilterFrame()
   if inset then
     inset:ClearAllPoints()
     inset:SetPoint("TOPLEFT", 10, -46)
-    inset:SetPoint("BOTTOMRIGHT", -10, 110)
+    inset:SetPoint("BOTTOMRIGHT", -10, 142)
   end
   local scroll = CreateFrame("ScrollFrame", "KeepOrSellFilterScroll", frame, "UIPanelScrollFrameTemplate")
   scroll:SetPoint("TOPLEFT", 18, -52)
-  scroll:SetPoint("BOTTOMRIGHT", -34, 116)
+  scroll:SetPoint("BOTTOMRIGHT", -34, 148)
 
   local edit = CreateFrame("EditBox", nil, scroll)
   edit:SetMultiLine(true)
-  edit:SetMaxLetters(MAX_LETTERS)
+  edit:SetMaxLetters(0) -- unlimited: ParseFilter reports a text over 64 KB instead of the box cutting it
   edit:SetAutoFocus(false)
   edit:SetFontObject(ChatFontNormal)
   edit:SetWidth(WIDTH - 60)
@@ -280,7 +279,10 @@ local function CreateFilterFrame()
   frame.Summary:SetPoint("RIGHT", frame, "RIGHT", -14, 0)
   frame.Summary:SetJustifyH("LEFT")
   frame.Summary:SetJustifyV("TOP")
-  frame.Summary:SetHeight(64)
+  -- room for about seven lines: up to four rule lines plus the option changes, which share one wrapping line
+  frame.Summary:SetWordWrap(true)
+  frame.Summary:SetNonSpaceWrap(true)
+  frame.Summary:SetHeight(96)
 
   frame.Close = Button(frame, L.FILTER_CLOSE, function() frame:Hide() end)
   frame.Close:SetPoint("BOTTOMRIGHT", -14, 12)

@@ -367,22 +367,11 @@ local function OptionText(option, value)
 end
 
 -- Plain lines saying what applying the filter would change in db. Call before ApplyFilter. Pure.
+-- The strongest changes come first (item rules with their junk count, category rules, keep marks, ignored lines);
+-- all option changes share the last line, so a filter changing many options can't push the rules out of view.
 function ns.FilterSummary(db, filter, report)
   local L = ns.L
   local lines = {}
-  for _, option in ipairs(ns.FILTER_OPTIONS) do
-    local new = filter.options and filter.options[option.key]
-    if new ~= nil and new ~= db[option.key] then
-      local old = db[option.key]
-      lines[#lines + 1] = L.FILTER_SUM_OPTION:format(option.key,
-        old == nil and "-" or OptionText(option, old), OptionText(option, new))
-    end
-  end
-  local added = 0
-  for id in pairs(filter.keep or {}) do
-    if not (db.keep and db.keep[id]) then added = added + 1 end
-  end
-  if added > 0 then lines[#lines + 1] = L.FILTER_SUM_KEEP:format(added) end
   local items, junk = 0, 0
   for _, group in pairs(filter.items or {}) do
     items = items + 1
@@ -391,8 +380,23 @@ function ns.FilterSummary(db, filter, report)
   if items > 0 then lines[#lines + 1] = L.FILTER_SUM_ITEMS:format(items, junk) end
   local categories = #(filter.categories or {})
   if categories > 0 then lines[#lines + 1] = L.FILTER_SUM_CATEGORIES:format(categories) end
+  local added = 0
+  for id in pairs(filter.keep or {}) do
+    if not (db.keep and db.keep[id]) then added = added + 1 end
+  end
+  if added > 0 then lines[#lines + 1] = L.FILTER_SUM_KEEP:format(added) end
   if report and report.ignored and report.ignored > 0 then
     lines[#lines + 1] = L.FILTER_SUM_IGNORED:format(report.ignored, table.concat(report.ignoredLines or {}, ", "))
   end
+  local options = {}
+  for _, option in ipairs(ns.FILTER_OPTIONS) do
+    local new = filter.options and filter.options[option.key]
+    if new ~= nil and new ~= db[option.key] then
+      local old = db[option.key]
+      options[#options + 1] = L.FILTER_SUM_OPTION:format(option.key,
+        old == nil and "-" or OptionText(option, old), OptionText(option, new))
+    end
+  end
+  if #options > 0 then lines[#lines + 1] = table.concat(options, ", ") end
   return lines
 end

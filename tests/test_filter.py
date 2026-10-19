@@ -376,14 +376,22 @@ class ApplyTests(unittest.TestCase):
         self.rt.globals().IMPORT = text
         self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT); REPORT.ignoredLines = {3, 17}; REPORT.ignored = 2")
         lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
-        self.assertEqual(lines, ["factor: 2 → 3", "1 keep marks added", "2 item rules (1 junk)",
-                                 "2 lines ignored (3, 17)"])
+        self.assertEqual(lines, ["2 item rules (1 junk)", "1 keep marks added", "2 lines ignored (3, 17)",
+                                 "factor: 2 → 3"])
 
     def test_summary_omits_unchanged_options(self):
         self.rt.globals().IMPORT = "KeepOrSell filter 1\nfactor = 2\nscrap = off\ncolor = x\nclass 7 = keep"
         self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
         lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
-        self.assertEqual(lines, ["scrap: on → off", "1 category rules", "1 lines ignored (4)"])
+        self.assertEqual(lines, ["1 category rules", "1 lines ignored (4)", "scrap: on → off"])
+
+    def test_summary_puts_rules_first_and_options_on_one_line(self):
+        self.rt.globals().IMPORT = ("KeepOrSell filter 1\nfactor = 3\nminProfit = 9\nscrap = off\nmaxAge = 3\n"
+                                    "item 100 = junk\nclass 7 = keep\nkeep = 1")
+        self.rt.execute("FILTER, REPORT = NS.ParseFilter(IMPORT)")
+        lines = self.lst(self.rt.eval("NS.FilterSummary(DB, FILTER, REPORT)"))
+        self.assertEqual(lines, ["1 item rules (1 junk)", "1 category rules", "1 keep marks added",
+                                 "factor: 2 → 3, minProfit: 4 → 9, maxAge: - → 3, scrap: on → off"])
 
 
 COMMAND_STUBS = """
