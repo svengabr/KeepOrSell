@@ -7,6 +7,12 @@ local function Check(key, label, refresh)
   return {kind = "checkbox", key = key, label = label, tip = label .. "_TIP", refresh = refresh or nil}
 end
 
+-- An option that only takes effect after the interface reloads: the window offers a Reload button once it changed
+local function NeedsReload(control)
+  control.reload = true
+  return control
+end
+
 local function Button(label, action, arg)
   return {kind = "button", label = label, text = label .. "_BUTTON", tip = label .. "_TIP", action = action, arg = arg}
 end
@@ -46,7 +52,7 @@ ns.OPTION_SECTIONS = {
     {Check("tooltip", "OPT_TOOLTIP"), Check("hints", "OPT_HINTS", true), Check("helpButton", "OPT_HELP_BUTTON", true),
       Check("destroy", "OPT_DESTROY", true)},
     {Check("lootCoins", "OPT_LOOT_COINS"), Check("lossWarnings", "OPT_LOSS_WARNINGS"), Check("bagValue", "OPT_BAG_VALUE", true),
-      Check("setSource", "OPT_SETS")},
+      NeedsReload(Check("setSource", "OPT_SETS"))},
   }},
   {id = "addons", label = "DEPENDENCIES", icon = "INV_Misc_Gear_01", columns = {
     {{kind = "dependencies"}},

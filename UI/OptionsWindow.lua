@@ -20,6 +20,7 @@ local frame
 local pages, navButtons = {}, {}
 local widgets = {} -- control key -> widget, for refreshing (and tests)
 local altTable
+local atLoad = {} -- values of options that need a reload, as this session started with them
 
 -- The widget the window keeps for a control key ("gear", "button:OPT_KEEP_FORGET", "alt:<key>:<field>",
 -- "altprof:<key>:<n>", "nav:<section>", "dep:<addon>" …)
@@ -64,10 +65,29 @@ local function Checkbox(parent, control, y)
   box.label:SetWidth(COLUMN_W - 30)
   box.label:SetJustifyH("LEFT")
   box.label:SetText(L[control.label])
+  -- an option that only works after a reload says so and offers the button while it differs from the session's start
+  local hint
+  if control.reload then
+    atLoad[control.key] = KeepOrSellDB[control.key]
+    hint = CreateFrame("Frame", nil, parent)
+    hint:SetSize(COLUMN_W, 48)
+    hint:SetPoint("TOPLEFT", 26, y - 26)
+    hint.note = hint:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
+    hint.note:SetPoint("TOPLEFT", 0, 0)
+    hint.note:SetWidth(COLUMN_W - 30)
+    hint.note:SetJustifyH("LEFT")
+    hint.note:SetText(L.OPT_RELOAD_NOTE)
+    hint.button = Style.Button(hint, L.OPT_RELOAD_BUTTON, function() if C_UI and C_UI.Reload then C_UI.Reload() end end)
+    hint.button:SetPoint("TOPLEFT", hint.note, "BOTTOMLEFT", 0, -4)
+    hint.Refresh = function() hint:SetShown(KeepOrSellDB[control.key] ~= atLoad[control.key]) end
+    hint:Hide()
+    widgets["reload:" .. control.key] = hint
+  end
   box:SetScript("OnClick", function(self)
     KeepOrSellDB[control.key] = self:GetChecked() and true or false
     Changed(control)
     if control.key == "accountMode" and altTable then altTable.Refresh() end
+    if hint then hint.Refresh() end
   end)
   box:SetScript("OnEnter", function(self) ShowTip(self, L[control.label], TooltipText(control)) end)
   box:SetScript("OnLeave", HideTip)
@@ -78,7 +98,7 @@ local function Checkbox(parent, control, y)
     box.label:SetTextColor(unpack(ready and WHITE or GREY))
   end
   widgets[control.key] = box
-  return 32
+  return hint and 32 + 50 or 32
 end
 
 local function Round(value, step)

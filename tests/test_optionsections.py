@@ -94,6 +94,9 @@ class OptionSectionTests(unittest.TestCase):
         english = [s.name for s in self.ns.ProfessionSlots(self.rt.table_from([]), None, "enUS").values()]
         self.assertEqual(english, ["Cooking", "First Aid", "Fishing"])
 
+    def test_only_baganator_groups_need_a_reload(self):
+        self.assertEqual([c.key for c in self.controls() if c.reload], ["setSource"])
+
     def test_special_rows(self):
         kinds = [c.kind for c in self.controls()]
         self.assertEqual((kinds.count("alts"), kinds.count("dependencies")), (1, 1))
@@ -113,7 +116,7 @@ class OptionSectionTests(unittest.TestCase):
             self.assertIsNotNone(de.L[key], key)
         for key in ("OPT_WINDOW_TITLE", "OPT_WINDOW_OPEN", "OPT_WINDOW_OPEN_BUTTON", "OPT_WINDOW_OPEN_TIP", "ALTS_HEADER",
                     "ALTS_COL_CHARACTER", "ALTS_COL_PROFESSIONS", "ALTS_COL_PROFESSION", "ALTS_COL_CLASS",
-                    "ALTS_COL_INCLUDED", "ALTS_NOT_LEARNED", "ALTS_YOU", "ALTS_HINT", "OPT_HELP_BUTTON", "OPT_HELP_BUTTON_TIP"):
+                    "ALTS_COL_INCLUDED", "ALTS_NOT_LEARNED", "ALTS_YOU", "ALTS_HINT", "OPT_RELOAD_NOTE", "OPT_RELOAD_BUTTON", "OPT_HELP_BUTTON", "OPT_HELP_BUTTON_TIP"):
             self.assertIsNotNone(self.ns.L[key], key)
             self.assertNotEqual(de.L[key], self.ns.L[key], key)
 

@@ -118,6 +118,20 @@ class OptionsWindowTests(unittest.TestCase):
         self.assertAlmostEqual(self.rt.eval("KeepOrSellDB.factor"), 3.0)
         self.assertEqual(factor.label.text, "3x")
 
+    def test_reload_hint_after_changing_an_option_that_needs_it(self):
+        self.rt.execute("KeepOrSellDB.setSource = true; RELOADED = false; C_UI = {Reload = function() RELOADED = true end}")
+        self.ns.ShowOptionsWindow("display")
+        hint = self.widget("reload:setSource")
+        self.assertFalse(hint.shown)
+        self.click("setSource")
+        self.assertTrue(hint.shown)
+        self.assertEqual(hint.note.text, self.ns.L.OPT_RELOAD_NOTE)
+        hint.button.OnClick(hint.button)
+        self.assertTrue(self.rt.eval("RELOADED"))
+        self.click("setSource")  # back to the value the session started with
+        self.assertFalse(hint.shown)
+        self.assertIsNone(self.widget("reload:gear"))
+
     def test_remembers_section(self):
         self.ns.ShowOptionsWindow("display")
         self.assertEqual(self.rt.eval("KeepOrSellDB.optionsSection"), "display")
