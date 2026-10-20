@@ -125,7 +125,7 @@ end
 
 -- A character name whose first name and surname stay on one line when the tooltip wraps
 local function Unbroken(name)
-  return (name:gsub(" ", "94p")) -- non-breaking space
+  return (name:gsub(" ", "\194\160")) -- non-breaking space (UTF-8 C2 A0)
 end
 
 -- "Amy (Tailoring), Bob (Tailoring, class item)": who of the account needs the item and why. Pure.
