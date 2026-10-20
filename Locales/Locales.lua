@@ -243,6 +243,8 @@ local L = {
   TIP_UPCOMING = "Profession – reagent for a recipe of your profession you can still learn",
   TIP_ALT = "For alts: %s – mail it over",
   TIP_ALT_CLASS = "class item",
+  TIP_ALSO = "also: %s",
+  TIP_ALSO_ALTS = "for alts: %s",
   SECTION_ACCOUNT = "Account mode",
   OPT_WINDOW_TITLE = "KeepOrSell – Options",
   OPT_WINDOW_OPEN = "Options",
@@ -511,6 +513,8 @@ if GetLocale and GetLocale() == "deDE" then
   L.TIP_UPCOMING = "Beruf – Zutat für ein Rezept deines Berufs, das du noch lernen kannst"
   L.TIP_ALT = "Für Twinks: %s – per Post schicken"
   L.TIP_ALT_CLASS = "Klassenitem"
+  L.TIP_ALSO = "auch: %s"
+  L.TIP_ALSO_ALTS = "für Twinks: %s"
   L.SECTION_ACCOUNT = "Account-Modus"
   L.OPT_WINDOW_TITLE = "KeepOrSell – Optionen"
   L.OPT_WINDOW_OPEN = "Optionen"

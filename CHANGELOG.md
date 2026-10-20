@@ -8,6 +8,7 @@
 - KeepOrSell now tells characters apart by first name and surname. Before, two characters with the same first name shared their remembered recipes; each character moves its data over on its next login.
 - The old option "Reagents for your other characters" is now the per-alt switch "Profession materials": if you had it off, it stays off for every character KeepOrSell knew when you updated. Filter texts no longer carry it (the alts are private), so an old filter's `altReagents` line is skipped.
 - KeepOrSell has its own options window, in the style of the setup window: sections in a sidebar on the left, the options side by side on the right. `/kos` opens and closes it; the "? KoS" button and the setup window open it too. Esc → Options → AddOns → KeepOrSell now holds a button that opens it. It also works with the gamepad UI.
+- The tooltip names every reason to keep an item, not only the first: e.g. a quest item that your profession and two alts also need shows "also: Profession · for alts: …" below.
 - New option "\"? KoS\" button in the bags" (Display) hides that button if your bag window is crowded.
 
 ## 0.19.1

@@ -33,6 +33,13 @@ class AltTooltipTests(unittest.TestCase):
         text = self.ns.TooltipText(verdict, None, self.rt.eval("KeepOrSellDB"))
         self.assertIn("For alts: Amy (Tailoring), Bob (Tailoring, class item), Cid – mail it over", text)
 
+    def test_other_reasons_line(self):
+        also = self.rt.eval("""{{kind = 'profession'}, {kind = 'alt', alts = {
+          {name = 'Hunt Fred', professions = {'First Aid'}, profession = true, class = false},
+          {name = 'Lock Fred', professions = {}, profession = false, class = true}}}}""")
+        self.assertEqual(self.ns.AlsoText(also), "also: Profession · for alts: Hunt Fred, Lock Fred")
+        self.assertIsNone(self.ns.AlsoText(None))
+
     def test_alt_rows_offer_the_best_way_as_otherwise(self):
         rows = self.ns.TooltipRows(self.rt.eval("{kind = 'alt', ahTrusted = true, ahWorth = true}"),
                                    self.rt.eval("{ah = 1000, vendor = 10}"))

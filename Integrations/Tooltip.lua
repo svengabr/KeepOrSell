@@ -135,6 +135,22 @@ function ns.AltList(alts)
   return table.concat(parts, ", ")
 end
 
+-- "also: Profession · for alts: Hunt Fred, Lock Fred" for verdict.also, or nil. Pure.
+function ns.AlsoText(also)
+  if not also then return nil end
+  local parts = {}
+  for _, reason in ipairs(also) do
+    if reason.kind == "profession" then
+      table.insert(parts, L.SET_PROFESSION)
+    elseif reason.kind == "alt" then
+      local names = {}
+      for _, alt in ipairs(reason.alts or {}) do table.insert(names, alt.name) end
+      table.insert(parts, L.TIP_ALSO_ALTS:format(table.concat(names, ", ")))
+    end
+  end
+  return #parts > 0 and L.TIP_ALSO:format(table.concat(parts, " · ")) or nil
+end
+
 -- "filter 'Leveling'" for a verdict a filter rule made, "filter rule" when the filter has no name; nil otherwise
 local function FilterText(verdict, db)
   if verdict.reason ~= "filter" then return nil end
@@ -243,6 +259,8 @@ local function AddLine(tooltip, data)
     -- an empty line sets the verdict apart from the lines other addons add above it
     tooltip:AddLine(" ")
     tooltip:AddLine(text, 1, 1, 1, true)
+    local also = ns.AlsoText(verdict.also)
+    if also then tooltip:AddLine("   " .. also, 0.6, 0.6, 0.6, true) end
     for _, row in ipairs(rows or {}) do
       tooltip:AddDoubleLine("|c" .. row[3] .. row[1] .. "|r", "|c" .. row[3] .. row[2] .. "|r", 1, 1, 1, 1, 1, 1)
     end

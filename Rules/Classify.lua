@@ -217,12 +217,29 @@ end
 
 function ns.Decide(facts, db)
   local verdict = Decide(facts, db)
+  verdict.also = ns.OtherReasons(verdict, facts, db)
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
   verdict.bound = facts.bound or nil
   verdict.ahTrusted = priceReason ~= "noprice" and priceReason ~= "stale"
   verdict.ahWorth = priceClass == "ah"
   verdict.deValue = db.disenchant and facts.disenchant and facts.disenchant.value or nil
   return verdict
+end
+
+local GOES = {junk = true, ah = true, disenchant = true}
+
+-- What else speaks for keeping an item the verdict keeps anyway (the tooltip names only the first reason):
+-- {{kind = "profession"}, {kind = "alt", alts = {...}}} or nil. Nothing for items that go. Pure.
+function ns.OtherReasons(verdict, facts, db)
+  if GOES[verdict.kind] then return nil end
+  local also = {}
+  if verdict.kind ~= "profession" and db.profession
+    and (facts.reagent or (db.upcomingReagents and facts.upcoming)) then
+    table.insert(also, {kind = "profession"})
+  end
+  local alts = verdict.kind ~= "alt" and not facts.bound and ns.FilterAlts(facts.alts, db)
+  if alts then table.insert(also, {kind = "alt", alts = alts}) end
+  return #also > 0 and also or nil
 end
 
 -- true if the tooltip lines contain a class or race requirement the player doesn't meet. Pure.
