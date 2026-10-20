@@ -94,6 +94,30 @@ function ns.ProfessionIcon(name)
   return "Interface\\Icons\\" .. (BY_NAME[name] and BY_NAME[name].icon or "INV_Misc_QuestionMark")
 end
 
+-- The icons a row shows: the three secondary professions always (learned or not, named in the client's language),
+-- then the others as ns.SortProfessions orders them: {{name, icon, learned}, ...}. icons = {[name] = icon} recorded
+-- from the client, else the icon by name. Pure.
+function ns.ProfessionSlots(names, icons, locale)
+  icons = icons or {}
+  local have = {}
+  for _, name in ipairs(names or {}) do have[name] = true end
+  local slots, shown = {}, {}
+  for _, entry in ipairs(PROFESSIONS) do
+    if entry[1] == 1 then
+      local name = have[entry[3]] and entry[3] or have[entry[4]] and entry[4]
+        or (locale == "deDE" and entry[4] or entry[3])
+      shown[name] = true
+      table.insert(slots, {name = name, icon = icons[name] or ns.ProfessionIcon(name), learned = have[name] == true})
+    end
+  end
+  for _, name in ipairs(ns.SortProfessions(names)) do
+    if not shown[name] then
+      table.insert(slots, {name = name, icon = icons[name] or ns.ProfessionIcon(name), learned = true})
+    end
+  end
+  return slots
+end
+
 -- A sorted copy: secondary professions first (cooking, first aid, fishing), then the main professions, then class
 -- skills and every name it doesn't know (Forever's own class professions, other languages), alphabetical within a
 -- group. Pure.

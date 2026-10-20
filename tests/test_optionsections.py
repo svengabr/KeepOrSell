@@ -80,6 +80,17 @@ class OptionSectionTests(unittest.TestCase):
         self.assertEqual(list(self.ns.SortProfessions(english).values()),
                          ["Cooking", "First Aid", "Fishing", "Alchemy", "Tailoring", "Poisons"])
 
+    def test_profession_slots_always_show_the_secondary_ones(self):
+        names = self.rt.table_from(["Schneiderei", "Angeln"])
+        icons = self.rt.eval("{Angeln = 136245}")
+        slots = [(s.name, s.learned, s.icon) for s in self.ns.ProfessionSlots(names, icons, "deDE").values()]
+        self.assertEqual(slots, [("Kochkunst", False, "Interface\\Icons\\INV_Misc_Food_15"),
+                                 ("Erste Hilfe", False, "Interface\\Icons\\Spell_Holy_SealOfSacrifice"),
+                                 ("Angeln", True, 136245),
+                                 ("Schneiderei", True, "Interface\\Icons\\Trade_Tailoring")])
+        english = [s.name for s in self.ns.ProfessionSlots(self.rt.table_from([]), None, "enUS").values()]
+        self.assertEqual(english, ["Cooking", "First Aid", "Fishing"])
+
     def test_special_rows(self):
         kinds = [c.kind for c in self.controls()]
         self.assertEqual((kinds.count("alts"), kinds.count("dependencies")), (1, 1))
@@ -99,7 +110,7 @@ class OptionSectionTests(unittest.TestCase):
             self.assertIsNotNone(de.L[key], key)
         for key in ("OPT_WINDOW_TITLE", "OPT_WINDOW_OPEN", "OPT_WINDOW_OPEN_BUTTON", "OPT_WINDOW_OPEN_TIP", "ALTS_HEADER",
                     "ALTS_COL_CHARACTER", "ALTS_COL_PROFESSIONS", "ALTS_COL_PROFESSION", "ALTS_COL_CLASS",
-                    "ALTS_COL_INCLUDED", "ALTS_NO_PROFESSIONS", "ALTS_HINT", "OPT_HELP_BUTTON", "OPT_HELP_BUTTON_TIP"):
+                    "ALTS_COL_INCLUDED", "ALTS_NOT_LEARNED", "ALTS_YOU", "ALTS_HINT", "OPT_HELP_BUTTON", "OPT_HELP_BUTTON_TIP"):
             self.assertIsNotNone(self.ns.L[key], key)
             self.assertNotEqual(de.L[key], self.ns.L[key], key)
 

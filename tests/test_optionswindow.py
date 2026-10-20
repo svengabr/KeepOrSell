@@ -218,14 +218,27 @@ class OptionsWindowTests(unittest.TestCase):
         self.rt.execute(ALTS)
         self.rt.execute("KeepOrSellDB.recipeProfession = {['Amy-Realm'] = {[1] = 'Tailoring', [2] = 'Enchanting', [3] = 'Fishing'}}")
         self.ns.ShowOptionsWindow("account")
-        cooking, first, second = (self.widget("altprof:Amy-Realm:%d" % i) for i in (1, 2, 3))
-        self.assertEqual((cooking.profession, first.profession, second.profession), ("Fishing", "Enchanting", "Tailoring"))
-        self.assertEqual(first.icon.texture, "Interface\\Icons\\Trade_Engraving")
-        self.assertTrue(first.shown)
-        self.assertIsNone(self.widget("altprof:Amy-Realm:4"))
-        self.assertEqual(self.widget("altnoprof:Bob-Realm").text, self.ns.L.ALTS_NO_PROFESSIONS)
-        first.OnEnter(first)
+        slots = [self.widget("altprof:Amy-Realm:%d" % i) for i in range(1, 6)]
+        self.assertEqual([s.profession for s in slots], ["Cooking", "First Aid", "Fishing", "Enchanting", "Tailoring"])
+        self.assertEqual(slots[3].icon.texture, "Interface\\Icons\\Trade_Engraving")
+        self.assertTrue(slots[3].shown)
+        self.assertIsNone(self.widget("altprof:Amy-Realm:6"))
+        # a secondary profession the alt doesn't have is greyed out
+        self.assertLess(slots[0].alpha, 1)
+        self.assertEqual(slots[2].alpha, 1)
+        slots[0].OnEnter(slots[0])
+        self.assertEqual(self.rt.eval("GameTooltip.text"), self.ns.L.ALTS_NOT_LEARNED % "Cooking")
+        slots[3].OnEnter(slots[3])
         self.assertEqual(self.rt.eval("GameTooltip.text"), "Enchanting")
+
+    def test_own_character_listed_first_without_switches(self):
+        self.rt.execute(ALTS)
+        self.ns.ShowOptionsWindow("account")
+        self.assertIn(self.ns.L.ALTS_YOU, self.widget("altname:Tester-Realm").text)
+        self.assertIsNone(self.widget("alt:Tester-Realm:included"))
+        row = self.widget("altrow:Tester-Realm")
+        self.assertFalse(row.checks.included.shown)
+        self.assertTrue(self.widget("altrow:Amy-Realm").checks.included.shown)
 
 
 if __name__ == "__main__":

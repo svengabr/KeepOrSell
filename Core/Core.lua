@@ -123,6 +123,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
       ns.SettingsChanged()
     end
   elseif event == "SKILL_LINES_CHANGED" then
+    ns.RecordCharacter() -- the options list each character's professions
     -- an unlearned profession takes its reagents along
     if ns.ForgetLostProfessions() then ns.RefreshBaganator() end
     ScheduleHints()

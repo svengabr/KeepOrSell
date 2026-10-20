@@ -198,32 +198,37 @@ local function ProfessionIcon(row, index)
   holder.icon = holder:CreateTexture(nil, "ARTWORK")
   holder.icon:SetAllPoints()
   holder.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-  holder:SetScript("OnEnter", function(self) ShowTip(self, self.profession) end)
+  holder:SetScript("OnEnter", function(self)
+    ShowTip(self, self.learned and self.profession or L.ALTS_NOT_LEARNED:format(self.profession))
+  end)
   holder:SetScript("OnLeave", HideTip)
   return holder
 end
 
--- Up to MAX_PROF_ICONS icons, then the rest in the last icon's tooltip
+-- The secondary professions always (greyed out when not learned), then the others; past MAX_PROF_ICONS the last
+-- icon's tooltip names the rest
 local function ShowProfessions(row, alt)
-  local names = ns.SortProfessions(alt.professionList)
-  for key in pairs(widgets) do
-    if key:match("^altprof:" .. alt.key:gsub("%p", "%%%0") .. ":") then widgets[key] = nil end
-  end
-  for i = 1, math.max(#names, #row.professionIcons) do
-    local name = names[i]
-    if name and i <= MAX_PROF_ICONS then
+  local slots = ns.ProfessionSlots(alt.professionList, alt.professionIcons, GetLocale and GetLocale())
+  for i = 1, math.max(#slots, #row.professionIcons) do
+    local slot = slots[i]
+    if slot and i <= MAX_PROF_ICONS then
       local holder = row.professionIcons[i] or ProfessionIcon(row, i)
       row.professionIcons[i] = holder
-      holder.profession = i == MAX_PROF_ICONS and table.concat(names, ", ", i) or name
-      holder.icon:SetTexture(ns.ProfessionIcon(name))
+      holder.profession, holder.learned = slot.name, slot.learned
+      if i == MAX_PROF_ICONS and #slots > i then
+        local rest = {}
+        for j = i, #slots do table.insert(rest, slots[j].name) end
+        holder.profession, holder.learned = table.concat(rest, ", "), true
+      end
+      holder.icon:SetTexture(slot.icon)
+      if holder.icon.SetDesaturated then holder.icon:SetDesaturated(not slot.learned) end
+      holder:SetAlpha(slot.learned and 1 or 0.35)
       holder:Show()
       widgets["altprof:" .. alt.key .. ":" .. i] = holder
     elseif row.professionIcons[i] then
       row.professionIcons[i]:Hide()
     end
   end
-  row.noProfessions:SetText(#names == 0 and L.ALTS_NO_PROFESSIONS or "")
-  widgets["altnoprof:" .. alt.key] = row.noProfessions
 end
 
 local function AltRow(parent, index)
@@ -234,11 +239,7 @@ local function AltRow(parent, index)
   row.name:SetPoint("LEFT", 2, 0)
   row.name:SetWidth(NAME_W)
   row.name:SetJustifyH("LEFT")
-  -- professions as icons with their name in the tooltip; the text only when none is known
-  row.noProfessions = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-  row.noProfessions:SetPoint("LEFT", NAME_W + 4, 0)
-  row.noProfessions:SetWidth(PROF_W)
-  row.noProfessions:SetJustifyH("LEFT")
+  -- professions as icons with their name in the tooltip
   row.professionIcons = {}
   row.checks = {}
   for i, column in ipairs(ALT_COLUMNS) do
@@ -302,15 +303,17 @@ local function AltTable(parent, _, y)
       local row = t.rows[i] or AltRow(child, i)
       t.rows[i] = row
       row.key = alt.key
-      row.name:SetText(ClassName(alt.name, alt.class))
+      -- the logged-in character shows its professions too; the switches are for alts only
+      row.name:SetText(ClassName(alt.name, alt.class) .. (alt.isSelf and " " .. L.ALTS_YOU or ""))
       ShowProfessions(row, alt)
       for _, column in ipairs(ALT_COLUMNS) do
         local box = row.checks[column.field]
         box:SetChecked(alt[column.field])
         box:SetEnabled(on)
-        widgets["alt:" .. alt.key .. ":" .. column.field] = box
+        box:SetShown(not alt.isSelf)
+        if not alt.isSelf then widgets["alt:" .. alt.key .. ":" .. column.field] = box end
       end
-      row:SetAlpha(alt.included and 1 or DIM)
+      row:SetAlpha((alt.included or alt.isSelf) and 1 or DIM)
       row:Show()
       widgets["altrow:" .. alt.key] = row
       widgets["altname:" .. alt.key] = row.name

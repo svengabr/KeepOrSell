@@ -125,6 +125,22 @@ class RecordTests(unittest.TestCase):
         me = self.rt.eval("{key = 'Tester-Realm', faction = 'Alliance', realm = 'Realm'}")
         self.assertEqual(self.ns.AltCharacters(characters, me)[1].name, "Drache Offiziell")
 
+    def test_record_character_remembers_its_professions(self):
+        # prof1, prof2, archaeology, fishing, cooking, first aid; a gap where a slot is empty
+        self.rt.execute("""
+          function GetProfessions() return 1, nil, nil, 4, 5 end
+          PROFS = {[1] = {"Schneiderei", 136249}, [4] = {"Angeln", 136245}, [5] = {"Kochkunst", 133971}}
+          function GetProfessionInfo(i) return PROFS[i][1], PROFS[i][2] end""")
+        self.ns.RecordCharacter()
+        professions = self.rt.eval("KeepOrSellDB.characters['Tester-Realm'].professions")
+        self.assertEqual(dict(professions.items()), {"Schneiderei": 136249, "Angeln": 136245, "Kochkunst": 133971})
+
+    def test_record_character_keeps_professions_while_unknown(self):
+        self.rt.execute("function GetProfessions() end")
+        self.rt.execute("KeepOrSellDB.characters = {['Tester-Realm'] = {professions = {Bergbau = 1}}}")
+        self.ns.RecordCharacter()
+        self.assertEqual(self.rt.eval("KeepOrSellDB.characters['Tester-Realm'].professions.Bergbau"), 1)
+
     def test_class_item_ids(self):
         self.assertEqual(list(self.ns.ClassItemIDs("PRIEST", False).values()), [17028, 17029, 17056])
         self.assertEqual(list(self.ns.ClassItemIDs("PRIEST", True).values()), [17056])
@@ -254,12 +270,27 @@ class AltRowsTests(unittest.TestCase):
         settings = self.rt.eval("{['Bob-Realm'] = {included = false}}")
         me = self.rt.eval("{key = 'Tester-Realm', faction = 'Alliance', realm = 'Realm'}")
         rows = self.ns.AltRows(characters, professions, settings, me)
+        self.assertTrue(rows[1].isSelf)
+        table_remove = self.rt.eval("function(t) table.remove(t, 1) return t end")
+        rows = table_remove(rows)
         self.assertEqual([(r.name, r["class"], r.professions, r.included, r.profession, r.classItems)
                           for r in rows.values()],
                          [("Amy", "PRIEST", "Enchanting, Tailoring", True, True, True),
                           ("Bob", "MAGE", None, False, True, True)])
         self.assertEqual(list(rows[1].professionList.values()), ["Enchanting", "Tailoring"])
         self.assertEqual(len(rows[2].professionList), 0)
+
+    def test_alt_rows_start_with_me_and_prefer_recorded_professions(self):
+        characters = self.rt.eval("""{['Tester-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'DRUID',
+            professions = {Kochkunst = 133971}},
+          ['Amy-Realm'] = {faction = 'Alliance', realm = 'Realm', class = 'PRIEST', professions = {Angeln = 136245}}}""")
+        professions = self.rt.eval("{['Amy-Realm'] = {[1] = 'Tailoring'}}")
+        me = self.rt.eval("{key = 'Tester-Realm', faction = 'Alliance', realm = 'Realm'}")
+        rows = self.ns.AltRows(characters, professions, self.rt.eval("{}"), me)
+        self.assertEqual([(r.name, bool(r.isSelf)) for r in rows.values()], [("Tester", True), ("Amy", False)])
+        self.assertEqual(list(rows[1].professionList.values()), ["Kochkunst"])
+        self.assertEqual(list(rows[2].professionList.values()), ["Angeln"])  # the recorded list wins
+        self.assertEqual(rows[2].professionIcons["Angeln"], 136245)
 
     def test_pool_text(self):
         pool = lambda **kw: self.ns.PoolText(self.rt.table_from(kw))

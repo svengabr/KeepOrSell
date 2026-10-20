@@ -51,6 +51,21 @@ end
 
 local altIndex -- built once per session: other characters only change in their own sessions
 
+-- The current character's professions as {[name] = icon}, or nil while the client can't tell yet. GetProfessions
+-- returns the slots prof1, prof2, archaeology, fishing, cooking, first aid, with gaps for empty ones.
+function ns.CurrentProfessions()
+  if not (GetProfessions and GetProfessionInfo) then return nil end
+  local slots = {GetProfessions()}
+  local result, any = {}, false
+  for i = 1, select("#", GetProfessions()) do
+    if slots[i] then
+      local name, icon = GetProfessionInfo(slots[i])
+      if name then result[name], any = icon or true, true end
+    end
+  end
+  return any and result or nil
+end
+
 -- Writes the current character's record; older versions kept only the faction in KeepOrSellDB.factions (the
 -- realm comes from the key "Name-Realm"). Runs at ADDON_LOADED and again at PLAYER_LOGIN; values the client can't
 -- tell yet keep the stored ones.
@@ -74,6 +89,7 @@ function ns.RecordCharacter()
     ruleset = ns.CurrentRuleset() or old.ruleset,
     realm = GetRealmName(),
     reagentEconomy = ns.HasReagentEconomy(),
+    professions = ns.CurrentProfessions() or old.professions,
   }
   altIndex = nil -- built without the own record so far
 end
@@ -202,20 +218,35 @@ function ns.MigrateAltSettings(db)
   db.altReagents, db.altProfession, db.altClassItems, db.altIncluded = nil, nil, nil, nil
 end
 
--- One row per alt for the options window: {key, name, class, professions = "A, B" or nil, professionList = {"A",
--- "B"}, included, profession, classItems}, sorted by name; professions are the distinct stored profession names of
--- its recipes. Pure.
-function ns.AltRows(characters, recipeProfession, altSettings, me)
-  local rows = {}
-  for _, alt in ipairs(ns.AltCharacters(characters, me)) do
-    local seen, names = {}, {}
-    for _, name in pairs(recipeProfession and recipeProfession[alt.key] or {}) do
+-- A character's professions, sorted: the ones recorded at its last login ({[name] = icon}), else the names its
+-- stored recipes carry
+local function ProfessionNames(record, recipeProfessions)
+  local seen, names = {}, {}
+  local recorded = record and record.professions
+  for name in pairs(recorded or {}) do table.insert(names, name) end
+  if not recorded then
+    for _, name in pairs(recipeProfessions or {}) do
       if not seen[name] then seen[name] = true; table.insert(names, name) end
     end
-    table.sort(names)
+  end
+  table.sort(names)
+  return names, recorded or {}
+end
+
+-- One row per character for the options window: me first (isSelf), then the alts sorted by name:
+-- {key, name, class, isSelf, professions = "A, B" or nil, professionList = {"A", "B"}, professionIcons = {[name] =
+-- icon}, included, profession, classItems}. Pure.
+function ns.AltRows(characters, recipeProfession, altSettings, me)
+  characters = characters or {}
+  local list = ns.AltCharacters(characters, me)
+  local own = characters[me.key] or {}
+  table.insert(list, 1, {key = me.key, name = me.key:match("^(.-)%-") or me.key, class = own.class, isSelf = true})
+  local rows = {}
+  for _, alt in ipairs(list) do
+    local names, icons = ProfessionNames(characters[alt.key], recipeProfession and recipeProfession[alt.key])
     local s = altSettings and altSettings[alt.key] or {}
-    table.insert(rows, {key = alt.key, name = alt.name, class = alt.class,
-      professions = #names > 0 and table.concat(names, ", ") or nil, professionList = names,
+    table.insert(rows, {key = alt.key, name = alt.name, class = alt.class, isSelf = alt.isSelf,
+      professions = #names > 0 and table.concat(names, ", ") or nil, professionList = names, professionIcons = icons,
       included = s.included ~= false, profession = s.profession ~= false, classItems = s.classItems ~= false})
   end
   return rows
