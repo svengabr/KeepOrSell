@@ -29,6 +29,7 @@ local function Widget(kind, parent)
     SetScript = function(self, name, fn) self[name] = fn end,
     GetScript = function(self, name) return self[name] end,
     SetScrollChild = function(self, child) self.scrollChild = child end,
+    SetTexture = function(self, texture) self.texture = texture end,
     SetSize = function(self, w, h) self.width, self.height = w, h end,
     GetWidth = function() return 400 end,
     GetHeight = function() return 400 end,
@@ -43,7 +44,12 @@ local function Widget(kind, parent)
     return function() return Widget("Frame") end
   end})
 end
-CreateFrame = function(kind, name, parent) local w = Widget(kind, parent); w.name = name; return w end
+CreateFrame = function(kind, name, parent)
+  local w = Widget(kind, parent)
+  w.name = name
+  if kind == "ScrollFrame" then w.ScrollBar = Widget("Slider", w) end -- UIPanelScrollFrameTemplate's bar
+  return w
+end
 UIParent = Widget("Frame")
 GameTooltip = Widget("Frame")
 UISpecialFrames = {}
@@ -189,6 +195,37 @@ class OptionsWindowTests(unittest.TestCase):
     def test_dependency_rows(self):
         self.ns.ShowOptionsWindow("addons")
         self.assertIn("Auctionator", self.widget("dep:Auctionator").text)
+        self.assertIn("active", self.widget("dep:Auctionator").text)
+        # what the addon is for goes on its own line, so a long text can't run into the next addon
+        self.assertEqual(self.widget("depuse:Auctionator").text, self.ns.L.DEP_AUCTIONATOR)
+        self.assertNotIn(self.ns.L.DEP_AUCTIONATOR, self.widget("dep:Auctionator").text)
+
+    def test_nav_labels_drop_the_addon_name(self):
+        self.assertEqual(self.ns.NavLabel("Auction house (Auctionator)"), "Auction house")
+        self.assertEqual(self.ns.NavLabel("Keep"), "Keep")
+        self.ns.ShowOptionsWindow()
+        self.assertEqual(self.widget("nav:ah").text, "Auction house")
+
+    def test_scroll_bar_only_when_needed(self):
+        self.rt.execute(ALTS)
+        self.ns.ShowOptionsWindow("account")
+        self.assertFalse(self.ns.OptionsAltTable().scroll.ScrollBar.shown)
+        self.rt.execute("for i = 1, 25 do KeepOrSellDB.characters['Alt' .. i .. '-Realm'] = {faction = 'Alliance', realm = 'Realm'} end")
+        self.ns.RefreshOptionsWindow()
+        self.assertTrue(self.ns.OptionsAltTable().scroll.ScrollBar.shown)
+
+    def test_professions_as_icons_with_tooltip(self):
+        self.rt.execute(ALTS)
+        self.rt.execute("KeepOrSellDB.recipeProfession = {['Amy-Realm'] = {[1] = 'Tailoring', [2] = 'Enchanting'}}")
+        self.ns.ShowOptionsWindow("account")
+        first, second = self.widget("altprof:Amy-Realm:1"), self.widget("altprof:Amy-Realm:2")
+        self.assertEqual((first.profession, second.profession), ("Enchanting", "Tailoring"))
+        self.assertEqual(first.icon.texture, "Interface\\Icons\\Trade_Engraving")
+        self.assertTrue(first.shown)
+        self.assertIsNone(self.widget("altprof:Amy-Realm:3"))
+        self.assertEqual(self.widget("altnoprof:Bob-Realm").text, self.ns.L.ALTS_NO_PROFESSIONS)
+        first.OnEnter(first)
+        self.assertEqual(self.rt.eval("GameTooltip.text"), "Enchanting")
 
 
 if __name__ == "__main__":

@@ -258,6 +258,8 @@ class AltRowsTests(unittest.TestCase):
                           for r in rows.values()],
                          [("Amy", "PRIEST", "Enchanting, Tailoring", True, True, True),
                           ("Bob", "MAGE", None, False, True, True)])
+        self.assertEqual(list(rows[1].professionList.values()), ["Enchanting", "Tailoring"])
+        self.assertEqual(len(rows[2].professionList), 0)
 
     def test_pool_text(self):
         pool = lambda **kw: self.ns.PoolText(self.rt.table_from(kw))

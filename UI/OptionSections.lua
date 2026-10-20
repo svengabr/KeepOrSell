@@ -66,3 +66,28 @@ function ns.SectionControls(id)
   end
   return controls
 end
+
+-- Icon per profession name as the client stores it (English and German); other names get a question mark
+local PROFESSION_ICONS = {
+  Trade_Alchemy = {"Alchemy", "Alchemie"},
+  Trade_BlackSmithing = {"Blacksmithing", "Schmiedekunst"},
+  Trade_Engraving = {"Enchanting", "Verzauberkunst"},
+  Trade_Engineering = {"Engineering", "Ingenieurskunst"},
+  Trade_Herbalism = {"Herbalism", "Kräuterkunde"},
+  INV_Misc_ArmorKit_17 = {"Leatherworking", "Lederverarbeitung"},
+  Trade_Mining = {"Mining", "Bergbau"},
+  INV_Misc_Pelt_Wolf_01 = {"Skinning", "Kürschnerei"},
+  Trade_Tailoring = {"Tailoring", "Schneiderei"},
+  INV_Misc_Food_15 = {"Cooking", "Kochkunst"},
+  Spell_Holy_SealOfSacrifice = {"First Aid", "Erste Hilfe"},
+  Trade_Fishing = {"Fishing", "Angeln"},
+}
+local ICON_BY_NAME = {}
+for icon, names in pairs(PROFESSION_ICONS) do
+  for _, name in ipairs(names) do ICON_BY_NAME[name] = icon end
+end
+
+-- "Interface\\Icons\\…" for a profession name. Pure.
+function ns.ProfessionIcon(name)
+  return "Interface\\Icons\\" .. (ICON_BY_NAME[name] or "INV_Misc_QuestionMark")
+end

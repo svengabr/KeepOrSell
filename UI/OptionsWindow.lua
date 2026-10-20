@@ -22,7 +22,8 @@ local pages, navButtons = {}, {}
 local widgets = {} -- control key -> widget, for refreshing (and tests)
 local altTable
 
--- The widget the window keeps for a control key ("gear", "button:OPT_KEEP_FORGET", "alt:<key>:<field>" …)
+-- The widget the window keeps for a control key ("gear", "button:OPT_KEEP_FORGET", "alt:<key>:<field>",
+-- "altprof:<key>:<n>", "nav:<section>", "dep:<addon>" …)
 function ns.OptionsWidget(key) return widgets[key] end
 function ns.OptionsFrame() return frame end
 function ns.OptionsPage(id) return pages[id] end
@@ -78,7 +79,7 @@ local function Checkbox(parent, control, y)
     box.label:SetTextColor(unpack(ready and WHITE or GREY))
   end
   widgets[control.key] = box
-  return 30
+  return 32
 end
 
 local function Round(value, step)
@@ -144,16 +145,25 @@ local function ActionButton(parent, control, y)
   return 50
 end
 
+-- Each addon takes two lines: name and status, then what KeepOrSell needs it for
+local DEP_H = 38
+
 local function Dependencies(parent, _, y)
   for i, dep in ipairs(ns.DEPENDENCIES) do
     local line = parent:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-    line:SetPoint("TOPLEFT", 4, y - (i - 1) * ROW_H)
+    line:SetPoint("TOPLEFT", 4, y - (i - 1) * DEP_H)
     line:SetWidth(COLUMN_W - 8)
     line:SetJustifyH("LEFT")
-    line.Refresh = function() line:SetText(("|cffffd200%s|r  %s"):format(dep.name, ns.DependencyText(dep))) end
+    line.Refresh = function() line:SetText(("|cffffd200%s|r  %s"):format(dep.name, ns.DependencyStatusText(dep))) end
+    local use = parent:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+    use:SetPoint("TOPLEFT", line, "BOTTOMLEFT", 0, -2)
+    use:SetWidth(COLUMN_W - 8)
+    use:SetJustifyH("LEFT")
+    use:SetText(dep.use)
     widgets["dep:" .. dep.name] = line
+    widgets["depuse:" .. dep.name] = use
   end
-  return #ns.DEPENDENCIES * ROW_H
+  return #ns.DEPENDENCIES * DEP_H
 end
 
 -- Alt table ----------------------------------------------------------------------------------------------------
@@ -179,6 +189,43 @@ local function ClassName(name, class)
   return color and color.WrapTextInColorCode and color:WrapTextInColorCode(name) or name
 end
 
+local PROF_ICON, MAX_PROF_ICONS = 20, 6
+
+local function ProfessionIcon(row, index)
+  local holder = CreateFrame("Frame", nil, row)
+  holder:SetSize(PROF_ICON, PROF_ICON)
+  holder:SetPoint("LEFT", NAME_W + 4 + (index - 1) * (PROF_ICON + 2), 0)
+  holder.icon = holder:CreateTexture(nil, "ARTWORK")
+  holder.icon:SetAllPoints()
+  holder.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+  holder:SetScript("OnEnter", function(self) ShowTip(self, self.profession) end)
+  holder:SetScript("OnLeave", HideTip)
+  return holder
+end
+
+-- Up to MAX_PROF_ICONS icons, then the rest in the last icon's tooltip
+local function ShowProfessions(row, alt)
+  local names = alt.professionList or {}
+  for key in pairs(widgets) do
+    if key:match("^altprof:" .. alt.key:gsub("%p", "%%%0") .. ":") then widgets[key] = nil end
+  end
+  for i = 1, math.max(#names, #row.professionIcons) do
+    local name = names[i]
+    if name and i <= MAX_PROF_ICONS then
+      local holder = row.professionIcons[i] or ProfessionIcon(row, i)
+      row.professionIcons[i] = holder
+      holder.profession = i == MAX_PROF_ICONS and table.concat(names, ", ", i) or name
+      holder.icon:SetTexture(ns.ProfessionIcon(name))
+      holder:Show()
+      widgets["altprof:" .. alt.key .. ":" .. i] = holder
+    elseif row.professionIcons[i] then
+      row.professionIcons[i]:Hide()
+    end
+  end
+  row.noProfessions:SetText(#names == 0 and L.ALTS_NO_PROFESSIONS or "")
+  widgets["altnoprof:" .. alt.key] = row.noProfessions
+end
+
 local function AltRow(parent, index)
   local row = CreateFrame("Frame", nil, parent)
   row:SetSize(SCROLL_W, ROW_H)
@@ -187,10 +234,12 @@ local function AltRow(parent, index)
   row.name:SetPoint("LEFT", 2, 0)
   row.name:SetWidth(NAME_W)
   row.name:SetJustifyH("LEFT")
-  row.professions = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
-  row.professions:SetPoint("LEFT", NAME_W + 4, 0)
-  row.professions:SetWidth(PROF_W)
-  row.professions:SetJustifyH("LEFT")
+  -- professions as icons with their name in the tooltip; the text only when none is known
+  row.noProfessions = row:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+  row.noProfessions:SetPoint("LEFT", NAME_W + 4, 0)
+  row.noProfessions:SetWidth(PROF_W)
+  row.noProfessions:SetJustifyH("LEFT")
+  row.professionIcons = {}
   row.checks = {}
   for i, column in ipairs(ALT_COLUMNS) do
     local box = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
@@ -254,7 +303,7 @@ local function AltTable(parent, _, y)
       t.rows[i] = row
       row.key = alt.key
       row.name:SetText(ClassName(alt.name, alt.class))
-      row.professions:SetText(alt.professions or L.ALTS_NO_PROFESSIONS)
+      ShowProfessions(row, alt)
       for _, column in ipairs(ALT_COLUMNS) do
         local box = row.checks[column.field]
         box:SetChecked(alt[column.field])
@@ -268,6 +317,8 @@ local function AltTable(parent, _, y)
     end
     for i = #data + 1, #t.rows do t.rows[i]:Hide() end
     child:SetHeight(math.max(ROW_H, #data * ROW_H))
+    local bar = t.scroll.ScrollBar
+    if type(bar) == "table" and bar.SetShown then bar:SetShown(#data * ROW_H > t.height + ROWS_Y - 34) end
     t:SetAlpha(on and 1 or DIM)
   end
   altTable = t
@@ -311,6 +362,11 @@ local function Select(id)
   for key, button in pairs(navButtons) do button.selected:SetShown(key == id) end
 end
 
+-- The sidebar has no room for "(Auctionator)": the page heading still names the addon. Pure.
+function ns.NavLabel(text)
+  return text:match("^(.-)%s*%(.*%)$") or text
+end
+
 local function NavButton(parent, section, index)
   local button = CreateFrame("Button", nil, parent)
   button:SetSize(NAV_W - 16, 30)
@@ -327,7 +383,11 @@ local function NavButton(parent, section, index)
   icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   local text = button:CreateFontString(nil, "ARTWORK", "GameFontNormal")
   text:SetPoint("LEFT", icon, "RIGHT", 6, 0)
-  text:SetText(L[section.label])
+  text:SetWidth(NAV_W - 50)
+  text:SetJustifyH("LEFT")
+  text:SetWordWrap(false)
+  text:SetText(ns.NavLabel(L[section.label]))
+  widgets["nav:" .. section.id] = text
   button:SetScript("OnClick", function() Select(section.id) end)
   navButtons[section.id] = button
 end

@@ -59,6 +59,18 @@ class OptionSectionTests(unittest.TestCase):
             self.assertIn(b.action, ACTIONS)
         self.assertEqual(sorted(b.arg for b in buttons if b.arg), ["export", "import"])
 
+    def test_profession_icons_in_english_and_german(self):
+        icon = self.ns.ProfessionIcon
+        self.assertEqual(icon("Tailoring"), "Interface\\Icons\\Trade_Tailoring")
+        self.assertEqual(icon("Schneiderei"), "Interface\\Icons\\Trade_Tailoring")
+        self.assertEqual(icon("Erste Hilfe"), icon("First Aid"))
+        for name in ("Alchemy", "Blacksmithing", "Enchanting", "Engineering", "Herbalism", "Leatherworking", "Mining",
+                     "Skinning", "Tailoring", "Cooking", "First Aid", "Fishing", "Alchemie", "Schmiedekunst",
+                     "Verzauberkunst", "Ingenieurskunst", "Kräuterkunde", "Lederverarbeitung", "Bergbau",
+                     "Kürschnerei", "Kochkunst", "Angeln"):
+            self.assertNotEqual(icon(name), icon("Unknown craft"), name)
+        self.assertEqual(icon("Unknown craft"), "Interface\\Icons\\INV_Misc_QuestionMark")
+
     def test_special_rows(self):
         kinds = [c.kind for c in self.controls()]
         self.assertEqual((kinds.count("alts"), kinds.count("dependencies")), (1, 1))

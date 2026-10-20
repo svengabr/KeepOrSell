@@ -202,8 +202,9 @@ function ns.MigrateAltSettings(db)
   db.altReagents, db.altProfession, db.altClassItems, db.altIncluded = nil, nil, nil, nil
 end
 
--- One row per alt for the options window: {key, name, class, professions = "A, B" or nil, included, profession,
--- classItems}, sorted by name; professions are the distinct stored profession names of its recipes. Pure.
+-- One row per alt for the options window: {key, name, class, professions = "A, B" or nil, professionList = {"A",
+-- "B"}, included, profession, classItems}, sorted by name; professions are the distinct stored profession names of
+-- its recipes. Pure.
 function ns.AltRows(characters, recipeProfession, altSettings, me)
   local rows = {}
   for _, alt in ipairs(ns.AltCharacters(characters, me)) do
@@ -214,7 +215,7 @@ function ns.AltRows(characters, recipeProfession, altSettings, me)
     table.sort(names)
     local s = altSettings and altSettings[alt.key] or {}
     table.insert(rows, {key = alt.key, name = alt.name, class = alt.class,
-      professions = #names > 0 and table.concat(names, ", ") or nil,
+      professions = #names > 0 and table.concat(names, ", ") or nil, professionList = names,
       included = s.included ~= false, profession = s.profession ~= false, classItems = s.classItems ~= false})
   end
   return rows

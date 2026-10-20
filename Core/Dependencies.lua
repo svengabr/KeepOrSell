@@ -59,8 +59,13 @@ local STATUS = {
   missing = {"ff808080", "DEP_MISSING"},
 }
 
+-- The colored status word ("active", "not installed" …)
+function ns.DependencyStatusText(dep)
+  local color, key = unpack(STATUS[ns.GetDependencyStatus(dep.name)])
+  return ("|c%s%s|r"):format(color, L[key])
+end
+
 -- "<colored status> · <use>"
 function ns.DependencyText(dep)
-  local color, key = unpack(STATUS[ns.GetDependencyStatus(dep.name)])
-  return ("|c%s%s|r · %s"):format(color, L[key], dep.use)
+  return ns.DependencyStatusText(dep) .. " · " .. dep.use
 end
