@@ -123,6 +123,11 @@ local function UselessText(verdict)
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
+-- A character name whose first name and surname stay on one line when the tooltip wraps
+local function Unbroken(name)
+  return (name:gsub(" ", "94p")) -- non-breaking space
+end
+
 -- "Amy (Tailoring), Bob (Tailoring, class item)": who of the account needs the item and why. Pure.
 function ns.AltList(alts)
   local parts = {}
@@ -130,7 +135,8 @@ function ns.AltList(alts)
     local why = {}
     for _, profession in ipairs(alt.professions or {}) do table.insert(why, profession) end
     if alt.class then table.insert(why, L.TIP_ALT_CLASS) end
-    table.insert(parts, #why > 0 and ("%s (%s)"):format(alt.name, table.concat(why, ", ")) or alt.name)
+    local name = Unbroken(alt.name)
+    table.insert(parts, #why > 0 and ("%s (%s)"):format(name, table.concat(why, ", ")) or name)
   end
   return table.concat(parts, ", ")
 end
@@ -144,7 +150,7 @@ function ns.AlsoText(also)
       table.insert(parts, L.SET_PROFESSION)
     elseif reason.kind == "alt" then
       local names = {}
-      for _, alt in ipairs(reason.alts or {}) do table.insert(names, alt.name) end
+      for _, alt in ipairs(reason.alts or {}) do table.insert(names, Unbroken(alt.name)) end
       table.insert(parts, L.TIP_ALSO_ALTS:format(table.concat(names, ", ")))
     end
   end

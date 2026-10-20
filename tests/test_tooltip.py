@@ -37,8 +37,13 @@ class AltTooltipTests(unittest.TestCase):
         also = self.rt.eval("""{{kind = 'profession'}, {kind = 'alt', alts = {
           {name = 'Hunt Fred', professions = {'First Aid'}, profession = true, class = false},
           {name = 'Lock Fred', professions = {}, profession = false, class = true}}}}""")
-        self.assertEqual(self.ns.AlsoText(also), "also: Profession · for alts: Hunt Fred, Lock Fred")
+        # a non-breaking space keeps first name and surname together when the line wraps
+        self.assertEqual(self.ns.AlsoText(also), "also: Profession · for alts: Hunt Fred, Lock Fred")
         self.assertIsNone(self.ns.AlsoText(None))
+
+    def test_alt_list_keeps_names_together(self):
+        alts = self.rt.eval("{{name = 'Su Ez', professions = {'Mining'}, profession = true, class = false}}")
+        self.assertEqual(self.ns.AltList(alts), "Su Ez (Mining)")
 
     def test_alt_rows_offer_the_best_way_as_otherwise(self):
         rows = self.ns.TooltipRows(self.rt.eval("{kind = 'alt', ahTrusted = true, ahWorth = true}"),
