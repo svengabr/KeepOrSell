@@ -70,6 +70,17 @@ class FilterTests(unittest.TestCase):
         self.assertIsNone(f.options.factor)
         self.assertEqual(report.ignored, 1)
 
+    def test_old_alt_reagents_key_imports(self):
+        f, report = self.parse("KeepOrSell filter 1\naltReagents = off\n")
+        self.assertIsNone(f.options.altReagents)
+        self.assertIsNone(f.options.accountMode)
+        self.assertEqual(report.ignored, 1)
+
+    def test_account_mode_options(self):
+        f, report = self.parse("KeepOrSell filter 1\naccountMode = off\naltClassItems = on\n")
+        self.assertIs(f.options.accountMode, False)
+        self.assertEqual(report.ignored, 1)  # per-alt settings are never part of a filter
+
     def test_toggle_values(self):
         f, _ = self.parse("KeepOrSell filter 1\nscrap = off\ngear = 1\nquestie = TRUE\nopenable = 0\nplainGear = false\n")
         self.assertIs(f.options.scrap, False)
@@ -137,6 +148,7 @@ class FilterTests(unittest.TestCase):
         keys = [self.ns.FILTER_OPTIONS[i].key for i in range(1, len(self.ns.FILTER_OPTIONS) + 1)]
         self.assertEqual(keys[:3], ["factor", "minProfit", "maxAge"])
         self.assertEqual(len(keys), 13)
+        self.assertEqual(keys[-1], "accountMode")
 
     def test_long_name_cut(self):
         f, _ = self.parse("KeepOrSell filter 1\nname = " + "a" * 100 + "\n")
@@ -199,7 +211,8 @@ local db = {
   keep = {[4306] = true, [2589] = true, [10] = true},
   factor = 2.5, minProfit = 5, maxAge = 7,
   scrap = true, profession = false, gear = true, plainGear = false, recipeJunk = true,
-  questie = true, disenchant = false, openable = true, upcomingReagents = false, altReagents = true,
+  questie = true, disenchant = false, openable = true, upcomingReagents = false, accountMode = true,
+  altSettings = {["Bob-Realm"] = {included = false}}, characters = {["Bob-Realm"] = {faction = "Alliance", class = "MAGE"}},
 }
 return db
 """
@@ -211,6 +224,12 @@ class SerializeTests(unittest.TestCase):
 
     def db(self):
         return self.rt.execute(DB)
+
+    def test_export_has_no_character_names(self):
+        text = self.ns.SerializeFilter(self.db())
+        self.assertNotIn("Bob", text)
+        self.assertIn("accountMode = on", text)
+        self.assertNotIn("altReagents", text)
 
     def test_round_trip(self):
         db = self.db()
@@ -458,6 +477,7 @@ class CommandTests(unittest.TestCase):
         self.rt.eval("""function(ns)
           ns.SettingsChanged = function() ns.changed = (ns.changed or 0) + 1 end
           ns.ShowFilterWindow = function(mode) ns.shown = mode end
+          ns.RefreshOptionsWindow = function() ns.windowRefreshed = (ns.windowRefreshed or 0) + 1 end
           KeepOrSellDB.filter = {items = {}, categories = {}}
         end""")(self.ns)
         self.db = self.rt.eval("KeepOrSellDB")
@@ -469,6 +489,12 @@ class CommandTests(unittest.TestCase):
 
     def printed(self):
         return list(self.rt.eval("PRINTED").values())
+
+    def test_filter_change_refreshes_open_window(self):
+        f = self.parse("KeepOrSell filter 1\nscrap = off\n")
+        self.ns.ApplyFilterCommand(f)
+        self.assertEqual(self.ns.windowRefreshed, 1)
+        self.assertIs(self.db.scrap, False)
 
     def test_rule_command_sets_and_clears(self):
         ok, err = self.rule(self.ns, self.db, 4, "junk")

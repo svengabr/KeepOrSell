@@ -15,6 +15,11 @@ UNDOCUMENTED_FUNCTIONS = {
     "C_TradeSkillUI.GetAllRecipeIDs": "not on Forever; Professions.lua prefers it where present, else GetFilteredRecipeIDs",
 }
 
+# Enums the generated docs lack but the client has; only used behind a guard
+UNDOCUMENTED_ENUMS = {
+    "GameRule": "used by Syndicator on Forever behind RegionalUniqueNamesEnabled(); Account.lua checks it exists",
+}
+
 
 @lru_cache(maxsize=None)
 def api():
@@ -55,6 +60,8 @@ def stub_errors(rt):
     errors = [f"{name} is not a Forever API function" for name in functions.values() if not is_function(name)]
     for entry in enums.values():
         name = entry[1]
+        if name in UNDOCUMENTED_ENUMS:
+            continue
         if name not in doc["enums"]:
             errors.append(f"Enum.{name} does not exist on Forever")
         elif entry[2] is not None:

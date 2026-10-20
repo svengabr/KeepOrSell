@@ -1,8 +1,7 @@
--- Options panel under Esc > Options > AddOns
+-- KeepOrSell's entry under Esc > Options > AddOns: one button that opens the own options window
+-- (UI/OptionsWindow.lua), so players who look there still find the options.
 local addonName, ns = ...
 local L = ns.L
-
-local category
 
 -- Blizzard's gamepad UI (Forever's controller mode) is on
 function ns.IsGamepadUI()
@@ -11,122 +10,19 @@ function ns.IsGamepadUI()
     and C_InputInterfaceStyle.GetCurrentStyle() == Enum.InputDeviceInterfaceType.Gamepad
 end
 
--- Registers the panel; db must already hold the defaults
-function ns.RegisterOptions(db, defaults)
-  if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting) then return end
-  local layout
-  category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
-
-  local function Add(key, varType, name)
-    local variable = addonName .. "_" .. key
-    local setting = Settings.RegisterAddOnSetting(category, variable, key, db, varType, name, defaults[key])
-    return setting, variable
-  end
-
-  -- options that do nothing without their addon say so in the tooltip and are greyed out
-  local function Tooltip(key, tooltip)
-    local needs = ns.OPTION_NEEDS[key]
-    return needs and tooltip .. "\n\n" .. L.OPT_NEEDS:format(table.concat(ns.NeedsList(needs), " / ")) or tooltip
-  end
-
-  local function NeedsAddon(key, initializer)
-    local needs = ns.OPTION_NEEDS[key]
-    if needs and initializer and initializer.AddModifyPredicate then
-      initializer:AddModifyPredicate(function() return ns.IsAnyDependencyReady(needs) end)
-    end
-  end
-
-  local function Slider(key, name, tooltip, min, max, step, label)
-    local setting, variable = Add(key, Settings.VarType.Number, name)
-    local options = Settings.CreateSliderOptions(min, max, step)
-    options:SetLabelFormatter(MinimalSliderWithSteppersMixin.Label.Right, label)
-    NeedsAddon(key, Settings.CreateSlider(category, setting, options, Tooltip(key, tooltip)))
-    Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end)
-  end
-
-  local function Checkbox(key, name, tooltip, refresh)
-    local setting, variable = Add(key, Settings.VarType.Boolean, name)
-    NeedsAddon(key, Settings.CreateCheckbox(category, setting, Tooltip(key, tooltip)))
-    if refresh then Settings.SetOnValueChangedCallback(variable, function() ns.SettingsChanged() end) end
-  end
-
-  local function Header(name)
-    if layout and CreateSettingsListSectionHeaderInitializer then
-      layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(name))
-    end
-  end
-
+-- Registers the entry; the button only shows the own window (above the settings panel) and never closes
+-- Blizzard's panel from addon code
+function ns.RegisterOptions()
+  if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnCategory) then return end
+  local category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
   if layout and CreateSettingsButtonInitializer then
-    layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_SETUP, L.OPT_SETUP_BUTTON, function() ns.ShowSetup() end, L.OPT_SETUP_TIP, true))
+    layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_WINDOW_OPEN, L.OPT_WINDOW_OPEN_BUTTON,
+      function() ns.ShowOptionsWindow() end, L.OPT_WINDOW_OPEN_TIP, true))
   end
-
-  -- grouped by purpose; the header names the addon a group depends on
-  Header(L.SECTION_AH)
-  Slider("factor", L.OPT_FACTOR, L.OPT_FACTOR_TIP, ns.MIN_FACTOR, 10, 0.1, function(v) return ("%gx"):format(v) end)
-  Slider("minProfit", L.OPT_MIN_PROFIT, L.OPT_MIN_PROFIT_TIP, 0, 100, 1, function(v)
-    return v == 0 and L.OFF or L.SILVER:format(v)
-  end)
-  Slider("maxAge", L.OPT_MAX_AGE, L.OPT_MAX_AGE_TIP, 1, 21, 1, function(v)
-    return v >= 21 and L.OFF or L.DAYS:format(v)
-  end)
-  Checkbox("share", L.OPT_SHARE, L.OPT_SHARE_TIP, true)
-  Header(L.SECTION_JUNK)
-  Checkbox("scrap", L.OPT_SCRAP, L.OPT_SCRAP_TIP, true)
-  Checkbox("gear", L.OPT_GEAR, L.OPT_GEAR_TIP, true)
-  Checkbox("plainGear", L.OPT_PLAIN_GEAR, L.OPT_PLAIN_GEAR_TIP, true)
-  Checkbox("recipeJunk", L.OPT_RECIPES, L.OPT_RECIPES_TIP, true)
-  Header(L.SECTION_KEEP)
-  Checkbox("profession", L.OPT_PROFESSION, L.OPT_PROFESSION_TIP, true)
-  Checkbox("upcomingReagents", L.OPT_UPCOMING, L.OPT_UPCOMING_TIP, true)
-  Checkbox("altReagents", L.OPT_ALT_REAGENTS, L.OPT_ALT_REAGENTS_TIP, true)
-  Checkbox("questie", L.OPT_QUESTIE, L.OPT_QUESTIE_TIP, true)
-  Checkbox("disenchant", L.OPT_DISENCHANT, L.OPT_DISENCHANT_TIP, true)
-  Checkbox("openable", L.OPT_OPEN, L.OPT_OPEN_TIP, true)
-  Checkbox("keepClick", L.OPT_KEEP_CLICK, L.OPT_KEEP_CLICK_TIP)
-  if layout and CreateSettingsButtonInitializer then
-    layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_KEEP_FORGET, L.OPT_KEEP_FORGET_BUTTON,
-      function() ns.ForgetKept() end, L.OPT_KEEP_FORGET_TIP, true))
-  end
-  -- shareable filters (FilterWindow.lua); without a backup Undo says so in chat
-  Header(L.OPT_FILTER_HEADER)
-  if layout and CreateSettingsButtonInitializer then
-    local function Button(name, text, tip, click)
-      layout:AddInitializer(CreateSettingsButtonInitializer(name, text, click, tip, true))
-    end
-    Button(L.OPT_FILTER_EXPORT, L.OPT_FILTER_EXPORT_BUTTON, L.OPT_FILTER_EXPORT_TIP, function() ns.ShowFilterWindow("export") end)
-    Button(L.OPT_FILTER_IMPORT, L.OPT_FILTER_IMPORT_BUTTON, L.OPT_FILTER_IMPORT_TIP, function() ns.ShowFilterWindow("import") end)
-    Button(L.OPT_FILTER_UNDO, L.OPT_FILTER_UNDO_BUTTON, L.OPT_FILTER_UNDO_TIP, function() ns.UndoFilterCommand() end)
-    Button(L.OPT_FILTER_CLEAR, L.OPT_FILTER_CLEAR_BUTTON, L.OPT_FILTER_CLEAR_TIP, function() ns.ClearFilterCommand() end)
-  end
-  Header(L.SECTION_DISPLAY)
-  Checkbox("tooltip", L.OPT_TOOLTIP, L.OPT_TOOLTIP_TIP)
-  Checkbox("hints", L.OPT_HINTS, L.OPT_HINTS_TIP, true)
-  Checkbox("destroy", L.OPT_DESTROY, L.OPT_DESTROY_TIP, true)
-  Checkbox("lootCoins", L.OPT_LOOT_COINS, L.OPT_LOOT_COINS_TIP)
-  Checkbox("lossWarnings", L.OPT_LOSS_WARNINGS, L.OPT_LOSS_WARNINGS_TIP)
-  Checkbox("bagValue", L.OPT_BAG_VALUE, L.OPT_BAG_VALUE_TIP, true)
-  Checkbox("setSource", L.OPT_SETS, L.OPT_SETS_TIP)
-
-  if layout and CreateSettingsListSectionHeaderInitializer and Settings.CreateElementInitializer then
-    Header(L.DEPENDENCIES)
-    for _, dep in ipairs(ns.DEPENDENCIES) do
-      layout:AddInitializer(Settings.CreateElementInitializer("KeepOrSellDependencyTemplate", dep))
-    end
-  end
-
   Settings.RegisterAddOnCategory(category)
 end
 
+-- The help button and the hints open the options
 function ns.OpenOptions()
-  if not category then
-    if ns.IsGamepadUI() then print("|cffffd200KeepOrSell:|r " .. L.OPTIONS_GAMEPAD) end
-    return
-  end
-  -- Settings.OpenToCategory goes through C_SettingsUtil.OpenSettingsPanel, which newer
-  -- clients only allow from untainted code (ADDON_ACTION_BLOCKED); the panel's own method is not restricted
-  if SettingsPanel and SettingsPanel.OpenToCategory then
-    SettingsPanel:OpenToCategory(category:GetID())
-  else
-    Settings.OpenToCategory(category:GetID())
-  end
+  ns.ShowOptionsWindow()
 end

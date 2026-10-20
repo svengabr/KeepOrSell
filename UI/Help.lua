@@ -1,4 +1,5 @@
 -- A "? KoS" button in Baganator's bag window; hovering it lists KeepOrSell's shortcuts, a click opens the options.
+-- The option helpButton hides it.
 local _, ns = ...
 local L = ns.L
 
@@ -33,14 +34,28 @@ local function CreateButton()
   frame:SetSize(frame:GetTextWidth() + 20, 20)
   frame:SetScript("OnEnter", ShowTooltip)
   frame:SetScript("OnLeave", function() GameTooltip:Hide() end)
-  frame:SetScript("OnClick", function() ns.OpenOptions() end)
+  frame:SetScript("OnClick", function() ns.ShowOptionsWindow() end)
   return frame
 end
+
+local button
 
 -- Adds the button to Baganator's bag window; false when Baganator can't take it
 function ns.RegisterHelp()
   local api = Baganator and Baganator.API
   if not (api and api.RegisterRegion) then return false end
-  api.RegisterRegion("KeepOrSell", "keeporsell-help", "backpack", "bottom_left", CreateButton())
+  button = CreateButton()
+  api.RegisterRegion("KeepOrSell", "keeporsell-help", "backpack", "bottom_left", button)
+  ns.UpdateHelp()
   return true
+end
+
+-- Shows or hides the button as the option helpButton says
+function ns.UpdateHelp()
+  if not button then return end
+  local shown = KeepOrSellDB.helpButton ~= false
+  if shown == button:IsShown() then return end
+  -- a hidden region still takes its width in Baganator's row
+  button:SetWidth(shown and button:GetTextWidth() + 20 or 1)
+  button:SetShown(shown)
 end

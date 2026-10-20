@@ -11,7 +11,7 @@ from pathlib import Path
 import lupa.lua51 as lua51
 
 from addon import SOURCE_DIRS
-from wowapi import api, is_function
+from wowapi import UNDOCUMENTED_ENUMS, api, is_function
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = sorted(p for d in SOURCE_DIRS for p in (ROOT / d).glob("*.lua"))
@@ -20,8 +20,8 @@ SOURCES = sorted(p for d in SOURCE_DIRS for p in (ROOT / d).glob("*.lua"))
 NOT_IN_DOCS = {
     # SavedVariables, slash command and optional third-party addons
     "KeepOrSellDB": "our SavedVariables",
+    "Constants": "generated constants table (CharacterNameSeparatorConsts, used by Syndicator on Forever); guarded",
     "SLASH_KEEPORSELL1": "our slash command",
-    "KeepOrSellDependencyMixin": "our mixin for the template in Options.xml",
     "Auctionator": "optional dependency, public API",
     "Baganator": "optional dependency, public API",
     "LibQuestieDB": "optional dependency (QuestieDB), public API in src/api.lua",
@@ -32,11 +32,7 @@ NOT_IN_DOCS = {
     "GameTooltip": "FrameXML frame",
     "ItemRefTooltip": "FrameXML frame",
     "UIParent": "FrameXML frame",
-    "SettingsPanel": "FrameXML frame (Blizzard_Settings)",
     "Settings": "FrameXML namespace (Blizzard_Settings)",
-    "MinimalSliderWithSteppersMixin": "FrameXML mixin",
-    "SettingsListElementMixin": "FrameXML mixin (Blizzard_Settings_Shared/Blizzard_SettingControls.lua)",
-    "CreateSettingsListSectionHeaderInitializer": "FrameXML (Blizzard_Settings_Shared/Blizzard_SettingControls.lua)",
     "CreateSettingsButtonInitializer": "FrameXML (Blizzard_Settings_Shared/Blizzard_SettingControls.lua), used behind a guard",
     "ButtonFrameTemplate_HidePortrait": "FrameXML (Blizzard_SharedXML/PortraitFrame.lua), used behind a guard",
     "ButtonFrameTemplate_HideButtonBar": "FrameXML (Blizzard_SharedXML/PortraitFrame.lua), used behind a guard",
@@ -125,6 +121,8 @@ class ForeverApiTests(unittest.TestCase):
         missing = []
         for name, text in self.sources.items():
             for enum, key in re.findall(r"\bEnum\.(\w+)(?:\.(\w+))?", text):
+                if enum in UNDOCUMENTED_ENUMS:
+                    continue
                 if enum not in enums:
                     missing.append(f"{name}: Enum.{enum}")
                 elif key and key not in enums[enum]:

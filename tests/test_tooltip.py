@@ -19,6 +19,38 @@ AH = {link3 = 1000, link4 = 15, link5 = 120}
 """
 
 
+class AltTooltipTests(unittest.TestCase):
+    ALTS = """{
+      {name = 'Amy', professions = {'Tailoring'}, profession = true, class = false},
+      {name = 'Bob', professions = {'Tailoring'}, profession = true, class = true},
+      {name = 'Cid', professions = {}, profession = true, class = false}}"""
+
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Tooltip.lua",), STUBS)
+
+    def test_alt_tooltip_names_alts_and_why(self):
+        verdict = self.rt.eval("{kind = 'alt', alts = %s}" % self.ALTS)
+        text = self.ns.TooltipText(verdict, None, self.rt.eval("KeepOrSellDB"))
+        self.assertIn("For alts: Amy (Tailoring), Bob (Tailoring, class item), Cid – mail it over", text)
+
+    def test_other_reasons_line(self):
+        also = self.rt.eval("""{{kind = 'profession'}, {kind = 'alt', alts = {
+          {name = 'Hunt Fred', professions = {'First Aid'}, profession = true, class = false},
+          {name = 'Lock Fred', professions = {}, profession = false, class = true}}}}""")
+        # a non-breaking space keeps first name and surname together when the line wraps
+        self.assertEqual(self.ns.AlsoText(also), "also: Profession · for alts: Hunt Fred, Lock Fred")
+        self.assertIsNone(self.ns.AlsoText(None))
+
+    def test_alt_list_keeps_names_together(self):
+        alts = self.rt.eval("{{name = 'Su Ez', professions = {'Mining'}, profession = true, class = false}}")
+        self.assertEqual(self.ns.AltList(alts), "Su Ez (Mining)")
+
+    def test_alt_rows_offer_the_best_way_as_otherwise(self):
+        rows = self.ns.TooltipRows(self.rt.eval("{kind = 'alt', ahTrusted = true, ahWorth = true}"),
+                                   self.rt.eval("{ah = 1000, vendor = 10}"))
+        self.assertIn("Otherwise", rows[1][1])
+
+
 class TooltipTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(CORE_FILES + ("Bags.lua", "Tooltip.lua"), STUBS)

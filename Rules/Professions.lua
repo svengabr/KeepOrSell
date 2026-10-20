@@ -60,9 +60,17 @@ end
 
 local index, upcomingIndex -- {[itemID] = true}, rebuilt after a change
 
--- "Name-Realm", for data KeepOrSell keeps per character
-function ns.CharacterKey()
-  return (UnitName("player") or "?") .. "-" .. (GetRealmName() or "?")
+-- "Name-Realm", for data KeepOrSell keeps per character. Forever's characters have a surname (UnitName returns
+-- it second while regional unique names are on): "Drache Offiziell-Realm". firstNameOnly gives the key older
+-- versions used.
+function ns.CharacterKey(firstNameOnly)
+  local name, surname = UnitName("player")
+  name = name or "?"
+  if not firstNameOnly and surname and surname ~= "" and RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled() then
+    local separators = Constants and Constants.CharacterNameSeparatorConsts
+    name = name .. (separators and separators.CHARACTERNAME_SURNAME_SEPARATOR or " ") .. surname
+  end
+  return name .. "-" .. (GetRealmName() or "?")
 end
 
 local function CharacterTable(name)
@@ -180,40 +188,6 @@ function ns.IsUpcomingReagent(itemID)
   if not itemID then return false end
   if not upcomingIndex then upcomingIndex = ns.ReagentIndex(CharacterTable("upcoming"), CharacterTable("crafts")) end
   return upcomingIndex[itemID] == true
-end
-
--- recipes/crafts: KeepOrSellDB.recipes/.crafts ({["Name-Realm"] = {...}}); factions: {["Name-Realm"] = faction}.
--- Returns {[itemID] = {name, ...}}: the other characters of the player on the same realm and faction whose
--- known recipes still gain skill from the item (the item can be mailed to them). Characters whose faction
--- isn't known yet are left out. Pure.
-function ns.AltReagentIndex(recipes, crafts, factions, me, faction)
-  local realm = me:match("%-(.+)$")
-  local result = {}
-  for key, stored in pairs(recipes or {}) do
-    local name, keyRealm = key:match("^(.-)%-(.+)$")
-    if key ~= me and keyRealm == realm and faction and factions[key] == faction then
-      for itemID in pairs(ns.ReagentIndex(stored, crafts and crafts[key])) do
-        result[itemID] = result[itemID] or {}
-        table.insert(result[itemID], name)
-      end
-    end
-  end
-  for _, names in pairs(result) do table.sort(names) end
-  return result
-end
-
-local altIndex -- built once per session: other characters only change in their own sessions
-
--- Names of the player's other characters that still gain skill from the item, or nil
-function ns.AltsNeedingReagent(itemID)
-  if not (itemID and KeepOrSellDB) then return nil end
-  if not altIndex then
-    local me, faction = ns.CharacterKey(), UnitFactionGroup and UnitFactionGroup("player")
-    KeepOrSellDB.factions = KeepOrSellDB.factions or {}
-    KeepOrSellDB.factions[me] = faction or KeepOrSellDB.factions[me]
-    altIndex = ns.AltReagentIndex(KeepOrSellDB.recipes, KeepOrSellDB.crafts, KeepOrSellDB.factions, me, faction)
-  end
-  return altIndex[itemID]
 end
 
 local NO_RECIPES = {[356] = true, [794] = true} -- fishing, archaeology

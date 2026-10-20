@@ -28,7 +28,7 @@ ns.FILTER_OPTIONS = {
   {key = "disenchant", kind = "toggle"},
   {key = "openable", kind = "toggle"},
   {key = "upcomingReagents", kind = "toggle"},
-  {key = "altReagents", kind = "toggle"},
+  {key = "accountMode", kind = "toggle"},
 }
 
 local OPTION_BY_KEY = {}

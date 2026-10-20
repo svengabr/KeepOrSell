@@ -102,8 +102,8 @@ end
 -- learned, "other" for a profession the player doesn't have
 -- upcoming = a recipe of the player's profession not learned yet (and not grey) needs the item: Profession
 -- group like a reagent of a known recipe, even when worth auctioning (option upcomingReagents)
--- altReagent = {name, ...} of the player's other characters (same realm and faction) whose known recipes
--- still gain skill from the item: Profession group unless bound (option altReagents)
+-- alts = {alt, ...} other characters of the account that need the item (ns.AltsNeedingItem): with account mode on
+-- (ns.FilterAlts) the group "For alts" unless bound, after the player's own needs
 -- tool = a profession tool (mining pick, skinning knife ...), kept no matter what
 -- classItem = a spell reagent or tool of the player's class (Thieves' Tools, Light Feather ...), kept no matter
 -- what, even when the class quest that handed it out is done
@@ -152,10 +152,9 @@ local function Decide(facts, db)
   if not verdict then
     if db.profession and facts.reagent then return {kind = "profession"} end
     if db.profession and db.upcomingReagents and facts.upcoming then return {kind = "profession", reason = "upcoming"} end
-    -- another character of the player still learns from it; only worth it when it can be mailed
-    if db.profession and db.altReagents and facts.altReagent and not facts.bound then
-      return {kind = "profession", reason = "alt", alts = facts.altReagent}
-    end
+    -- another character of the account needs it; only worth it when it can be mailed
+    local alts = not facts.bound and ns.FilterAlts(facts.alts, db)
+    if alts then return {kind = "alt", alts = alts} end
     if db.profession and facts.recipe == "learn" then return {kind = "profession", reason = "recipe"} end
     -- after the profession checks: a broad rule never takes a reagent that still gives skill
     verdict = RuleVerdict(ns.FilterCategoryRule(db.filter, facts.classID, facts.subclassID, facts.quality),
@@ -218,12 +217,29 @@ end
 
 function ns.Decide(facts, db)
   local verdict = Decide(facts, db)
+  verdict.also = ns.OtherReasons(verdict, facts, db)
   local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
   verdict.bound = facts.bound or nil
   verdict.ahTrusted = priceReason ~= "noprice" and priceReason ~= "stale"
   verdict.ahWorth = priceClass == "ah"
   verdict.deValue = db.disenchant and facts.disenchant and facts.disenchant.value or nil
   return verdict
+end
+
+local GOES = {junk = true, ah = true, disenchant = true}
+
+-- What else speaks for keeping an item the verdict keeps anyway (the tooltip names only the first reason):
+-- {{kind = "profession"}, {kind = "alt", alts = {...}}} or nil. Nothing for items that go. Pure.
+function ns.OtherReasons(verdict, facts, db)
+  if GOES[verdict.kind] then return nil end
+  local also = {}
+  if verdict.kind ~= "profession" and db.profession
+    and (facts.reagent or (db.upcomingReagents and facts.upcoming)) then
+    table.insert(also, {kind = "profession"})
+  end
+  local alts = verdict.kind ~= "alt" and not facts.bound and ns.FilterAlts(facts.alts, db)
+  if alts then table.insert(also, {kind = "alt", alts = alts}) end
+  return #also > 0 and also or nil
 end
 
 -- true if the tooltip lines contain a class or race requirement the player doesn't meet. Pure.
@@ -360,7 +376,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass
       or ns.IsUselessDrink(playerClass, classID, ItemSpellName(itemID), DrinkName()) or false,
-    altReagent = ns.AltsNeedingReagent(itemID),
+    alts = ns.AltsNeedingItem(itemID),
     plain = ns.IsPlainGear(quality, classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),
     reagent = ns.IsSkillUpReagent(itemID),

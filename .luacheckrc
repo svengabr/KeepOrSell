@@ -10,7 +10,6 @@ globals = {
   "SLASH_KEEPORSELL1",
   "SlashCmdList",
   "Scrap",              -- hooks Scrap.IsJunk
-  "KeepOrSellDependencyMixin", -- mixin of the template in Options.xml
   "StaticPopupDialogs", -- adds KEEPORSELL_CLEAR_FILTER
 }
 
@@ -25,7 +24,9 @@ read_globals = {
   "C_AddOns",
   "C_AuctionHouse",
   "C_ChatInfo",
+  "C_ClassColor",
   "C_Container",
+  "C_GameRules",
   "C_InputInterfaceStyle",
   "C_Item",
   "C_QuestLog",
@@ -33,13 +34,14 @@ read_globals = {
   "C_SpellBook",
   "C_Texture",
   "C_Timer",
+  "C_UI",
   "C_TooltipInfo",
   "C_TradeSkillUI",
   "ClearCursor",
+  "Constants",
   "CreateFrame",
   "CursorHasItem",
   "DeleteCursorItem",
-  "CreateSettingsListSectionHeaderInitializer",
   "Enum",
   "GetCursorInfo",
   "GetLootSlotInfo",
@@ -70,6 +72,7 @@ read_globals = {
   "IsInGroup",
   "IsInRaid",
   "ItemLocation",
+  "RegionalUniqueNamesEnabled",
   "UnitClass",
   "UnitFactionGroup",
   "UnitLevel",
@@ -93,10 +96,7 @@ read_globals = {
   "StaticPopup_Show",
   "UIErrorsFrame",
   "ItemRefTooltip",
-  "MinimalSliderWithSteppersMixin",
   "Settings",
-  "SettingsListElementMixin",
-  "SettingsPanel",
   "TooltipDataProcessor",
   "UIParent",
 

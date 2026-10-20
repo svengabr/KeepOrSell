@@ -173,14 +173,52 @@ class DecideTests(unittest.TestCase):
         self.db.scrap = False
         self.assertIsNone(self.kind(classID=7, prices=self.CHEAP))
 
-    def test_reagent_for_an_alt(self):
-        self.db.altReagents = True
-        bob = self.rt.eval("{'Bob'}")
-        verdict = self.decide(classID=7, altReagent=bob, prices=self.CHEAP)
-        self.assertEqual((verdict.kind, verdict.reason, verdict.alts[1]), ("profession", "alt", "Bob"))
-        self.assertEqual(self.kind(classID=7, altReagent=bob, bound=True, prices=self.CHEAP), "junk")
-        self.db.altReagents = False
-        self.assertEqual(self.kind(classID=7, altReagent=bob, prices=self.CHEAP), "junk")
+    BOB = "{{key = 'Bob-Realm', name = 'Bob', professions = {'Tailoring'}, profession = true, class = false}}"
+
+    def test_alt_need_goes_to_alt_group(self):
+        bob = self.rt.eval(self.BOB)
+        verdict = self.decide(classID=7, alts=bob, prices=self.CHEAP)
+        self.assertEqual((verdict.kind, verdict.alts[1].name), ("alt", "Bob"))
+        self.assertEqual(self.kind(classID=7, alts=bob, prices=self.FRESH_AH), "alt")  # beats the auction price
+        self.assertEqual(self.kind(classID=7, alts=bob, bound=True, prices=self.CHEAP), "junk")
+        self.db.profession = False
+        self.assertEqual(self.kind(classID=7, alts=bob, prices=self.CHEAP), "alt")
+        self.db.altSettings = self.rt.eval("{['Bob-Realm'] = {profession = false}}")
+        self.assertEqual(self.kind(classID=7, alts=bob, prices=self.CHEAP), "junk")
+        self.db.altSettings = self.rt.eval("{}")
+        self.db.accountMode = False
+        self.assertEqual(self.kind(classID=7, alts=bob, prices=self.CHEAP), "junk")
+
+    def also(self, verdict):
+        return [a.kind for a in verdict.also.values()] if verdict.also else []
+
+    def test_other_reasons_listed_when_kept_anyway(self):
+        bob = self.rt.eval(self.BOB)
+        verdict = self.decide(classID=7, quest="open", reagent=True, alts=bob, prices=self.CHEAP)
+        self.assertEqual(verdict.kind, "quest")
+        self.assertEqual(self.also(verdict), ["profession", "alt"])
+        self.assertEqual(verdict.also[2].alts[1].name, "Bob")
+        verdict = self.decide(classID=7, reagent=True, alts=bob, prices=self.CHEAP)
+        self.assertEqual((verdict.kind, self.also(verdict)), ("profession", ["alt"]))
+        verdict = self.decide(classID=7, kept=True, upcoming=True, prices=self.CHEAP)
+        self.assertEqual(self.also(verdict), ["profession"])
+
+    def test_no_other_reasons_when_it_goes(self):
+        bob = self.rt.eval(self.BOB)
+        self.set_filter(items={2589: "junk"})
+        verdict = self.decide(alts=bob, prices=self.CHEAP, **self.LINEN)
+        self.assertEqual((verdict.kind, verdict.also), ("junk", None))
+        verdict = self.decide(classID=7, quest="open", alts=bob, bound=True, prices=self.CHEAP)
+        self.assertIsNone(verdict.also)  # bound: no mail to alts
+        self.db.profession = False
+        self.assertIsNone(self.decide(classID=7, quest="open", reagent=True, prices=self.CHEAP).also)
+
+    def test_own_need_beats_alt(self):
+        bob = self.rt.eval(self.BOB)
+        self.assertEqual(self.kind(classID=7, reagent=True, alts=bob, prices=self.CHEAP), "profession")
+        verdict = self.decide(classID=7, classItem=True, alts=bob, prices=self.CHEAP)
+        self.assertEqual((verdict.kind, verdict.reason), (None, "classitem"))
+        self.assertEqual(self.kind(classID=7, kept=True, alts=bob, prices=self.CHEAP), None)
 
     def test_new_forever_trade_good_never_junk(self):
         # KeepOrSell can't judge what Forever added: a cheap new trade good stays, a pricey one may still sell
@@ -344,6 +382,13 @@ class DecideTests(unittest.TestCase):
         lua = "{items = {%s}, categories = {%s}}" % (
             ", ".join('[%d] = "%s"' % (k, v) for k, v in (items or {}).items()), ", ".join(categories or []))
         self.db.filter = self.rt.eval(lua)
+
+    def test_filter_rules_and_alts(self):
+        bob = self.rt.eval(self.BOB)
+        self.set_filter(items={2589: "junk"})
+        self.assertEqual(self.kind(alts=bob, prices=self.CHEAP, **self.LINEN), "junk")
+        self.set_filter(categories=['{class = 7, group = "junk"}'])
+        self.assertEqual(self.kind(alts=bob, prices=self.CHEAP, **self.LINEN), "alt")
 
     def test_item_rule_junk(self):
         self.set_filter(items={2589: "junk"})

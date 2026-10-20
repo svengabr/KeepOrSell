@@ -5,7 +5,7 @@ local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, bagValue = true, share = true,
   disenchant = true, openable = true, keepClick = true, lootCoins = true, upcomingReagents = true,
-  lossWarnings = true, altReagents = true,
+  lossWarnings = true, accountMode = true, helpButton = true,
 }
 
 local frame = CreateFrame("Frame")
@@ -31,6 +31,7 @@ local ScheduleHints = OncePerFrame(function()
   ns.UpdateHints()
   ns.UpdateDestroy()
   ns.UpdateBagValue()
+  ns.UpdateHelp()
 end)
 
 local HINT_DELAY = 5 -- seconds after login, so bags and item data are loaded
@@ -54,6 +55,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     KeepOrSellDB.sharedPrices = KeepOrSellDB.sharedPrices or {}
     KeepOrSellDB.fullScans = KeepOrSellDB.fullScans or {}
     KeepOrSellDB.filter = KeepOrSellDB.filter or {}
+    KeepOrSellDB.altSettings = KeepOrSellDB.altSettings or {} -- [character key] = {included, profession, classItems}
     KeepOrSellDB.filter.items = KeepOrSellDB.filter.items or {}
     KeepOrSellDB.filter.categories = KeepOrSellDB.filter.categories or {}
     -- 0.8.0/0.8.1 kept shared prices by item ID for all realms; without a realm they can't be trusted
@@ -64,12 +66,16 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     KeepOrSellDB.factor = math.max(KeepOrSellDB.factor, ns.MIN_FACTOR)
     -- with the gamepad UI on, closing Blizzard's settings window after an addon page showed can get blocked
     -- and loop the "blocked" popup until the game freezes (reported by LootTriage); /kos says why instead
-    if not ns.IsGamepadUI() then ns.RegisterOptions(KeepOrSellDB, DEFAULTS) end
+    -- the options list the other characters of the account, so the own record must exist first
+    ns.RecordCharacter()
+    ns.MigrateAltSettings(KeepOrSellDB)
+    if not ns.IsGamepadUI() then ns.RegisterOptions() end
     -- hook early, before other addons query Scrap:IsJunk
     ns.HookScrap()
     ns.HookKeepClick()
     ns.HookLossWarnings()
   elseif event == "PLAYER_LOGIN" then
+    ns.RecordCharacter()
     ns.Refresh()
     ns.RegisterBaganator()
     ns.HookTooltip()
@@ -113,9 +119,11 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     local known = ns.HasReagentEconomy()
     if known ~= reagentEconomy then
       reagentEconomy = known
+      ns.RecordCharacter()
       ns.SettingsChanged()
     end
   elseif event == "SKILL_LINES_CHANGED" then
+    ns.RecordCharacter() -- the options list each character's professions
     -- an unlearned profession takes its reagents along
     if ns.ForgetLostProfessions() then ns.RefreshBaganator() end
     ScheduleHints()
@@ -166,6 +174,6 @@ SlashCmdList.KEEPORSELL = function(msg)
   if msg and msg:lower():match("^%s*setup%s*$") then
     ns.ShowSetup()
   elseif not ns.HandleFilterCommand(msg) and not ns.HandleKeepCommand(msg) then
-    ns.OpenOptions()
+    ns.ToggleOptionsWindow()
   end
 end

@@ -123,6 +123,40 @@ local function UselessText(verdict)
   return RECIPE_TEXT[verdict.reason] and L[RECIPE_TEXT[verdict.reason]]
 end
 
+-- A character name whose first name and surname stay on one line when the tooltip wraps
+local function Unbroken(name)
+  return (name:gsub(" ", "\194\160")) -- non-breaking space (UTF-8 C2 A0)
+end
+
+-- "Amy (Tailoring), Bob (Tailoring, class item)": who of the account needs the item and why. Pure.
+function ns.AltList(alts)
+  local parts = {}
+  for _, alt in ipairs(alts or {}) do
+    local why = {}
+    for _, profession in ipairs(alt.professions or {}) do table.insert(why, profession) end
+    if alt.class then table.insert(why, L.TIP_ALT_CLASS) end
+    local name = Unbroken(alt.name)
+    table.insert(parts, #why > 0 and ("%s (%s)"):format(name, table.concat(why, ", ")) or name)
+  end
+  return table.concat(parts, ", ")
+end
+
+-- "also: Profession · for alts: Hunt Fred, Lock Fred" for verdict.also, or nil. Pure.
+function ns.AlsoText(also)
+  if not also then return nil end
+  local parts = {}
+  for _, reason in ipairs(also) do
+    if reason.kind == "profession" then
+      table.insert(parts, L.SET_PROFESSION)
+    elseif reason.kind == "alt" then
+      local names = {}
+      for _, alt in ipairs(reason.alts or {}) do table.insert(names, Unbroken(alt.name)) end
+      table.insert(parts, L.TIP_ALSO_ALTS:format(table.concat(names, ", ")))
+    end
+  end
+  return #parts > 0 and L.TIP_ALSO:format(table.concat(parts, " · ")) or nil
+end
+
 -- "filter 'Leveling'" for a verdict a filter rule made, "filter rule" when the filter has no name; nil otherwise
 local function FilterText(verdict, db)
   if verdict.reason ~= "filter" then return nil end
@@ -162,8 +196,9 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   elseif kind == "profession" and filterText then
     text = Headline(L.TIP_PROFESSION_GROUP, filterText)
   elseif kind == "profession" then
-    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING
-      or reason == "alt" and L.TIP_ALT:format(table.concat(verdict.alts or {}, ", ")) or L.TIP_PROFESSION
+    text = reason == "recipe" and L.TIP_RECIPE or reason == "upcoming" and L.TIP_UPCOMING or L.TIP_PROFESSION
+  elseif kind == "alt" then
+    text = L.TIP_ALT:format(ns.AltList(verdict.alts))
   elseif kind == "ah" then
     text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict), filterText,
       PriceNote(prices, verdict, db))
@@ -230,6 +265,8 @@ local function AddLine(tooltip, data)
     -- an empty line sets the verdict apart from the lines other addons add above it
     tooltip:AddLine(" ")
     tooltip:AddLine(text, 1, 1, 1, true)
+    local also = ns.AlsoText(verdict.also)
+    if also then tooltip:AddLine("   " .. also, 0.6, 0.6, 0.6, true) end
     for _, row in ipairs(rows or {}) do
       tooltip:AddDoubleLine("|c" .. row[3] .. row[1] .. "|r", "|c" .. row[3] .. row[2] .. "|r", 1, 1, 1, 1, 1, 1)
     end
