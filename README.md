@@ -49,6 +49,8 @@ Want to keep something KeepOrSell would sell? **Alt+Right-click** it in your bag
 
 ![Bag tools](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/07-bag-tools.jpg)
 
+![Account mode](https://raw.githubusercontent.com/svengabr/KeepOrSell/main/media/gallery/09-account-mode.jpg)
+
 ## Sharing filters
 
 A filter is your setup as plain text: the decision options (e.g. factor, minimum profit, price age and the junk, profession and disenchant switches), your keep marks and your own rules. Post it in a forum or Discord, or paste someone else's.

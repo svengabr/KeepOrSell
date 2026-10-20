@@ -12,26 +12,40 @@
 <div class="copy">
   <span class="chip" style="color: var(--gold)">Options</span>
   <h1>Tune it to the way you play</h1>
-  <p>Set the auction house threshold, minimum profit and price age, and choose what counts as junk and what to keep.</p>
-  <p class="note">Esc → Options → AddOns → KeepOrSell · options without their addon are greyed out</p>
+  <p>Its own window: sections on the left, switches side by side. Set the auction house threshold, choose what counts as junk and what to keep.</p>
+  <p class="note">/kos or the “? KoS” button in your bags · options without their addon are greyed out</p>
 </div>
 <div class="stage">
-  <div class="settings" style="height: 900px; overflow: hidden;">
-    <h2>KeepOrSell</h2>
-    <h3>Auction house (Auctionator)</h3>
-    <div class="opt"><span>Auction house threshold</span><span class="slider"><span class="track"><i style="left: 10%"></i></span>2x</span></div>
-    <div class="opt"><span>Minimum AH profit</span><span class="slider"><span class="track"><i style="left: 0%"></i></span>off</span></div>
-    <div class="opt"><span>Maximum price age</span><span class="slider"><span class="track"><i style="left: 30%"></i></span>7 days</span></div>
-    <div class="opt"><span>Share prices in the group</span><span class="box">✓</span></div>
-    <h3>Junk (Scrap)</h3>
-    <div class="opt"><span>Cheap trade goods as junk</span><span class="box">✓</span></div>
-    <div class="opt"><span>Items your class can't use</span><span class="box">✓</span></div>
-    <div class="opt"><span>Grey and white gear as junk</span><span class="box">✓</span></div>
-    <div class="opt"><span>Useless recipes</span><span class="box">✓</span></div>
-    <h3>Keep</h3>
-    <div class="opt"><span>Keep profession reagents</span><span class="box">✓</span></div>
-    <div class="opt"><span>Upcoming quests (Questie)</span><span class="box">✓</span></div>
-    <div class="opt"><span>Suggest disenchanting</span><span class="box">✓</span></div>
+  <div class="win">
+    <div class="bar">KeepOrSell – Options</div>
+    <div class="body">
+      <div class="pane nav">
+        <div><img src="icons/inv_misc_coin_01.jpg" alt="">Auction house</div>
+        <div><img src="icons/inv_misc_pelt_wolf_01.jpg" alt="">Junk</div>
+        <div class="sel"><img src="icons/inv_misc_note_01.jpg" alt="">Keep</div>
+        <div><img src="icons/inv_letter_15.jpg" alt="">Account mode</div>
+        <div><img src="icons/inv_scroll_03.jpg" alt="">Filter</div>
+        <div><img src="icons/inv_misc_spyglass_02.jpg" alt="">Display</div>
+        <div><img src="icons/inv_misc_gear_01.jpg" alt="">Dependencies</div>
+      </div>
+      <div class="pane content">
+        <h2>Keep</h2>
+        <div class="cols">
+          <div class="col">
+            <div class="cb"><span class="box">✓</span>Keep profession reagents</div>
+            <div class="cb"><span class="box">✓</span>Reagents for recipes you haven't learned</div>
+            <div class="cb"><span class="box">✓</span>Upcoming quests (Questie)</div>
+          </div>
+          <div class="col">
+            <div class="cb"><span class="box">✓</span>Suggest disenchanting</div>
+            <div class="cb"><span class="box">✓</span>Items to open</div>
+            <div class="cb"><span class="box">✓</span>Alt+Right-click keeps an item</div>
+            <div class="label">Kept items</div>
+            <span class="btn">Forget all</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 </body>
