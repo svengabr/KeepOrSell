@@ -12,7 +12,6 @@ local CONTENT_W = WIDTH - 3 * MARGIN - NAV_W
 local PAGE_W, PAGE_H = CONTENT_W - 2 * MARGIN, PANEL_H - 2 * MARGIN
 local COLUMN_TOP = 40 -- below the section heading
 local COLUMN_W = (PAGE_W - MARGIN) / 2
-local ROW_H = 22
 local DIM = 0.45
 local GREY = {0.6, 0.6, 0.6}
 local WHITE = {1, 1, 1}
@@ -173,8 +172,10 @@ local ALT_COLUMNS = {
   {field = "classItems", header = "ALTS_COL_CLASS"},
   {field = "included", header = "ALTS_COL_INCLUDED"},
 }
--- the rows must fit the scroll area (page width minus the scroll bar): 125 + 135 + 8 + 3 * 78 = 502 <= 504
-local NAME_W, PROF_W, CHECK_W = 125, 135, 78
+-- the rows must fit the scroll area (page width minus the scroll bar): 130 + 130 + 8 + 3 * 78 = 502 <= 504.
+-- Names get two lines (first name and surname may be 12 letters each, plus "(you)"); six profession icons fit.
+local NAME_W, PROF_W, CHECK_W = 130, 130, 78
+local NAME_LINES, ALT_ROW_H = 2, 30
 local SCROLL_W = PAGE_W - 26
 local HEAD_Y, ROWS_Y = -20, -52 -- column headers may wrap to two lines
 
@@ -238,12 +239,15 @@ end
 
 local function AltRow(parent, index)
   local row = CreateFrame("Frame", nil, parent)
-  row:SetSize(SCROLL_W, ROW_H)
-  row:SetPoint("TOPLEFT", 0, -(index - 1) * ROW_H)
+  row:SetSize(SCROLL_W, ALT_ROW_H)
+  row:SetPoint("TOPLEFT", 0, -(index - 1) * ALT_ROW_H)
   row.name = row:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
   row.name:SetPoint("LEFT", 2, 0)
-  row.name:SetWidth(NAME_W)
+  row.name:SetSize(NAME_W, ALT_ROW_H)
   row.name:SetJustifyH("LEFT")
+  row.name:SetJustifyV("MIDDLE")
+  row.name:SetWordWrap(true)
+  if row.name.SetMaxLines then row.name:SetMaxLines(NAME_LINES) end
   -- professions as icons with their name in the tooltip
   row.professionIcons = {}
   row.checks = {}
@@ -287,7 +291,7 @@ local function AltTable(parent, _, y)
   t.scroll:SetPoint("TOPLEFT", 0, ROWS_Y)
   t.scroll:SetPoint("BOTTOMRIGHT", -(PAGE_W - SCROLL_W), 34)
   local child = CreateFrame("Frame", nil, t.scroll)
-  child:SetSize(SCROLL_W, ROW_H)
+  child:SetSize(SCROLL_W, ALT_ROW_H)
   t.scroll:SetScrollChild(child)
   t.hint = t:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
   t.hint:SetPoint("BOTTOMLEFT", 4, 6)
@@ -324,9 +328,9 @@ local function AltTable(parent, _, y)
       widgets["altname:" .. alt.key] = row.name
     end
     for i = #data + 1, #t.rows do t.rows[i]:Hide() end
-    child:SetHeight(math.max(ROW_H, #data * ROW_H))
+    child:SetHeight(math.max(ALT_ROW_H, #data * ALT_ROW_H))
     local bar = t.scroll.ScrollBar
-    if type(bar) == "table" and bar.SetShown then bar:SetShown(#data * ROW_H > t.height + ROWS_Y - 34) end
+    if type(bar) == "table" and bar.SetShown then bar:SetShown(#data * ALT_ROW_H > t.height + ROWS_Y - 34) end
     t:SetAlpha(on and 1 or DIM)
   end
   altTable = t
@@ -336,7 +340,8 @@ end
 -- The numbers the layout rests on (tests)
 function ns.OptionsLayout()
   return {pageWidth = PAGE_W, pageHeight = PAGE_H, columnTop = COLUMN_TOP,
-    altRowWidth = NAME_W + PROF_W + 8 + #ALT_COLUMNS * CHECK_W, altScrollWidth = SCROLL_W}
+    altRowWidth = NAME_W + PROF_W + 8 + #ALT_COLUMNS * CHECK_W, altScrollWidth = SCROLL_W,
+    altNameWidth = NAME_W, altNameLines = NAME_LINES, altRowHeight = ALT_ROW_H, altProfessionWidth = PROF_W}
 end
 
 -- Pages and sidebar --------------------------------------------------------------------------------------------

@@ -177,6 +177,14 @@ class OptionsWindowTests(unittest.TestCase):
         self.assertLessEqual(bottom, layout.pageHeight)
         self.assertLessEqual(table.width, layout.pageWidth)
 
+    def test_long_names_get_two_lines(self):
+        # Forever names: first name and surname up to 12 letters each, plus "(you)"; one line each at ~10 px a letter
+        layout = self.ns.OptionsLayout()
+        self.assertGreaterEqual(layout.altNameWidth, 130)
+        self.assertEqual(layout.altNameLines, 2)
+        self.assertGreaterEqual(layout.altRowHeight, 30)
+        self.assertGreaterEqual(layout.altProfessionWidth, 6 * 22 - 2)  # six icons
+
     def test_alt_columns_fit_the_scroll_area(self):
         layout = self.ns.OptionsLayout()
         self.assertLessEqual(layout.altRowWidth, layout.altScrollWidth)
