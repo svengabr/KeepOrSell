@@ -88,6 +88,9 @@ class OptionSectionTests(unittest.TestCase):
                                  ("Erste Hilfe", False, "Interface\\Icons\\Spell_Holy_SealOfSacrifice"),
                                  ("Angeln", True, 136245),
                                  ("Schneiderei", True, "Interface\\Icons\\Trade_Tailoring")])
+        recorded = self.rt.eval("{Angeln = {icon = 136245, rank = 75, maxRank = 150}}")
+        fishing = self.ns.ProfessionSlots(self.rt.table_from(["Angeln"]), recorded, "deDE")[3]
+        self.assertEqual((fishing.icon, fishing.rank, fishing.maxRank), (136245, 75, 150))
         english = [s.name for s in self.ns.ProfessionSlots(self.rt.table_from([]), None, "enUS").values()]
         self.assertEqual(english, ["Cooking", "First Aid", "Fishing"])
 

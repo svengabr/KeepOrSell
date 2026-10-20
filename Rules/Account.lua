@@ -51,7 +51,7 @@ end
 
 local altIndex -- built once per session: other characters only change in their own sessions
 
--- The current character's professions as {[name] = icon}, or nil while the client can't tell yet. GetProfessions
+-- The current character's professions as {[name] = {icon, rank, maxRank}}, or nil while the client can't tell yet. GetProfessions
 -- returns the slots prof1, prof2, archaeology, fishing, cooking, first aid, with gaps for empty ones.
 function ns.CurrentProfessions()
   if not (GetProfessions and GetProfessionInfo) then return nil end
@@ -59,8 +59,8 @@ function ns.CurrentProfessions()
   local result, any = {}, false
   for i = 1, select("#", GetProfessions()) do
     if slots[i] then
-      local name, icon = GetProfessionInfo(slots[i])
-      if name then result[name], any = icon or true, true end
+      local name, icon, rank, maxRank = GetProfessionInfo(slots[i])
+      if name then result[name], any = {icon = icon, rank = rank, maxRank = maxRank}, true end
     end
   end
   return any and result or nil
@@ -218,8 +218,8 @@ function ns.MigrateAltSettings(db)
   db.altReagents, db.altProfession, db.altClassItems, db.altIncluded = nil, nil, nil, nil
 end
 
--- A character's professions, sorted: the ones recorded at its last login ({[name] = icon}), else the names its
--- stored recipes carry
+-- A character's professions, sorted: the ones recorded at its last login ({[name] = {icon, rank, maxRank}}), else
+-- the names its stored recipes carry
 local function ProfessionNames(record, recipeProfessions)
   local seen, names = {}, {}
   local recorded = record and record.professions
@@ -234,8 +234,8 @@ local function ProfessionNames(record, recipeProfessions)
 end
 
 -- One row per character for the options window: me first (isSelf), then the alts sorted by name:
--- {key, name, class, isSelf, professions = "A, B" or nil, professionList = {"A", "B"}, professionIcons = {[name] =
--- icon}, included, profession, classItems}. Pure.
+-- {key, name, class, isSelf, professions = "A, B" or nil, professionList = {"A", "B"}, professionIcons = the
+-- recorded professions as stored, included, profession, classItems}. Pure.
 function ns.AltRows(characters, recipeProfession, altSettings, me)
   characters = characters or {}
   local list = ns.AltCharacters(characters, me)

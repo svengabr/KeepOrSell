@@ -199,7 +199,11 @@ local function ProfessionIcon(row, index)
   holder.icon:SetAllPoints()
   holder.icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
   holder:SetScript("OnEnter", function(self)
-    ShowTip(self, self.learned and self.profession or L.ALTS_NOT_LEARNED:format(self.profession))
+    local slot = self.slot
+    local text = not slot.learned and L.ALTS_NOT_LEARNED:format(slot.name)
+      or slot.rank and slot.maxRank and L.ALTS_SKILL:format(slot.name, slot.rank, slot.maxRank)
+      or slot.name
+    ShowTip(self, text)
   end)
   holder:SetScript("OnLeave", HideTip)
   return holder
@@ -214,11 +218,12 @@ local function ShowProfessions(row, alt)
     if slot and i <= MAX_PROF_ICONS then
       local holder = row.professionIcons[i] or ProfessionIcon(row, i)
       row.professionIcons[i] = holder
-      holder.profession, holder.learned = slot.name, slot.learned
+      holder.slot, holder.profession = slot, slot.name
       if i == MAX_PROF_ICONS and #slots > i then
         local rest = {}
         for j = i, #slots do table.insert(rest, slots[j].name) end
-        holder.profession, holder.learned = table.concat(rest, ", "), true
+        holder.slot = {name = table.concat(rest, ", "), learned = true}
+        holder.profession = holder.slot.name
       end
       holder.icon:SetTexture(slot.icon)
       if holder.icon.SetDesaturated then holder.icon:SetDesaturated(not slot.learned) end

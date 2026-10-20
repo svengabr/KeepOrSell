@@ -129,11 +129,14 @@ class RecordTests(unittest.TestCase):
         # prof1, prof2, archaeology, fishing, cooking, first aid; a gap where a slot is empty
         self.rt.execute("""
           function GetProfessions() return 1, nil, nil, 4, 5 end
-          PROFS = {[1] = {"Schneiderei", 136249}, [4] = {"Angeln", 136245}, [5] = {"Kochkunst", 133971}}
-          function GetProfessionInfo(i) return PROFS[i][1], PROFS[i][2] end""")
+          PROFS = {[1] = {"Schneiderei", 136249, 150, 225}, [4] = {"Angeln", 136245, 75, 150},
+                   [5] = {"Kochkunst", 133971, 1, 75}}
+          function GetProfessionInfo(i) return unpack(PROFS[i]) end""")
         self.ns.RecordCharacter()
         professions = self.rt.eval("KeepOrSellDB.characters['Tester-Realm'].professions")
-        self.assertEqual(dict(professions.items()), {"Schneiderei": 136249, "Angeln": 136245, "Kochkunst": 133971})
+        self.assertEqual(sorted(professions.keys()), ["Angeln", "Kochkunst", "Schneiderei"])
+        tailoring = professions["Schneiderei"]
+        self.assertEqual((tailoring.icon, tailoring.rank, tailoring.maxRank), (136249, 150, 225))
 
     def test_record_character_keeps_professions_while_unknown(self):
         self.rt.execute("function GetProfessions() end")
@@ -290,7 +293,7 @@ class AltRowsTests(unittest.TestCase):
         self.assertEqual([(r.name, bool(r.isSelf)) for r in rows.values()], [("Tester", True), ("Amy", False)])
         self.assertEqual(list(rows[1].professionList.values()), ["Kochkunst"])
         self.assertEqual(list(rows[2].professionList.values()), ["Angeln"])  # the recorded list wins
-        self.assertEqual(rows[2].professionIcons["Angeln"], 136245)
+        self.assertEqual(rows[2].professionIcons["Angeln"], 136245)  # 0.20 dev builds stored the icon alone
 
     def test_pool_text(self):
         pool = lambda **kw: self.ns.PoolText(self.rt.table_from(kw))

@@ -231,6 +231,15 @@ class OptionsWindowTests(unittest.TestCase):
         slots[3].OnEnter(slots[3])
         self.assertEqual(self.rt.eval("GameTooltip.text"), "Enchanting")
 
+    def test_profession_tooltip_shows_the_skill(self):
+        self.rt.execute(ALTS)
+        self.rt.execute("KeepOrSellDB.characters['Amy-Realm'].professions = {Tailoring = {icon = 136249, rank = 150, maxRank = 225}}")
+        self.ns.ShowOptionsWindow("account")
+        tailoring = self.widget("altprof:Amy-Realm:4")
+        self.assertEqual(tailoring.icon.texture, 136249)
+        tailoring.OnEnter(tailoring)
+        self.assertEqual(self.rt.eval("GameTooltip.text"), self.ns.L.ALTS_SKILL % ("Tailoring", 150, 225))
+
     def test_own_character_listed_first_without_switches(self):
         self.rt.execute(ALTS)
         self.ns.ShowOptionsWindow("account")

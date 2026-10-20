@@ -258,6 +258,7 @@ local L = {
   ALTS_COL_INCLUDED = "Included",
   ALTS_NOT_LEARNED = "%s (not learned)",
   ALTS_YOU = "(you)",
+  ALTS_SKILL = "%s %d/%d",
   ALTS_HINT = "Missing an alt? Log in once with KeepOrSell. Professions count once its profession window was opened.",
   OPT_ACCOUNT_MODE = "Think of my other characters",
   OPT_ACCOUNT_MODE_TIP = "Items another of your characters on this ruleset and faction needs go to the group \"For alts\", so you can mail them over. Each character has to log in once with KeepOrSell.",
@@ -523,6 +524,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.ALTS_COL_INCLUDED = "Dabei"
   L.ALTS_NOT_LEARNED = "%s (nicht gelernt)"
   L.ALTS_YOU = "(du)"
+  L.ALTS_SKILL = "%s %d/%d"
   L.ALTS_HINT = "Fehlt ein Twink? Einmal mit KeepOrSell einloggen. Berufe zählen, sobald er sein Berufsfenster einmal geöffnet hat."
   L.OPT_ACCOUNT_MODE = "An meine Twinks denken"
   L.OPT_ACCOUNT_MODE_TIP = "Items, die ein anderer deiner Charaktere auf diesem Ruleset und dieser Fraktion braucht, kommen in die Gruppe „Für Twinks“, damit du sie per Post schicken kannst. Jeder Charakter muss sich einmal mit KeepOrSell einloggen."

@@ -95,10 +95,17 @@ function ns.ProfessionIcon(name)
 end
 
 -- The icons a row shows: the three secondary professions always (learned or not, named in the client's language),
--- then the others as ns.SortProfessions orders them: {{name, icon, learned}, ...}. icons = {[name] = icon} recorded
--- from the client, else the icon by name. Pure.
+-- then the others as ns.SortProfessions orders them: {{name, icon, learned, rank, maxRank}, ...}. icons = the
+-- recorded professions ({[name] = {icon, rank, maxRank}}; development builds stored the icon alone), else the icon
+-- by name. Pure.
 function ns.ProfessionSlots(names, icons, locale)
   icons = icons or {}
+  local function Slot(name, learned)
+    local info = icons[name]
+    local icon = type(info) == "table" and info.icon or (type(info) == "number" or type(info) == "string") and info
+    return {name = name, icon = icon or ns.ProfessionIcon(name), learned = learned,
+      rank = type(info) == "table" and info.rank or nil, maxRank = type(info) == "table" and info.maxRank or nil}
+  end
   local have = {}
   for _, name in ipairs(names or {}) do have[name] = true end
   local slots, shown = {}, {}
@@ -107,12 +114,12 @@ function ns.ProfessionSlots(names, icons, locale)
       local name = have[entry[3]] and entry[3] or have[entry[4]] and entry[4]
         or (locale == "deDE" and entry[4] or entry[3])
       shown[name] = true
-      table.insert(slots, {name = name, icon = icons[name] or ns.ProfessionIcon(name), learned = have[name] == true})
+      table.insert(slots, Slot(name, have[name] == true))
     end
   end
   for _, name in ipairs(ns.SortProfessions(names)) do
     if not shown[name] then
-      table.insert(slots, {name = name, icon = icons[name] or ns.ProfessionIcon(name), learned = true})
+      table.insert(slots, Slot(name, true))
     end
   end
   return slots
