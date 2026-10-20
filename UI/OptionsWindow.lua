@@ -205,7 +205,7 @@ end
 
 -- Up to MAX_PROF_ICONS icons, then the rest in the last icon's tooltip
 local function ShowProfessions(row, alt)
-  local names = alt.professionList or {}
+  local names = ns.SortProfessions(alt.professionList)
   for key in pairs(widgets) do
     if key:match("^altprof:" .. alt.key:gsub("%p", "%%%0") .. ":") then widgets[key] = nil end
   end

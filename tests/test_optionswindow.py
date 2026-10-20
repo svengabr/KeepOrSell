@@ -216,13 +216,13 @@ class OptionsWindowTests(unittest.TestCase):
 
     def test_professions_as_icons_with_tooltip(self):
         self.rt.execute(ALTS)
-        self.rt.execute("KeepOrSellDB.recipeProfession = {['Amy-Realm'] = {[1] = 'Tailoring', [2] = 'Enchanting'}}")
+        self.rt.execute("KeepOrSellDB.recipeProfession = {['Amy-Realm'] = {[1] = 'Tailoring', [2] = 'Enchanting', [3] = 'Fishing'}}")
         self.ns.ShowOptionsWindow("account")
-        first, second = self.widget("altprof:Amy-Realm:1"), self.widget("altprof:Amy-Realm:2")
-        self.assertEqual((first.profession, second.profession), ("Enchanting", "Tailoring"))
+        cooking, first, second = (self.widget("altprof:Amy-Realm:%d" % i) for i in (1, 2, 3))
+        self.assertEqual((cooking.profession, first.profession, second.profession), ("Fishing", "Enchanting", "Tailoring"))
         self.assertEqual(first.icon.texture, "Interface\\Icons\\Trade_Engraving")
         self.assertTrue(first.shown)
-        self.assertIsNone(self.widget("altprof:Amy-Realm:3"))
+        self.assertIsNone(self.widget("altprof:Amy-Realm:4"))
         self.assertEqual(self.widget("altnoprof:Bob-Realm").text, self.ns.L.ALTS_NO_PROFESSIONS)
         first.OnEnter(first)
         self.assertEqual(self.rt.eval("GameTooltip.text"), "Enchanting")

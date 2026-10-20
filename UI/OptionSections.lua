@@ -67,27 +67,49 @@ function ns.SectionControls(id)
   return controls
 end
 
--- Icon per profession name as the client stores it (English and German); other names get a question mark
-local PROFESSION_ICONS = {
-  Trade_Alchemy = {"Alchemy", "Alchemie"},
-  Trade_BlackSmithing = {"Blacksmithing", "Schmiedekunst"},
-  Trade_Engraving = {"Enchanting", "Verzauberkunst"},
-  Trade_Engineering = {"Engineering", "Ingenieurskunst"},
-  Trade_Herbalism = {"Herbalism", "Kräuterkunde"},
-  INV_Misc_ArmorKit_17 = {"Leatherworking", "Lederverarbeitung"},
-  Trade_Mining = {"Mining", "Bergbau"},
-  INV_Misc_Pelt_Wolf_01 = {"Skinning", "Kürschnerei"},
-  Trade_Tailoring = {"Tailoring", "Schneiderei"},
-  INV_Misc_Food_15 = {"Cooking", "Kochkunst"},
-  Spell_Holy_SealOfSacrifice = {"First Aid", "Erste Hilfe"},
-  Trade_Fishing = {"Fishing", "Angeln"},
+-- Professions by group, each with its icon and its name as the client stores it (English and German):
+-- 1 = secondary (everyone can learn them, in this order), 2 = main professions, 3 = class skills
+local PROFESSIONS = {
+  {1, "INV_Misc_Food_15", "Cooking", "Kochkunst"},
+  {1, "Spell_Holy_SealOfSacrifice", "First Aid", "Erste Hilfe"},
+  {1, "Trade_Fishing", "Fishing", "Angeln"},
+  {2, "Trade_Alchemy", "Alchemy", "Alchimie"},
+  {2, "Trade_BlackSmithing", "Blacksmithing", "Schmiedekunst"},
+  {2, "Trade_Engraving", "Enchanting", "Verzauberkunst"},
+  {2, "Trade_Engineering", "Engineering", "Ingenieurskunst"},
+  {2, "Trade_Herbalism", "Herbalism", "Kräuterkunde"},
+  {2, "INV_Misc_ArmorKit_17", "Leatherworking", "Lederverarbeitung"},
+  {2, "Trade_Mining", "Mining", "Bergbau"},
+  {2, "INV_Misc_Pelt_Wolf_01", "Skinning", "Kürschnerei"},
+  {2, "Trade_Tailoring", "Tailoring", "Schneiderei"},
+  {3, "Trade_BrewPoison", "Poisons", "Gifte"},
 }
-local ICON_BY_NAME = {}
-for icon, names in pairs(PROFESSION_ICONS) do
-  for _, name in ipairs(names) do ICON_BY_NAME[name] = icon end
+local BY_NAME = {} -- name -> {group, icon, position}
+for position, entry in ipairs(PROFESSIONS) do
+  for i = 3, #entry do BY_NAME[entry[i]] = {group = entry[1], icon = entry[2], position = position} end
 end
 
--- "Interface\\Icons\\…" for a profession name. Pure.
+-- "Interface\\Icons\\…" for a profession name; a question mark for names it doesn't know. Pure.
 function ns.ProfessionIcon(name)
-  return "Interface\\Icons\\" .. (ICON_BY_NAME[name] or "INV_Misc_QuestionMark")
+  return "Interface\\Icons\\" .. (BY_NAME[name] and BY_NAME[name].icon or "INV_Misc_QuestionMark")
+end
+
+-- A sorted copy: secondary professions first (cooking, first aid, fishing), then the main professions, then class
+-- skills and every name it doesn't know (Forever's own class professions, other languages), alphabetical within a
+-- group. Pure.
+function ns.SortProfessions(names)
+  local sorted = {}
+  for _, name in ipairs(names or {}) do table.insert(sorted, name) end
+  local function key(name)
+    local known = BY_NAME[name]
+    return known and known.group or 3, known and known.group == 1 and known.position or 0
+  end
+  table.sort(sorted, function(a, b)
+    local groupA, posA = key(a)
+    local groupB, posB = key(b)
+    if groupA ~= groupB then return groupA < groupB end
+    if posA ~= posB then return posA < posB end
+    return a < b
+  end)
+  return sorted
 end

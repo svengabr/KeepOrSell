@@ -65,11 +65,20 @@ class OptionSectionTests(unittest.TestCase):
         self.assertEqual(icon("Schneiderei"), "Interface\\Icons\\Trade_Tailoring")
         self.assertEqual(icon("Erste Hilfe"), icon("First Aid"))
         for name in ("Alchemy", "Blacksmithing", "Enchanting", "Engineering", "Herbalism", "Leatherworking", "Mining",
-                     "Skinning", "Tailoring", "Cooking", "First Aid", "Fishing", "Alchemie", "Schmiedekunst",
+                     "Skinning", "Tailoring", "Cooking", "First Aid", "Fishing", "Poisons", "Alchimie", "Schmiedekunst",
                      "Verzauberkunst", "Ingenieurskunst", "Kräuterkunde", "Lederverarbeitung", "Bergbau",
-                     "Kürschnerei", "Kochkunst", "Angeln"):
+                     "Kürschnerei", "Kochkunst", "Angeln", "Gifte"):
             self.assertNotEqual(icon(name), icon("Unknown craft"), name)
         self.assertEqual(icon("Unknown craft"), "Interface\\Icons\\INV_Misc_QuestionMark")
+
+    def test_professions_sorted_secondary_main_class(self):
+        names = self.rt.table_from(["Schneiderei", "Gifte", "Kochkunst", "Erste Hilfe", "Verzauberkunst", "Angeln",
+                                    "Arkane Schriften"])
+        self.assertEqual(list(self.ns.SortProfessions(names).values()),
+                         ["Kochkunst", "Erste Hilfe", "Angeln", "Schneiderei", "Verzauberkunst", "Arkane Schriften", "Gifte"])
+        english = self.rt.table_from(["Tailoring", "Fishing", "Poisons", "Cooking", "Alchemy", "First Aid"])
+        self.assertEqual(list(self.ns.SortProfessions(english).values()),
+                         ["Cooking", "First Aid", "Fishing", "Alchemy", "Tailoring", "Poisons"])
 
     def test_special_rows(self):
         kinds = [c.kind for c in self.controls()]
