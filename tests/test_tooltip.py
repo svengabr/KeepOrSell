@@ -99,6 +99,12 @@ class TooltipTests(unittest.TestCase):
         self.rt.execute("AH.link4 = 40")
         self.assertIn("Junk – (an unsold auction costs 100c deposit)", self.show(4))
 
+    def test_junk_names_ignored_grey_price(self):
+        self.rt.execute("ITEMS[4][6] = 0; AH.link4 = 1000; KeepOrSellDB.greyVendor = true")
+        text = self.show(4)
+        self.assertIn("Junk – (grey: auction price ignored)", text)
+        self.assertIn("|cffffaa33   » Vendor|r | |cffffaa3313c|r\n|cffaaaaaa      Auction house|r | |cffaaaaaa1000c|r", text)
+
     def test_open(self):
         verdict = self.rt.eval('{kind = "open"}')
         db = self.rt.eval("KeepOrSellDB")

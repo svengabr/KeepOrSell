@@ -147,7 +147,8 @@ class FilterTests(unittest.TestCase):
             self.assertTrue(self.ns.FILTER_GROUPS[g])
         keys = [self.ns.FILTER_OPTIONS[i].key for i in range(1, len(self.ns.FILTER_OPTIONS) + 1)]
         self.assertEqual(keys[:3], ["factor", "minProfit", "maxAge"])
-        self.assertEqual(len(keys), 13)
+        self.assertEqual(len(keys), 14)
+        self.assertIn("greyVendor", keys)
         self.assertEqual(keys[-1], "accountMode")
 
     def test_long_name_cut(self):

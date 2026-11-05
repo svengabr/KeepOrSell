@@ -274,6 +274,37 @@ class DecideTests(unittest.TestCase):
         self.assertEqual(self.kind(bound=True, prices=self.FRESH_AH, **plain), "junk")
         self.assertIsNone(self.kind(quest=None, prices=self.CHEAP, **plain))
 
+    GREY_GEAR = {"classID": 4, "equipLoc": "INVTYPE_CHEST", "plain": True, "priceData": True, "quality": 0}
+
+    def test_grey_vendor_ignores_auction_price(self):
+        # absurd auction prices for greys: with the option on they go to the vendor anyway
+        self.db.greyVendor = True
+        verdict = self.decide(prices=self.FRESH_AH, **self.GREY_GEAR)
+        self.assertEqual((verdict.kind, verdict.reason, verdict.priceReason), ("junk", "plain", "grey"))
+        self.assertFalse(verdict.ahWorth)
+        self.assertTrue(verdict.ahTrusted)  # the price is known, just not believed
+        self.assertEqual(self.kind(classID=7, quality=0, prices=self.FRESH_AH), "junk")
+        verdict = self.decide(classID=15, quality=0, prices=self.FRESH_AH)
+        self.assertEqual((verdict.kind, verdict.needsPrice), (None, None))  # Scrap sells it as grey anyway
+
+    def test_grey_vendor_off_keeps_auction_price(self):
+        self.db.greyVendor = False
+        self.assertEqual(self.kind(prices=self.FRESH_AH, **self.GREY_GEAR), "ah")
+        self.assertEqual(self.kind(classID=15, quality=0, prices=self.FRESH_AH), "ah")
+
+    def test_grey_vendor_only_greys_with_vendor_price(self):
+        self.db.greyVendor = True
+        white = dict(self.GREY_GEAR, quality=1)
+        self.assertEqual(self.kind(prices=self.FRESH_AH, **white), "ah")
+        self.assertEqual(self.kind(classID=15, quality=None, prices=self.FRESH_AH), "ah")
+        # no vendor price: the auction house is the only way to sell it
+        self.assertEqual(self.kind(classID=15, quality=0, prices={"ah": 1000, "age": 1, "hasAge": True}), "ah")
+
+    def test_grey_vendor_without_auction_price(self):
+        # nothing to ignore: a grey trade good without auction price is still cheap enough to sell
+        self.db.greyVendor = True
+        self.assertEqual(self.kind(classID=7, quality=0, prices={"vendor": 100}), "junk")
+
     def test_plain_gear_stale_price_kept(self):
         plain = {"classID": 4, "equipLoc": "INVTYPE_CHEST", "plain": True, "priceData": True}
         self.assertIsNone(self.kind(prices={"ah": 120, "vendor": 100, "age": 9, "hasAge": True}, **plain))

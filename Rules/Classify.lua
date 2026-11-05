@@ -4,6 +4,19 @@ local _, ns = ...
 local WEAPON, ARMOR, TRADEGOODS, QUESTITEM = 2, 4, 7, 12 -- Enum.ItemClass
 local BIND_ON_PICKUP, BIND_QUEST = 1, 4 -- Enum.ItemBind
 
+-- The price class and reason of an item, plus whether its auction price is known and recent. With the option
+-- greyVendor a grey item the vendor buys goes to the vendor whatever the auction house says (reason "grey"):
+-- people list greys at absurd prices. Pure.
+local function PriceClass(facts, db)
+  local prices = facts.prices or {}
+  local priceClass, priceReason = ns.ClassifyPrices(prices, db)
+  local trusted = priceReason ~= "noprice" and priceReason ~= "stale"
+  if db.greyVendor and facts.quality == 0 and prices.vendor and prices.vendor > 0 then
+    return "vendor", "grey", trusted
+  end
+  return priceClass, priceReason, trusted
+end
+
 -- The built-in verdict for an item no rule and no earlier check decided: by price, gear and usefulness.
 local function BuiltInVerdict(facts, db, priceClass, priceReason, isGear, doneQuestItem, questFor)
   local verdict = {priceReason = priceReason}
@@ -145,7 +158,7 @@ local function Decide(facts, db)
   if facts.tool then return {reason = "tool"} end
   if facts.classItem then return {reason = "classitem"} end
 
-  local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
+  local priceClass, priceReason, ahTrusted = PriceClass(facts, db)
   local isGear = (facts.classID == WEAPON or facts.classID == ARMOR) and (facts.equipLoc or "") ~= ""
   -- the filter author named this item: it beats the profession checks
   local verdict = RuleVerdict(ns.FilterItemRule(db.filter, facts.itemID), "item", facts, db, priceClass, priceReason, isGear)
@@ -166,7 +179,6 @@ local function Decide(facts, db)
   local disenchant = db.disenchant and facts.disenchant
   local disposable = verdict.kind == "junk" or verdict.kind == "ah"
     or (verdict.needsPrice and verdict.reason == "unusable")
-  local ahTrusted = priceReason ~= "noprice" and priceReason ~= "stale"
   if not verdict.kind and verdict.reason == "wearable" and not verdict.needsPrice then
     -- kept gear: the tooltip names what it would bring once the player no longer needs it
     verdict.bound, verdict.ahTrusted, verdict.disenchant = facts.bound, ahTrusted, disenchant or nil
@@ -218,9 +230,9 @@ end
 function ns.Decide(facts, db)
   local verdict = Decide(facts, db)
   verdict.also = ns.OtherReasons(verdict, facts, db)
-  local priceClass, priceReason = ns.ClassifyPrices(facts.prices or {}, db)
+  local priceClass, _, ahTrusted = PriceClass(facts, db)
   verdict.bound = facts.bound or nil
-  verdict.ahTrusted = priceReason ~= "noprice" and priceReason ~= "stale"
+  verdict.ahTrusted = ahTrusted
   verdict.ahWorth = priceClass == "ah"
   verdict.deValue = db.disenchant and facts.disenchant and facts.disenchant.value or nil
   return verdict

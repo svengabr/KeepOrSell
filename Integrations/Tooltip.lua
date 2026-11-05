@@ -28,6 +28,8 @@ local function PriceNote(prices, verdict, db)
     table.insert(notes, L.TIP_BELOW_FACTOR:format(db.factor))
   elseif verdict.kind == "junk" and verdict.priceReason == "minprofit" then
     table.insert(notes, L.TIP_BELOW_PROFIT:format(Money(db.minProfit * 100)))
+  elseif verdict.kind == "junk" and verdict.priceReason == "grey" and prices.ah and prices.ah > 0 then
+    table.insert(notes, L.TIP_GREY_VENDOR)
   elseif verdict.kind == "junk" and verdict.priceReason == "deposit" then
     local deposit = ns.AuctionDeposit(prices.vendor, math.max(prices.count or 1, 1), ns.DEPOSIT_HOURS)
     if deposit then table.insert(notes, L.TIP_BELOW_DEPOSIT:format(Money(deposit))) end

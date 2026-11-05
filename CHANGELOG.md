@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- New option "Ignore auction prices for grey items" (Auction house section, on by default): grey items the vendor buys go to the vendor, whatever the auction house says. Greys are often listed at absurd prices that never sell; before, such a price put them in the AuctionHouse group. The tooltip says "(grey: auction price ignored)". Filters can set it with `greyVendor`. Requested on CurseForge (issue #1).
+
 ## 0.20.1
 
 - Fix: searching the game's Options (e.g. for "name") raised `ADDON_ACTION_FORBIDDEN … IsUserOAuthed()` and blamed KeepOrSell. The button under Esc > Options > AddOns no longer shows up in the Options search; it is still on the KeepOrSell page.

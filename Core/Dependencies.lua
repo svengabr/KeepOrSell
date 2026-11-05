@@ -15,6 +15,7 @@ ns.DEPENDENCIES = {
 ns.OPTION_NEEDS = {
   factor = {"Auctionator", "TradeSkillMaster"}, minProfit = {"Auctionator", "TradeSkillMaster"},
   maxAge = "Auctionator", -- TSM has no price age
+  greyVendor = {"Auctionator", "TradeSkillMaster"},
   setSource = "Baganator", destroy = "Baganator", bagValue = "Baganator", questie = "Questie",
 }
 
