@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.20.1
 
 - Fix: searching the game's Options (e.g. for "name") raised `ADDON_ACTION_FORBIDDEN … IsUserOAuthed()` and blamed KeepOrSell. The button under Esc > Options > AddOns no longer shows up in the Options search; it is still on the KeepOrSell page.
 
