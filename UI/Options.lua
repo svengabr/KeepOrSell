@@ -15,9 +15,11 @@ end
 function ns.RegisterOptions()
   if not (Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnCategory) then return end
   local category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
+  -- No search tags (last argument false): added from addon code, the tag table is tainted, and Blizzard's
+  -- options search reads it on every keystroke, so unrelated protected settings (Discord display name) got blocked
   if layout and CreateSettingsButtonInitializer then
     layout:AddInitializer(CreateSettingsButtonInitializer(L.OPT_WINDOW_OPEN, L.OPT_WINDOW_OPEN_BUTTON,
-      function() ns.ShowOptionsWindow() end, L.OPT_WINDOW_OPEN_TIP, true))
+      function() ns.ShowOptionsWindow() end, L.OPT_WINDOW_OPEN_TIP, false))
   end
   Settings.RegisterAddOnCategory(category)
 end

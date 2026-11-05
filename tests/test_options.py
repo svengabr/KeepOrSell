@@ -110,6 +110,15 @@ class OptionsTests(unittest.TestCase):
         self.rt.eval("BUTTONS")[self.ns.L.OPT_WINDOW_OPEN]()
         self.assertEqual(self.ns.windowShown, 1)
 
+    def test_blizzard_button_has_no_search_tags(self):
+        # Tags added from addon code are tainted; Blizzard's options search reads them on every
+        # keystroke and then blocks protected settings (ADDON_ACTION_FORBIDDEN IsUserOAuthed)
+        self.rt.execute("""TAGS = {}
+          function CreateSettingsButtonInitializer(name, text, click, tip, tags) TAGS[name] = tags return {} end
+          KeepOrSellDB = {}""")
+        self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
+        self.assertIs(self.rt.eval("TAGS")[self.ns.L.OPT_WINDOW_OPEN], False)
+
     def test_old_alt_switches_migrate_on_load(self):
         self.rt.execute("KeepOrSellDB = {altReagents = false, characters = {['Bob-Realm'] = {faction = 'Alliance'}}}")
         self.rt.execute("FireEvent('ADDON_LOADED', 'KeepOrSell')")
