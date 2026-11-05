@@ -329,6 +329,22 @@ class DecideTests(unittest.TestCase):
         self.assertIsNone(verdict.kind)  # tradeable without known price: keep
         self.assertTrue(verdict.needsPrice)
 
+    def test_unusable_plain_gear_without_price_is_junk_after_ah_visit(self):
+        # a druid's white mail boots: nobody sells them on the AH, like plain gear the class can wear
+        boots = {"classID": 4, "equipLoc": "INVTYPE_FEET", "unusable": True, "plain": True}
+        verdict = self.decide(priceData=True, prices={"vendor": 65}, **boots)
+        self.assertEqual((verdict.kind, verdict.reason), ("junk", "unusable"))
+        self.assertEqual(self.kind(priceData=True, prices=self.FRESH_AH, **boots), "ah")
+        # never visited the AH, or a stale price: keep
+        self.assertTrue(self.decide(priceData=False, prices={"vendor": 65}, **boots).needsPrice)
+        self.assertTrue(self.decide(priceData=True, prices={"ah": 120, "vendor": 65, "age": 9, "hasAge": True},
+                                    **boots).needsPrice)
+        # the plain gear switch decides, and green gear the class can't wear still waits for a price
+        self.db.plainGear = False
+        self.assertTrue(self.decide(priceData=True, prices={"vendor": 65}, **boots).needsPrice)
+        self.db.plainGear = True
+        self.assertTrue(self.decide(priceData=True, prices={"vendor": 65}, **dict(boots, plain=False)).needsPrice)
+
     def test_profession_tool_never_junk(self):
         tool = {"classID": 2, "equipLoc": "INVTYPE_WEAPONMAINHAND", "tool": True, "priceData": True}
         for facts in ({"plain": True}, {"unusable": True}, {"unusable": True, "bound": True}):

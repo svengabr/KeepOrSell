@@ -32,7 +32,9 @@ local function BuiltInVerdict(facts, db, priceClass, priceReason, isGear, doneQu
     else
       verdict.reason = facts.bound and "unusable_bound" or "unusable"
     end
-    if facts.bound or priceClass == "vendor" then
+    -- grey or white gear nobody sells on the auction house isn't worth it there, as for plain gear the class can wear
+    local unsoldPlain = db.plainGear and facts.plain and priceReason == "noprice" and facts.priceData
+    if facts.bound or priceClass == "vendor" or unsoldPlain then
       verdict.kind = "junk"
     elseif priceClass == "ah" then
       verdict.kind = "ah"

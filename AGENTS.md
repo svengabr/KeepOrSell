@@ -79,7 +79,7 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
   QuestieDB (option `questie`). Never class items of the player's class (`ns.IsClassItem`), green or better wearable gear, consumables,
   other quest items, cheap items Forever added (`ns.IsNewItem`: KeepOrSell can't judge them), items the player marked to keep (`KeepOrSellDB.keep`), copies saved in an equipment set, or (account mode) items another character of the same ruleset and faction needs: profession materials that still give it skill points and class items of its class, unless bound. Wearable gear may go to the auction house (tradeable and worth it). For enchanters, green or better gear that would be junk or AuctionHouse goes to
   the Disenchant group instead when disenchanting is worth more (never junk). The only exception to
-  "when in doubt": grey/white gear without an auction price counts as not worth it once the player has visited
+  "when in doubt": grey/white gear (also gear the class can never wear; switch `plainGear`) without an auction price counts as not worth it once the player has visited
   the AH with Auctionator (`KeepOrSellDB.ahVisited`).
 - **Filter rules** (`KeepOrSellDB.filter`): item rules are as strong as Scrap's own list; only quest checks, keep marks, equipment sets, items to open, tools and class items beat them. Category rules may only junk grey, white bound items with a vendor price, or items with a known, recent price below the auction threshold (a bound item above white or without a vendor price falls back to the built-in logic), never green+ wearable gear or items Forever added (`ns.IsNewItem`). Filter text is data only: never execute it, validate every line.
 - **New texts** always go into `Locales.lua`, in English and German.
