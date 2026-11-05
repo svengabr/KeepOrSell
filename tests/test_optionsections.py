@@ -6,10 +6,10 @@ from addon import load
 FILES = ("Locales.lua", "Prices.lua", "OptionSections.lua")
 
 # every option the Blizzard settings page showed before the own window, plus the "? KoS" switch
-OPTIONS = ["factor", "minProfit", "maxAge", "share", "scrap", "gear", "plainGear", "recipeJunk", "profession",
+OPTIONS = ["factor", "minProfit", "maxAge", "share", "greyVendor", "scrap", "gear", "plainGear", "recipeJunk", "profession",
            "upcomingReagents", "questie", "disenchant", "openable", "keepClick", "accountMode", "tooltip", "hints",
            "helpButton", "destroy", "lootCoins", "lossWarnings", "bagValue", "setSource"]
-REFRESH = {"factor", "minProfit", "maxAge", "share", "scrap", "gear", "plainGear", "recipeJunk", "profession", "upcomingReagents", "questie",
+REFRESH = {"factor", "minProfit", "maxAge", "share", "greyVendor", "scrap", "gear", "plainGear", "recipeJunk", "profession", "upcomingReagents", "questie",
            "disenchant", "openable", "accountMode", "hints", "helpButton", "destroy", "bagValue"}
 ACTIONS = {"ForgetKept", "ShowFilterWindow", "UndoFilterCommand", "ClearFilterCommand", "ShowSetup"}
 
@@ -36,7 +36,7 @@ class OptionSectionTests(unittest.TestCase):
         self.assertEqual([s.id for s in self.sections()], ["ah", "junk", "keep", "account", "filter", "display", "addons"])
 
     def test_section_controls_left_column_first(self):
-        self.assertEqual([c.key for c in self.ns.SectionControls("junk").values()], ["scrap", "gear", "plainGear", "recipeJunk"])
+        self.assertEqual([c.key for c in self.ns.SectionControls("junk").values()], ["scrap", "gear", "plainGear", "greyVendor", "recipeJunk"])
 
     def test_slider_ranges_and_labels(self):
         factor, profit, age = self.by_key("factor"), self.by_key("minProfit"), self.by_key("maxAge")

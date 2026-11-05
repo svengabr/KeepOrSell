@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- New option "Grey items always to the vendor" (Junk section, on by default): grey items the vendor buys go to the vendor, whatever the auction house says. Greys are often listed at absurd prices that never sell; before, such a price put them in the AuctionHouse group. The tooltip says "(grey: auction price ignored)". Filters can set it with `greyVendor`. Requested on CurseForge (issue #1).
+- "Grey and white gear as junk" now also covers grey and white gear your class can never wear: once you have visited the auction house with Auctionator, such gear without an auction price is junk instead of waiting for a price (e.g. white mail boots on a druid).
+- Tooltip: a price note now follows the reason without a comma, e.g. "Junk – plain gear (below 2x vendor price)".
+
 ## 0.20.1
 
 - Fix: searching the game's Options (e.g. for "name") raised `ADDON_ACTION_FORBIDDEN … IsUserOAuthed()` and blamed KeepOrSell. The button under Esc > Options > AddOns no longer shows up in the Options search; it is still on the KeepOrSell page.

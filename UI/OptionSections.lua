@@ -32,7 +32,7 @@ ns.OPTION_SECTIONS = {
   }},
   {id = "junk", label = "SECTION_JUNK", icon = "INV_Misc_Pelt_Wolf_01", columns = {
     {Check("scrap", "OPT_SCRAP", true), Check("gear", "OPT_GEAR", true)},
-    {Check("plainGear", "OPT_PLAIN_GEAR", true), Check("recipeJunk", "OPT_RECIPES", true)},
+    {Check("plainGear", "OPT_PLAIN_GEAR", true), Check("greyVendor", "OPT_GREY_VENDOR", true), Check("recipeJunk", "OPT_RECIPES", true)},
   }},
   {id = "keep", label = "SECTION_KEEP", icon = "INV_Misc_Note_01", columns = {
     {Check("profession", "OPT_PROFESSION", true), Check("upcomingReagents", "OPT_UPCOMING", true),

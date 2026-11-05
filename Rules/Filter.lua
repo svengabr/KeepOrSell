@@ -19,6 +19,7 @@ ns.FILTER_OPTIONS = {
   {key = "factor", kind = "number", min = ns.MIN_FACTOR, max = 10, decimals = 1},
   {key = "minProfit", kind = "number", min = 0, max = 100, decimals = 0},
   {key = "maxAge", kind = "number", min = 1, max = 21, decimals = 0},
+  {key = "greyVendor", kind = "toggle"},
   {key = "scrap", kind = "toggle"},
   {key = "profession", kind = "toggle"},
   {key = "gear", kind = "toggle"},

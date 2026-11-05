@@ -80,14 +80,14 @@ class TooltipTests(unittest.TestCase):
           TSM_API = {ToItemString = function(link) return link end,
                      GetCustomPriceValue = function(_, s) return s == "link3" and 1000 or nil end}
         """)
-        self.assertIn("Auction house – (TSM)", self.show(3))
+        self.assertIn("Auction house (TSM)", self.show(3))
 
     def test_auctionator_price_not_named_tsm(self):
         self.assertNotIn("(TSM)", self.show(3))
 
     def test_junk(self):
         text = self.show(4)
-        self.assertIn("Junk – (below 2x vendor price)", text)
+        self.assertIn("Junk (below 2x vendor price)", text)
         self.assertIn("|cffffaa33   » Vendor|r | |cffffaa3313c|r\n|cffaaaaaa      Auction house|r | |cffaaaaaa15c|r", text)
 
     def test_junk_names_min_profit(self):
@@ -97,7 +97,18 @@ class TooltipTests(unittest.TestCase):
     def test_junk_names_deposit(self):
         # 40c passes the factor, but an unsold auction loses the 1s minimum deposit
         self.rt.execute("AH.link4 = 40")
-        self.assertIn("Junk – (an unsold auction costs 100c deposit)", self.show(4))
+        self.assertIn("Junk (an unsold auction costs 100c deposit)", self.show(4))
+
+    def test_junk_names_ignored_grey_price(self):
+        self.rt.execute("ITEMS[4][6] = 0; AH.link4 = 1000; KeepOrSellDB.greyVendor = true")
+        text = self.show(4)
+        self.assertIn("Junk (grey: auction price ignored)", text)
+        self.assertIn("|cffffaa33   » Vendor|r | |cffffaa3313c|r\n|cffaaaaaa      Auction house|r | |cffaaaaaa1000c|r", text)
+
+    def test_price_note_follows_reason_without_comma(self):
+        verdict = self.rt.eval('{kind = "junk", reason = "plain", priceReason = "grey"}')
+        text = self.ns.TooltipText(verdict, self.rt.eval("{ah = 200, vendor = 68}"), self.rt.eval("KeepOrSellDB"))
+        self.assertTrue(text.endswith("Junk – plain gear (grey: auction price ignored)"), text)
 
     def test_open(self):
         verdict = self.rt.eval('{kind = "open"}')
@@ -226,7 +237,7 @@ class TooltipTests(unittest.TestCase):
         db = self.rt.eval("KeepOrSellDB")
         text = self.ns.TooltipText(self.rt.eval("{kind = 'ah'}"),
                                    self.rt.eval("{ah = 1000, vendor = 38, age = 2, from = 'Sven'}"), db)
-        self.assertIn("Auction house – (price from Sven, 2 days old)", text)
+        self.assertIn("Auction house (price from Sven, 2 days old)", text)
         text = self.ns.TooltipText(self.rt.eval("{kind = 'ah'}"),
                                    self.rt.eval("{ah = 1000, vendor = 38, age = 0, from = 'Sven'}"), db)
         self.assertIn("(price from Sven, today)", text)
