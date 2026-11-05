@@ -28,11 +28,11 @@ ns.OPTION_SECTIONS = {
       {kind = "slider", key = "maxAge", label = "OPT_MAX_AGE", tip = "OPT_MAX_AGE_TIP", min = 1, max = 21, step = 1,
         refresh = true, format = function(v) return v >= 21 and L.OFF or L.DAYS:format(v) end},
     },
-    {Check("share", "OPT_SHARE", true), Check("greyVendor", "OPT_GREY_VENDOR", true)},
+    {Check("share", "OPT_SHARE", true)},
   }},
   {id = "junk", label = "SECTION_JUNK", icon = "INV_Misc_Pelt_Wolf_01", columns = {
     {Check("scrap", "OPT_SCRAP", true), Check("gear", "OPT_GEAR", true)},
-    {Check("plainGear", "OPT_PLAIN_GEAR", true), Check("recipeJunk", "OPT_RECIPES", true)},
+    {Check("plainGear", "OPT_PLAIN_GEAR", true), Check("greyVendor", "OPT_GREY_VENDOR", true), Check("recipeJunk", "OPT_RECIPES", true)},
   }},
   {id = "keep", label = "SECTION_KEEP", icon = "INV_Misc_Note_01", columns = {
     {Check("profession", "OPT_PROFESSION", true), Check("upcomingReagents", "OPT_UPCOMING", true),

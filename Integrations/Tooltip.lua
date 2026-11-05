@@ -47,6 +47,11 @@ local function Headline(group, ...)
   return #reasons > 0 and group .. " – " .. table.concat(reasons, ", ") or group
 end
 
+-- the price note in parentheses follows the headline after a space, not a comma: "Junk – plain gear (below 2x …)"
+local function WithNote(text, note)
+  return note and text .. " " .. note or text
+end
+
 local function OutcomeText(o)
   local name = C_Item.GetItemNameByID and C_Item.GetItemNameByID(o.itemID)
   if not name and C_Item.RequestLoadItemDataByID then C_Item.RequestLoadItemDataByID(o.itemID) end
@@ -202,14 +207,14 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
   elseif kind == "alt" then
     text = L.TIP_ALT:format(ns.AltList(verdict.alts))
   elseif kind == "ah" then
-    text = Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict), filterText,
+    text = WithNote(Headline(L.TIP_AH, reason == "unusable" and L.TIP_UNUSABLE or nil, UselessText(verdict), filterText),
       PriceNote(prices, verdict, db))
   elseif kind == "junk" then
     local why = reason == "plain" and L.TIP_PLAIN or UselessText(verdict)
       or (reason == "unusable" or reason == "unusable_bound") and L.TIP_UNUSABLE or nil
     -- soulbound junk goes to the vendor whatever the prices say
     local note = not verdict.bound and PriceNote(prices, verdict, db) or nil
-    text = Headline(L.TIP_JUNK, why, filterText, verdict.bound and L.TIP_BOUND or nil, note)
+    text = WithNote(Headline(L.TIP_JUNK, why, filterText, verdict.bound and L.TIP_BOUND or nil), note)
   elseif kind == "disenchant" then
     text = DisenchantText(verdict, filterText)
   elseif filterText and verdict.needsPrice then

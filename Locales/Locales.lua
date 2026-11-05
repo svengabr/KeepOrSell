@@ -19,7 +19,7 @@ local L = {
   OPT_MAX_AGE = "Maximum price age",
   OPT_MAX_AGE_TIP = "Auction prices older than this (last Auctionator scan) are ignored and the item is kept.",
   OPT_SHARE = "Share prices in the group",
-  OPT_GREY_VENDOR = "Ignore auction prices for grey items",
+  OPT_GREY_VENDOR = "Grey items always to the vendor",
   OPT_GREY_VENDOR_TIP = "Grey items the vendor buys are sold there, whatever the auction house says. Greys are often listed at absurd prices that never sell.",
   OPT_SHARE_TIP = "Asks your party or raid for auction prices you are missing and answers with your Auctionator prices. Only members of your realm with KeepOrSell take part. Shared prices keep their age and show who shared them.",
   OPT_SCRAP = "Cheap trade goods as junk",
@@ -295,7 +295,7 @@ if GetLocale and GetLocale() == "deDE" then
   L.OPT_MAX_AGE = "Höchstalter der Preise"
   L.OPT_MAX_AGE_TIP = "Ältere Auktionspreise (letzter Auctionator-Scan) werden ignoriert, das Item bleibt dann liegen."
   L.OPT_SHARE = "Preise in der Gruppe teilen"
-  L.OPT_GREY_VENDOR = "Auktionspreise grauer Items ignorieren"
+  L.OPT_GREY_VENDOR = "Graue Items immer zum Händler"
   L.OPT_GREY_VENDOR_TIP = "Graue Items, für die der Händler etwas zahlt, gehen an den Händler, egal was das Auktionshaus sagt. Graues wird oft zu absurden Preisen eingestellt, die nie verkaufen."
   L.OPT_SHARE_TIP = "Fragt deine Gruppe oder deinen Schlachtzug nach Auktionspreisen, die dir fehlen, und antwortet mit deinen Auctionator-Preisen. Mit dabei sind nur Mitglieder deines Realms mit KeepOrSell. Geteilte Preise behalten ihr Alter und zeigen, wer sie geteilt hat."
   L.OPT_SCRAP = "Handwerkswaren als Schrott"

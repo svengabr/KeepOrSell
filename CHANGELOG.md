@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- New option "Ignore auction prices for grey items" (Auction house section, on by default): grey items the vendor buys go to the vendor, whatever the auction house says. Greys are often listed at absurd prices that never sell; before, such a price put them in the AuctionHouse group. The tooltip says "(grey: auction price ignored)". Filters can set it with `greyVendor`. Requested on CurseForge (issue #1).
+- New option "Grey items always to the vendor" (Junk section, on by default): grey items the vendor buys go to the vendor, whatever the auction house says. Greys are often listed at absurd prices that never sell; before, such a price put them in the AuctionHouse group. The tooltip says "(grey: auction price ignored)". Filters can set it with `greyVendor`. Requested on CurseForge (issue #1).
+- Tooltip: a price note now follows the reason without a comma, e.g. "Junk – plain gear (below 2x vendor price)".
 
 ## 0.20.1
 

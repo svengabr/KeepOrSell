@@ -36,7 +36,7 @@ class OptionSectionTests(unittest.TestCase):
         self.assertEqual([s.id for s in self.sections()], ["ah", "junk", "keep", "account", "filter", "display", "addons"])
 
     def test_section_controls_left_column_first(self):
-        self.assertEqual([c.key for c in self.ns.SectionControls("junk").values()], ["scrap", "gear", "plainGear", "recipeJunk"])
+        self.assertEqual([c.key for c in self.ns.SectionControls("junk").values()], ["scrap", "gear", "plainGear", "greyVendor", "recipeJunk"])
 
     def test_slider_ranges_and_labels(self):
         factor, profit, age = self.by_key("factor"), self.by_key("minProfit"), self.by_key("maxAge")
