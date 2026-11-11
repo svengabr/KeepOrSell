@@ -87,7 +87,9 @@ addons. Baganator ships the Scrap junk plugin itself (`Baganator/API/Junk.lua`).
 - Commit messages follow Conventional Commits (`feat:`, `fix:`, `chore:` …).
 - `README.md` is English with a German section; `CHANGELOG.md` is English.
 - The README is also the **CurseForge project description** (Markdown). CurseForge can't take it over via API;
-  after README changes, remind the maintainer to paste it there by hand.
+  after README changes, remind the maintainer to paste it there by hand. Leave out the title, the logo, the
+  overview image and the gallery pointer there: the CurseForge page already shows them above the description.
+  The filter format is documented in `docs/filters.md`, not in the README.
 
 ## Tests
 
