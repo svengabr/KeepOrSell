@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.22.0
 
 - New option "Ask before destroying" (Display section, on by default): a click on the destroy button first opens a popup naming the item, its count and its value, and only Yes destroys it. If your bags changed in the meantime, nothing is destroyed and a chat line says so. Turn it off to destroy on a single click as before.
+- Fix: quest rewards of the quest item class that have a use effect (e.g. Scepter of Celebras, the portal into Maraudon) were junked once their quest was done. They are now kept with the tooltip line "Keep – quest reward with a use effect", and selling or destroying one warns you. Needs QuestieDB.
 
 ## 0.21.0
 
