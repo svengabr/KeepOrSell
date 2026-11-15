@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- New option "Ask before destroying" (Display section, on by default): a click on the destroy button first opens a popup naming the item, its count and its value, and only Yes destroys it. If your bags changed in the meantime, nothing is destroyed and a chat line says so. Turn it off to destroy on a single click as before.
+
 ## 0.21.0
 
 - New option "Grey items always to the vendor" (Junk section, on by default): grey items the vendor buys go to the vendor, whatever the auction house says. Greys are often listed at absurd prices that never sell; before, such a price put them in the AuctionHouse group. The tooltip says "(grey: auction price ignored)". Filters can set it with `greyVendor`. Requested on CurseForge (issue #1).

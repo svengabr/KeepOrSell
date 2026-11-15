@@ -1,5 +1,6 @@
 -- Destroys the cheapest junk item on a click, for small bags far from a vendor.
--- Shown as a button in Baganator's bag window; the tooltip names the item before it is destroyed.
+-- Shown as a button in Baganator's bag window; the tooltip names the item before it is destroyed,
+-- and unless the player turned it off a popup asks first.
 local _, ns = ...
 local L = ns.L
 
@@ -170,14 +171,57 @@ function ns.InventoryFull(message)
   print(PREFIX .. L.DESTROY_LOOT:format(best.link, GetMoneyString(best.value), target.link, GetMoneyString(target.value)))
 end
 
+-- The grey line under the item in the button's tooltip. Pure.
+function ns.DestroyClickText(confirm)
+  return confirm and L.DESTROY_ASK or L.DESTROY_CLICK
+end
+
 local function ShowTooltip(self)
   local target = self.target
   if not target then return end
   GameTooltip:SetOwner(self, "ANCHOR_TOP")
   GameTooltip:SetText("KeepOrSell")
   GameTooltip:AddLine(L.DESTROY_TIP:format(target.link, target.count, GetMoneyString(target.value)), 1, 1, 1, true)
-  GameTooltip:AddLine(L.DESTROY_CLICK, 0.6, 0.6, 0.6, true)
+  GameTooltip:AddLine(ns.DestroyClickText(KeepOrSellDB.destroyConfirm), 0.6, 0.6, 0.6, true)
   GameTooltip:Show()
+end
+
+local CONFIRM_POPUP = "KEEPORSELL_DESTROY"
+
+-- Destroys target and clears the tooltip and glow; with tell, a chat line says when the bag changed meanwhile
+local function Destroy(target, tell)
+  if ns.DestroyTarget(target) then
+    GameTooltip:Hide()
+    SetGlow(false)
+  elseif tell then
+    print(PREFIX .. L.DESTROY_CHANGED)
+  end
+end
+
+if StaticPopupDialogs then
+  StaticPopupDialogs[CONFIRM_POPUP] = {
+    text = "%s",
+    button1 = YES or "Yes",
+    button2 = NO or "No",
+    OnAccept = function(_, target) Destroy(target, true) end,
+    timeout = 0,
+    whileDead = true,
+    hideOnEscape = true,
+    showAlert = true,
+    preferredIndex = 3,
+  }
+end
+
+-- With the option destroyConfirm a popup names the item first; DestroyTarget checks the slot again on Yes
+local function OnClick(self)
+  local target = self.target
+  if not target then return end
+  if KeepOrSellDB.destroyConfirm and StaticPopup_Show then
+    local text = L.DESTROY_CONFIRM:format(target.link, target.count, GetMoneyString(target.value))
+    StaticPopup_Show(CONFIRM_POPUP, text, nil, target)
+  else
+    Destroy(target)
+  end
 end
 
 local function CreateButton()
@@ -203,12 +247,7 @@ local function CreateButton()
   fade:SetFromAlpha(1)
   fade:SetToAlpha(0.2)
   fade:SetDuration(0.6)
-  frame:SetScript("OnClick", function(self)
-    if ns.DestroyTarget(self.target) then
-      GameTooltip:Hide()
-      SetGlow(false)
-    end
-  end)
+  frame:SetScript("OnClick", OnClick)
   frame:Hide()
   return frame
 end

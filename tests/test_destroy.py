@@ -278,6 +278,71 @@ class LootFlowTests(unittest.TestCase):
         self.assertEqual(len(self.rt.eval("PRINTED")), 2)
 
 
+POPUP_STUBS = """
+StaticPopupDialogs = {}
+POPUPS = {}
+function StaticPopup_Show(which, arg1, arg2, data)
+  table.insert(POPUPS, {which = which, text = arg1, data = data})
+  return {}
+end
+function StaticPopup_Hide(which) HIDDEN = which end
+"""
+
+
+class ConfirmTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), FRAMES + STUBS + POPUP_STUBS)
+        self.rt.execute("KeepOrSellDB.destroy = true; KeepOrSellDB.destroyConfirm = true")
+        self.assertTrue(self.ns.RegisterDestroy())
+        self.ns.UpdateDestroy()
+
+    def click(self):
+        self.rt.eval("function(b) b.OnClick(b) end")(self.rt.eval("DESTROY_BUTTON"))
+
+    def popup(self):
+        return self.rt.eval("POPUPS[#POPUPS]")
+
+    def accept(self):
+        self.rt.eval("function(p) StaticPopupDialogs[p.which].OnAccept({}, p.data) end")(self.popup())
+
+    def test_click_asks_and_names_the_item(self):
+        self.click()
+        self.assertIsNone(self.rt.eval("DELETED"))
+        popup = self.popup()
+        self.assertEqual(popup.which, "KEEPORSELL_DESTROY")
+        self.assertIn("link20", popup.text)
+        self.assertIn("5", popup.text)
+        self.assertIn("10c", popup.text)
+
+    def test_yes_destroys(self):
+        self.click()
+        self.accept()
+        self.assertEqual(self.rt.eval("DELETED"), 20)
+
+    def test_no_keeps_the_item(self):
+        self.click()
+        self.assertIsNone(self.rt.eval("DELETED"))
+        self.assertTrue(self.rt.eval("StaticPopupDialogs.KEEPORSELL_DESTROY.hideOnEscape"))
+
+    def test_bag_changed_while_asking_destroys_nothing(self):
+        self.click()
+        self.rt.execute("SLOTS[4].stackCount = 6")
+        self.accept()
+        self.assertIsNone(self.rt.eval("DELETED"))
+        printed = list(self.rt.eval("PRINTED").values())
+        self.assertIn(self.ns.L.DESTROY_CHANGED, printed[-1])
+
+    def test_without_confirmation_click_destroys_at_once(self):
+        self.rt.execute("KeepOrSellDB.destroyConfirm = false")
+        self.click()
+        self.assertEqual(self.rt.eval("DELETED"), 20)
+        self.assertEqual(len(self.rt.eval("POPUPS")), 0)
+
+    def test_tooltip_mentions_the_question(self):
+        self.assertEqual(self.ns.DestroyClickText(True), self.ns.L.DESTROY_ASK)
+        self.assertEqual(self.ns.DestroyClickText(False), self.ns.L.DESTROY_CLICK)
+
+
 # bag 1: herb bag (family 32) with one free slot holding a grey item
 BAGS_STUBS = """
 NUM_BAG_SLOTS = 1
