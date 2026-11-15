@@ -231,6 +231,8 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
     text = L.TIP_KEEP .. " – " .. (db.keepClick and L.TIP_KEPT_UNDO or L.TIP_KEPT)
   elseif reason == "equipset" then
     text = L.TIP_KEEP .. " – " .. L.TIP_EQUIP_SET
+  elseif reason == "usable" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_USABLE
   elseif reason == "new" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NEW
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then

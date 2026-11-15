@@ -206,6 +206,14 @@ function ns.QuestieKnowsQuest(questID)
   return name ~= nil
 end
 
+-- true if a quest rewards the item, per QuestieDB (Item.questRewards); false without QuestieDB
+function ns.IsQuestReward(itemID)
+  local lib = itemID and QuestieDB()
+  if not (lib and lib.Item and lib.Item.questRewards) then return false end
+  local ok, quests = pcall(lib.Item.questRewards, itemID)
+  return ok and type(quests) == "table" and #quests > 0
+end
+
 -- true if the item exists only for a quest (it starts one or a quest hands it out), per QuestieDB
 function ns.IsQuestOnlyItem(itemID)
   return itemID ~= nil and questOnly[itemID] == true

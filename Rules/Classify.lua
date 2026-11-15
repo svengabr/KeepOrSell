@@ -111,6 +111,8 @@ end
 -- questOnly = the item exists only for a quest: it starts one or a quest hands it out (QuestieDB)
 -- questItemFor = {name, level, done} of the quest a quest item belongs to, at any level (QuestieDB)
 -- starter = {name, done} of the quest the item begins per the game's item table (Data/Starts.lua)
+-- usable = the item has a use effect; rewarded = a quest rewards it (QuestieDB). Together they tell a quest
+-- reward of the quest item class from a quest item: reason "usable" once no open quest needs it
 -- newItem = original Classic didn't have the item (Data/NewItems.lua): never junk for a low price alone
 -- learned = {name, level} of a quest QuestieDB lacks that some character's quest log asked for, not done here
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
@@ -148,8 +150,14 @@ local function Decide(facts, db)
   -- a quest item stays unless every quest the player could do with it is done; besides the quest item
   -- class, QuestieDB knows quest starters and handed-out items of any class
   -- the game's own item table knows every quest starter, also those QuestieDB lacks (facts.starter)
-  local questItem = facts.classID == QUESTITEM or (db.questie and facts.questOnly) or facts.starter ~= nil
   local questFor = facts.questItemFor or facts.starter
+  -- an item of the quest item class with a use effect that a quest rewards is kept for its use once no open
+  -- quest needs it (Scepter of Celebras: the portal into Maraudon), never junk because its quest is done; it
+  -- only ever keeps the item, so it doesn't wait for the option questie
+  local reward = facts.classID == QUESTITEM and facts.usable and facts.rewarded
+    and not (questFor and not questFor.done)
+  local questItem = not reward
+    and (facts.classID == QUESTITEM or (db.questie and facts.questOnly) or facts.starter ~= nil)
   local doneQuestItem = questItem and db.questie and questFor and questFor.done
   if questItem and not doneQuestItem then
     return {kind = "quest", reason = "questitem", quest = questFor and questFor.name and questFor or nil}
@@ -176,6 +184,7 @@ local function Decide(facts, db)
       "category", facts, db, priceClass, priceReason, isGear)
   end
   if not verdict then verdict = BuiltInVerdict(facts, db, priceClass, priceReason, isGear, doneQuestItem, questFor) end
+  if reward and not verdict.kind and not verdict.reason and not verdict.needsPrice then verdict.reason = "usable" end
 
   -- an enchanter may get more out of an item that would be sold, auctioned or kept only for a missing price
   local disenchant = db.disenchant and facts.disenchant
@@ -373,6 +382,7 @@ function ns.ItemFacts(itemID, itemLink, location)
   local questOnly = ns.IsQuestOnlyItem(itemID)
   local fromTooltip = TooltipFacts(itemID)
   local quality = Quality(itemID, itemLink)
+  local spellName = ItemSpellName(itemID)
   return {
     quest = ns.GetObjectiveState(itemID),
     questie = ns.GetQuestieQuest(itemID),
@@ -389,7 +399,9 @@ function ns.ItemFacts(itemID, itemLink, location)
     tool = ns.IsProfessionTool(itemID, classID, subclassID),
     classItem = ns.IsClassItem(playerClass, itemID, ns.HasReagentEconomy()),
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass
-      or ns.IsUselessDrink(playerClass, classID, ItemSpellName(itemID), DrinkName()) or false,
+      or ns.IsUselessDrink(playerClass, classID, spellName, DrinkName()) or false,
+    usable = spellName ~= nil,
+    rewarded = classID == QUESTITEM and ns.IsQuestReward(itemID),
     alts = ns.AltsNeedingItem(itemID),
     plain = ns.IsPlainGear(quality, classID, subclassID, equipLoc),
     bound = IsBound(itemLink, location),

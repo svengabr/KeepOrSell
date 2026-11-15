@@ -411,6 +411,50 @@ class DecideTests(unittest.TestCase):
         self.rt.execute("COMPLETED[600] = nil")
         self.assertIsNone(self.ns.Classify(20, "link20").kind)
 
+    def scepter(self):
+        # item 40 "Scepter of Celebras" is of the quest item class, has a use effect (a portal) and quest 7046
+        # rewards it; item 12 "Okra" gets the same, but open quest 500 still needs it
+        self.rt.execute("""
+          ITEMS[40] = {"Scepter of Celebras", 12, 0, "", 0}
+          BOUND[40] = true
+          C_Item.GetItemSpell = function(id) if id == 40 or id == 12 then return "Portal", 1 end end
+          LibQuestieDB.Item = {questRewards = function(id) if id == 40 or id == 12 then return {7046} end end}
+        """)
+
+    def test_quest_reward_with_use_effect_is_no_quest_item(self):
+        self.scepter()
+        verdict = self.ns.Classify(40, "link40")
+        self.assertEqual((verdict.kind, verdict.reason), (None, "usable"))
+
+    def test_quest_reward_is_never_junk(self):
+        self.scepter()
+        self.rt.execute("AH.link40 = 1")
+        self.assertIsNone(self.ns.Classify(40, "link40").kind)
+
+    def test_quest_item_with_use_effect_a_quest_needs_stays(self):
+        self.scepter()
+        verdict = self.ns.Classify(12, "link12")
+        self.assertEqual((verdict.kind, verdict.reason), ("quest", "questitem"))
+
+    def test_quest_reward_is_kept_once_the_quest_needing_it_is_done(self):
+        self.scepter()
+        self.rt.execute("COMPLETED[500] = true; AH.link12 = 5")
+        self.assertEqual(self.ns.Classify(12, "link12").reason, "usable")
+
+    def test_quest_item_without_use_effect_stays_a_quest_item(self):
+        facts = self.rt.eval("{classID = 12, rewarded = true}")
+        self.assertEqual(self.ns.Decide(facts, self.rt.eval("KeepOrSellDB")).kind, "quest")
+
+    def test_quest_reward_with_questie_option_off(self):
+        self.scepter()
+        self.rt.execute("KeepOrSellDB.questie = false")
+        self.assertEqual(self.ns.Classify(40, "link40").reason, "usable")
+
+    def test_usable_quest_item_no_quest_rewards_stays_a_quest_item(self):
+        # without QuestieDB nothing is rewarded
+        facts = self.rt.eval("{classID = 12, usable = true, rewarded = false}")
+        self.assertEqual(self.ns.Decide(facts, self.rt.eval("KeepOrSellDB")).kind, "quest")
+
     def test_objective_never_junk_for_done_quests(self):
         self.rt.execute("for _, id in ipairs({100, 200, 300, 700}) do COMPLETED[id] = true end")
         self.assertNotEqual(self.ns.Classify(4, "link4").reason, "questitem_done")
@@ -439,6 +483,9 @@ class TooltipTextTests(unittest.TestCase):
     def test_quest_item_names_its_quest(self):
         self.assertIn('Quest – quest item for "Westfall Stew" (level 14)',
                       self.text("{kind = 'quest', reason = 'questitem', quest = {name = 'Westfall Stew', level = 14}}"))
+
+    def test_quest_reward(self):
+        self.assertIn("Keep – quest reward with a use effect", self.text("{reason = 'usable'}"))
 
     def test_quest_item_quest_done(self):
         self.assertIn('quest item for "Westfall Stew" (already done)',

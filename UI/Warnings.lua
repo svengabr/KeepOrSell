@@ -4,7 +4,7 @@
 local _, ns = ...
 local L = ns.L
 
-local KEPT_REASONS = {kept = true, classitem = true, tool = true, equipset = true}
+local KEPT_REASONS = {kept = true, classitem = true, tool = true, equipset = true, usable = true}
 
 -- true if losing an item with this verdict deserves a warning. A filter keep rule counts like a keep mark: it
 -- is the only filter verdict without a group (a category junk rule waiting for a price has needsPrice). Pure.
