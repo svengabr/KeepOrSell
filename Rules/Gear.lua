@@ -49,10 +49,12 @@ local RESTRICTED_WEAPONS = Set(AXE1H, AXE2H, BOW, GUN, MACE1H, MACE2H, POLEARM, 
 
 local POOR, COMMON = 0, 1 -- Enum.ItemQuality
 local FISHING_POLE = 20
--- white or grey slots players keep for looks, not stats
-local KEEP_SLOTS = Set("INVTYPE_BODY", "INVTYPE_TABARD")
+-- white or grey slots players keep for looks, not stats; white trinkets, rings and necks are quest rewards
+-- with a purpose (Argent Dawn Commission), not vendor gear
+local KEEP_SLOTS = Set("INVTYPE_BODY", "INVTYPE_TABARD", "INVTYPE_TRINKET", "INVTYPE_FINGER", "INVTYPE_NECK")
 
--- true = grey or white weapon/armor that is only worth its vendor price (no shirts, tabards, fishing poles)
+-- true = grey or white weapon/armor that is only worth its vendor price (no shirts, tabards, trinkets, rings,
+-- necks, fishing poles)
 function ns.IsPlainGear(quality, classID, subclassID, equipLoc)
   if quality ~= POOR and quality ~= COMMON then return false end
   if classID ~= WEAPON and classID ~= ARMOR then return false end

@@ -62,6 +62,12 @@ class PlainGearTests(unittest.TestCase):
         self.assertFalse(self.ns.IsPlainGear(1, ARMOR, 0, "INVTYPE_TABARD"))
         self.assertFalse(self.ns.IsPlainGear(1, WEAPON, 20, "INVTYPE_2HWEAPON"))
 
+    def test_trinkets_rings_necks_kept(self):
+        # white trinkets are quest rewards like the Argent Dawn Commission, never plain vendor gear
+        self.assertFalse(self.ns.IsPlainGear(1, ARMOR, 0, "INVTYPE_TRINKET"))
+        self.assertFalse(self.ns.IsPlainGear(1, ARMOR, 0, "INVTYPE_FINGER"))
+        self.assertFalse(self.ns.IsPlainGear(0, ARMOR, 0, "INVTYPE_NECK"))
+
     def test_other_items_not_plain(self):
         self.assertFalse(self.ns.IsPlainGear(1, 0, 1, ""))
 
