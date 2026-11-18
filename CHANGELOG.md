@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.22.1
+
+- Fix: white trinkets, rings and necks counted as plain gear, so soulbound quest rewards like the Argent Dawn Commission were junked. Trinkets, rings and necks are now never plain gear, like shirts and tabards.
+
 ## 0.22.0
 
 - New option "Ask before destroying" (Display section, on by default): a click on the destroy button first opens a popup naming the item, its count and its value, and only Yes destroys it. If your bags changed in the meantime, nothing is destroyed and a chat line says so. Turn it off to destroy on a single click as before.
