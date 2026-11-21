@@ -8,7 +8,17 @@ ns.Style = Style
 
 Style.ICONS = "Interface\\Icons\\"
 local LOGO = "Interface\\AddOns\\KeepOrSell\\Icon"
-Style.HEADER_FONT = "Fonts\\MORPHEUS.TTF"
+-- Morpheus has no CJK glyphs: a locale may name a font that has them (L.HEADER_FONT). The font is checked
+-- once, and falls back to Morpheus when the client cannot load it, so headings never turn into boxes.
+local localeFont = ns.L and ns.L.HEADER_FONT
+Style.HEADER_FONT = localeFont or "Fonts\\MORPHEUS.TTF"
+if localeFont and UIParent and UIParent.CreateFontString then
+  local probe = UIParent:CreateFontString(nil, "BACKGROUND")
+  if not pcall(probe.SetFont, probe, localeFont, 12, "") or not probe:GetFont() then
+    Style.HEADER_FONT = "Fonts\\MORPHEUS.TTF"
+  end
+  probe:Hide()
+end
 Style.GOLD = {0.79, 0.64, 0.29}
 Style.PARCHMENT = {0.95, 0.89, 0.71}
 local GOLD, PARCHMENT, HEADER_FONT = Style.GOLD, Style.PARCHMENT, Style.HEADER_FONT
