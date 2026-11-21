@@ -1,7 +1,9 @@
 -- One pass over the bags, shared by the destroy button and the bag value.
 local _, ns = ...
 
-local BAGS = NUM_BAG_SLOTS or 4
+-- bags 0 to NUM_BAG_SLOTS plus the reagent bag behind them (bag 5 on Forever)
+local BAGS = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
+local REGULAR_BAGS = NUM_BAG_SLOTS or 4 -- the reagent bag takes only crafting reagents
 
 -- Scrap decides when present (its list, "not junk" marks and our hook); otherwise grey items and
 -- whatever KeepOrSell classifies as junk
@@ -51,11 +53,21 @@ local function BagFamily(bag)
   return family or 0
 end
 
--- Free slots in the regular bags; a free slot in a profession bag takes only its own kind of item
+-- true for a bag that takes any item: not a profession bag, not the reagent bag
+local function IsRegular(bag)
+  return bag <= REGULAR_BAGS and BagFamily(bag) == 0
+end
+
+-- true if the item may go into the reagent bag
+local function IsCraftingReagent(itemID)
+  return select(17, (C_Item.GetItemInfo or GetItemInfo)(itemID)) == true
+end
+
+-- Free slots in the regular bags; a free slot in a profession bag or the reagent bag takes only its own kind of item
 function ns.FreeSlots()
   local free = 0
   if not (C_Container and C_Container.GetContainerNumFreeSlots) then return free end
-  for bag = 0, BAGS do
+  for bag = 0, REGULAR_BAGS do
     local n, family = C_Container.GetContainerNumFreeSlots(bag)
     if (family or 0) == 0 then free = free + (n or 0) end
   end
@@ -84,14 +96,16 @@ function ns.FitsOnStacks(quantity, maxStack, slots, total)
   return (maxStack or 1) > 1 and (slots or 0) > 0 and slots * maxStack - (total or 0) >= (quantity or 1)
 end
 
--- true if loot needs no free regular slot: it fits onto existing stacks or into a profession bag
+-- true if loot needs no free regular slot: it fits onto existing stacks, into a profession bag or (a crafting
+-- reagent) into the reagent bag
 function ns.LootFits(itemID, quantity)
   if not (itemID and C_Container and C_Container.GetContainerItemInfo) then return false end
   local itemFamily = C_Item.GetItemFamily and C_Item.GetItemFamily(itemID) or 0
   local slots, total = 0, 0
   for bag = 0, BAGS do
     local family = BagFamily(bag)
-    if ns.FamilyMatches(itemFamily, family) and (C_Container.GetContainerNumFreeSlots(bag) or 0) > 0 then
+    local fits = bag > REGULAR_BAGS and IsCraftingReagent(itemID) or ns.FamilyMatches(itemFamily, family)
+    if fits and (C_Container.GetContainerNumFreeSlots(bag) or 0) > 0 then
       return true
     end
     for slot = 1, C_Container.GetContainerNumSlots(bag) do
@@ -108,14 +122,14 @@ local scanned, scannedAt
 
 -- Returns a list of {bag, slot, itemID, link, count, quality, locked, icon, junk, value, ah, special}:
 -- value = vendor price x stack, ah = auction price x stack for items of the AuctionHouse group,
--- special = it sits in a profession bag, where destroying it frees no regular slot
+-- special = it sits in a profession bag or the reagent bag, where destroying it frees no regular slot
 function ns.ScanBags()
   local now = GetTime and GetTime()
   if now and scannedAt == now then return scanned end
   local items = {}
   if not (C_Container and C_Container.GetContainerItemInfo) then return items end
   for bag = 0, BAGS do
-    local special = BagFamily(bag) ~= 0
+    local special = not IsRegular(bag)
     for slot = 1, C_Container.GetContainerNumSlots(bag) do
       local info = C_Container.GetContainerItemInfo(bag, slot)
       if info and info.itemID and info.hyperlink then

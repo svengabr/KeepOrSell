@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Fix: items in the reagent bag were left out of the bag scan, so the bag value line showed no auction house value for reagents there (herbs, cloth …), price sharing never asked for them, and the hints and the destroy button didn't see them. Junk in the reagent bag is not destroyed to make room, since its slot only takes reagents; loot that is a crafting reagent counts as fitting while the reagent bag has a free slot.
+- Fix for the WoW: Forever patch of 20 November 2026: the game no longer tells addons the realm name. KeepOrSell now stores per-character data (recipes, account mode, setup) and shared auction prices by ruleset instead of realm; Forever has one realm per ruleset anyway. Your data moves over by itself the next time each character logs in; until then an alt that hasn't logged in since may be missing from account mode. Shared prices and full scan times start fresh.
+- Fix: RP-PvP characters were pooled with PvP characters in account mode. RP-PvP is now its own ruleset ("RP-PvP · Horde").
+- New option "Coin on the quest reward worth the most gold" (Display section, on by default): when a quest lets you choose a reward, a gold coin marks the choice that sells to a vendor for the most (vendor price × count; ties all get a coin), and its tooltip names the amount. KeepOrSell doesn't judge whether a reward is an upgrade. Works at the quest giver and in the quest log.
+- Fix: the destroy button could pick an item KeepOrSell keeps (e.g. a quest item an open quest still needs) when it was on Scrap's own junk list. The destroy button now skips every item KeepOrSell keeps (quest, profession, for alts, keep marks, class items, tools, equipment sets), whatever Scrap says.
+- Fix: the Mallet of Zul'Farrak showed as "Quest – quest item" although no quest needs it: it is a key that summons Gahz'rilla. A short list of keys of the quest item class (Mallet of Zul'Farrak, Scepter of Celebras, Seal of Ascension, Drakefire Amulet, Scepter of the Shifting Sands, Aqual and Eternal Quintessence) is now kept with the tooltip line "Keep – key", never junk, and selling or destroying one warns you. While an open quest still needs one, it stays a quest item.
+
 ## 0.22.1
 
 - Fix: white trinkets, rings and necks counted as plain gear, so soulbound quest rewards like the Argent Dawn Commission were junked. Trinkets, rings and necks are now never plain gear, like shirts and tabards.

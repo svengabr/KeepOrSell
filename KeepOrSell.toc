@@ -18,6 +18,7 @@
 Locales\Locales.lua
 Data\Starts.lua
 Data\NewItems.lua
+Rules\Ruleset.lua
 Rules\Keep.lua
 Rules\Objectives.lua
 Rules\Prices.lua
@@ -43,6 +44,7 @@ UI\OptionsWindow.lua
 Core\Bags.lua
 UI\Destroy.lua
 UI\LootCoins.lua
+UI\RewardCoin.lua
 UI\Warnings.lua
 UI\BagValue.lua
 UI\FilterWindow.lua

@@ -455,6 +455,28 @@ class DecideTests(unittest.TestCase):
         facts = self.rt.eval("{classID = 12, usable = true, rewarded = false}")
         self.assertEqual(self.ns.Decide(facts, self.rt.eval("KeepOrSellDB")).kind, "quest")
 
+    def test_key_is_no_quest_item(self):
+        # Mallet of Zul'Farrak: quest item class, no use effect, no quest rewards it, no quest needs it
+        facts = self.rt.eval("{classID = 12, key = true, prices = {ah = 1}}")
+        verdict = self.ns.Decide(facts, self.rt.eval("KeepOrSellDB"))
+        self.assertEqual((verdict.kind, verdict.reason), (None, "key"))
+
+    def test_key_an_open_quest_needs_stays_a_quest_item(self):
+        facts = self.rt.eval("{classID = 12, key = true, questItemFor = {name = 'Gahz', level = 46}}")
+        self.assertEqual(self.ns.Decide(facts, self.rt.eval("KeepOrSellDB")).kind, "quest")
+
+    def test_key_after_its_quest_is_done(self):
+        facts = self.rt.eval("{classID = 12, key = true, questItemFor = {name = 'Gahz', level = 46, done = true}}")
+        self.assertEqual(self.ns.Decide(facts, self.rt.eval("KeepOrSellDB")).reason, "key")
+
+    def test_key_counts_as_kept(self):
+        self.assertTrue(self.ns.IsKeepVerdict(self.rt.eval("{reason = 'key'}")))
+
+    def test_mallet_is_a_key(self):
+        self.assertTrue(self.ns.IsKeyItem(9240))
+        self.assertTrue(self.ns.IsKeyItem(17191))
+        self.assertFalse(self.ns.IsKeyItem(9241))
+
     def test_objective_never_junk_for_done_quests(self):
         self.rt.execute("for _, id in ipairs({100, 200, 300, 700}) do COMPLETED[id] = true end")
         self.assertNotEqual(self.ns.Classify(4, "link4").reason, "questitem_done")
@@ -486,6 +508,9 @@ class TooltipTextTests(unittest.TestCase):
 
     def test_quest_reward(self):
         self.assertIn("Keep – quest reward with a use effect", self.text("{reason = 'usable'}"))
+
+    def test_key(self):
+        self.assertIn("Keep – key", self.text("{reason = 'key'}"))
 
     def test_quest_item_quest_done(self):
         self.assertIn('quest item for "Westfall Stew" (already done)',

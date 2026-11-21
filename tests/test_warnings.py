@@ -37,7 +37,7 @@ KeepOrSellDB.keep = {}
 
 class ShouldWarnTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(("Locales.lua", "Warnings.lua"), base=False)
+        self.rt, self.ns = load(CORE_FILES + ("Warnings.lua",))
 
     def warn(self, lua):
         return self.ns.ShouldWarnLoss(self.rt.eval(lua))

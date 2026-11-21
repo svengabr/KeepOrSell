@@ -113,6 +113,8 @@ end
 -- starter = {name, done} of the quest the item begins per the game's item table (Data/Starts.lua)
 -- usable = the item has a use effect; rewarded = a quest rewards it (QuestieDB). Together they tell a quest
 -- reward of the quest item class from a quest item: reason "usable" once no open quest needs it
+-- key = a dungeon key of the quest item class (Mallet of Zul'Farrak, ns.IsKeyItem): reason "key" once no open
+-- quest needs it, never junk
 -- newItem = original Classic didn't have the item (Data/NewItems.lua): never junk for a low price alone
 -- learned = {name, level} of a quest QuestieDB lacks that some character's quest log asked for, not done here
 -- recipe = "learn" for a recipe of the player's profession they don't know yet, "known" when already
@@ -156,7 +158,9 @@ local function Decide(facts, db)
   -- only ever keeps the item, so it doesn't wait for the option questie
   local reward = facts.classID == QUESTITEM and facts.usable and facts.rewarded
     and not (questFor and not questFor.done)
-  local questItem = not reward
+  -- a key opens or summons something in a dungeon: kept for that, not as a quest item
+  local key = facts.key and not (questFor and not questFor.done)
+  local questItem = not reward and not key
     and (facts.classID == QUESTITEM or (db.questie and facts.questOnly) or facts.starter ~= nil)
   local doneQuestItem = questItem and db.questie and questFor and questFor.done
   if questItem and not doneQuestItem then
@@ -164,6 +168,7 @@ local function Decide(facts, db)
   end
   if facts.kept then return {reason = "kept"} end
   if facts.equipSet then return {reason = "equipset"} end
+  if key then return {reason = "key"} end
   if db.openable and facts.openable then return {kind = "open"} end
   if facts.tool then return {reason = "tool"} end
   if facts.classItem then return {reason = "classitem"} end
@@ -401,6 +406,7 @@ function ns.ItemFacts(itemID, itemLink, location)
     unusable = ns.IsUnusableGear(playerClass, classID, subclassID, equipLoc) or fromTooltip.forOtherClass
       or ns.IsUselessDrink(playerClass, classID, spellName, DrinkName()) or false,
     usable = spellName ~= nil,
+    key = ns.IsKeyItem(itemID),
     rewarded = classID == QUESTITEM and ns.IsQuestReward(itemID),
     alts = ns.AltsNeedingItem(itemID),
     plain = ns.IsPlainGear(quality, classID, subclassID, equipLoc),
@@ -415,6 +421,19 @@ function ns.ItemFacts(itemID, itemLink, location)
     kept = ns.IsKept(itemID),
     equipSet = InEquipmentSet(location),
   }
+end
+
+local KEPT_REASONS = {kept = true, classitem = true, tool = true, equipset = true, usable = true, key = true}
+
+-- true if KeepOrSell keeps an item with this verdict: quest, profession, for alts, a keep mark, class item,
+-- tool, equipment set, usable quest reward or key. A filter keep rule counts like a keep mark: it is the only
+-- filter verdict without a group (a category junk rule waiting for a price has needsPrice). Used by the loss
+-- warnings and the destroy button, which must not destroy these even when Scrap's own list calls them junk. Pure.
+function ns.IsKeepVerdict(verdict)
+  if not verdict then return false end
+  if verdict.reason == "filter" and not verdict.kind and not verdict.needsPrice then return true end
+  return verdict.kind == "quest" or verdict.kind == "profession" or verdict.kind == "alt"
+    or KEPT_REASONS[verdict.reason] == true
 end
 
 -- Baganator asks for every item on each button refresh, so decisions are cached. The cache is cleared

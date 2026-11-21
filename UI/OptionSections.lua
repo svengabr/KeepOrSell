@@ -51,7 +51,7 @@ ns.OPTION_SECTIONS = {
   {id = "display", label = "SECTION_DISPLAY", icon = "INV_Misc_Spyglass_02", columns = {
     {Check("tooltip", "OPT_TOOLTIP"), Check("hints", "OPT_HINTS", true), Check("helpButton", "OPT_HELP_BUTTON", true),
       Check("destroy", "OPT_DESTROY", true), Check("destroyConfirm", "OPT_DESTROY_CONFIRM")},
-    {Check("lootCoins", "OPT_LOOT_COINS"), Check("lossWarnings", "OPT_LOSS_WARNINGS"), Check("bagValue", "OPT_BAG_VALUE", true),
+    {Check("lootCoins", "OPT_LOOT_COINS"), Check("rewardCoin", "OPT_REWARD_COIN"), Check("lossWarnings", "OPT_LOSS_WARNINGS"), Check("bagValue", "OPT_BAG_VALUE", true),
       NeedsReload(Check("setSource", "OPT_SETS"))},
   }},
   {id = "addons", label = "DEPENDENCIES", icon = "INV_Misc_Gear_01", columns = {

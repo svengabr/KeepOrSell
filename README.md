@@ -29,6 +29,7 @@ Want to keep something it would sell? **Alt+Right-click** it in your bags.
 
 - **Destroy button:** bags full and no vendor around? One click destroys the cheapest junk. It never touches rare or better items.
 - **Loot coins:** with full bags, a gold coin marks loot that's worth more than the junk it would replace.
+- **Reward coin:** when a quest lets you pick a reward, a gold coin marks the one that sells to a vendor for the most. It doesn't judge upgrades.
 - **Bag value:** a small line shows what your junk and your auction items are worth.
 - **Warnings:** sell or destroy something KeepOrSell would keep, and chat tells you why.
 - **Price sharing:** in a group, players with KeepOrSell pass each other the newer auction prices.

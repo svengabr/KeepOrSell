@@ -4,7 +4,7 @@ local addonName, ns = ...
 local DEFAULTS = {
   setSource = true, factor = 2, scrap = true, minProfit = 0, maxAge = 7,
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, destroyConfirm = true, bagValue = true, share = true,
-  disenchant = true, openable = true, keepClick = true, lootCoins = true, upcomingReagents = true,
+  disenchant = true, openable = true, keepClick = true, lootCoins = true, rewardCoin = true, upcomingReagents = true,
   lossWarnings = true, accountMode = true, helpButton = true, greyVendor = true,
 }
 
@@ -74,6 +74,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.HookScrap()
     ns.HookKeepClick()
     ns.HookLossWarnings()
+    ns.HookRewardCoin()
   elseif event == "PLAYER_LOGIN" then
     ns.RecordCharacter()
     ns.Refresh()

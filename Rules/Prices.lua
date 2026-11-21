@@ -81,23 +81,23 @@ end
 local DAY = 86400
 local SCAN_MARGIN = 60 -- seconds; closer full scans count as the same one
 
--- Auction houses are per realm and faction, so full scan times and shared prices are kept per house
-function ns.RealmKey()
-  local realm = GetNormalizedRealmName and GetNormalizedRealmName() or "?"
+-- Auction houses are per realm and faction, so full scan times and shared prices are kept per house: "PvP-Horde"
+-- (ns.PoolName in Ruleset.lua: Forever has one realm per ruleset and no longer tells addons the realm).
+function ns.HouseKey()
   local faction = UnitFactionGroup and UnitFactionGroup("player") or "?"
-  return realm .. "-" .. faction
+  return ns.PoolName() .. "-" .. faction
 end
 
 -- itemID -> {price, seen, visit, from} shared for this auction house, nil when none yet
 function ns.SharedPrices()
   local all = KeepOrSellDB and KeepOrSellDB.sharedPrices
-  return all and all[ns.RealmKey()]
+  return all and all[ns.HouseKey()]
 end
 
 -- server time of our last full scan of this auction house
 function ns.LastFullScan()
   local scans = KeepOrSellDB and KeepOrSellDB.fullScans
-  return scans and scans[ns.RealmKey()]
+  return scans and scans[ns.HouseKey()]
 end
 
 -- How fresh a price is: {days = Auctionator's age in days, visit = server time of the full auction

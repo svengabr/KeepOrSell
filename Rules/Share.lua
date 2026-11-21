@@ -152,13 +152,11 @@ function ns.PickAnswers(items, lookup, answered)
   return entries
 end
 
--- Short name of the sender, nil when on another realm (auction houses are per realm). Pure.
-function ns.ParseSender(sender, realm)
+-- Short name of the sender: the part before "-". Forever no longer tells addons the realm, and a group only forms
+-- within one ruleset, which is one realm and one auction house per faction there. Pure.
+function ns.ParseSender(sender)
   if type(sender) ~= "string" then return nil end
-  local name, senderRealm = sender:match("^([^-]+)-(.+)$")
-  if not name then return sender end
-  if senderRealm ~= realm then return nil end
-  return name
+  return sender:match("^([^-]+)-") or sender
 end
 
 -- "ok", "retry" (throttled, send again later) or "drop" for a SendAddonMessage result. Older clients
@@ -179,7 +177,8 @@ local SEND_INTERVAL = 1 -- stays below the addon message throttle
 local ANSWER_DELAY_MIN, ANSWER_DELAY_MAX = 0.5, 2
 local REFRESH_DELAY = 1
 local NOTICE_SECONDS = 60 -- one "new full scan" notice per sender and minute is enough
-local BAGS = NUM_BAG_SLOTS or 4
+-- bags 0 to NUM_BAG_SLOTS plus the reagent bag behind them (bag 5 on Forever)
+local BAGS = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
 
 local asked = {}     -- itemID -> GetTime() of our last query (session only)
 local pending = {}   -- itemID -> {freshness of each asker}, answered after a random delay
@@ -227,7 +226,7 @@ end
 
 -- This auction house's shared prices, created on first use
 local function SharedStore()
-  local key = ns.RealmKey()
+  local key = ns.HouseKey()
   KeepOrSellDB.sharedPrices = KeepOrSellDB.sharedPrices or {}
   KeepOrSellDB.sharedPrices[key] = KeepOrSellDB.sharedPrices[key] or {}
   return KeepOrSellDB.sharedPrices[key]
@@ -364,7 +363,7 @@ end
 function ns.HandleShareMessage(prefix, text, channel, sender)
   if prefix ~= PREFIX or not (KeepOrSellDB and KeepOrSellDB.share) then return end
   if channel ~= "PARTY" and channel ~= "RAID" then return end
-  local name = ns.ParseSender(sender, GetNormalizedRealmName and GetNormalizedRealmName())
+  local name = ns.ParseSender(sender)
   if not name or name == UnitName("player") then return end
   local message = ns.DecodeMessage(text)
   if not message then return end
@@ -393,7 +392,7 @@ function ns.ShareFullScanArrived()
   if not scanStarted then return end
   if C_AuctionHouse.GetNumReplicateItems and C_AuctionHouse.GetNumReplicateItems() == 0 then return end
   KeepOrSellDB.fullScans = KeepOrSellDB.fullScans or {}
-  KeepOrSellDB.fullScans[ns.RealmKey()] = scanStarted
+  KeepOrSellDB.fullScans[ns.HouseKey()] = scanStarted
   scanStarted = nil
 end
 

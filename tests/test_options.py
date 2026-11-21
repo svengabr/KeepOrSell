@@ -86,8 +86,8 @@ def load():
       ns.ToggleOptionsWindow = function() ns.toggled = (ns.toggled or 0) + 1 end
       ns.ShowOptionsWindow = function() ns.windowShown = (ns.windowShown or 0) + 1 end
     end""")(ns)
-    for f in ("Locales.lua", "Keep.lua", "Prices.lua", "Share.lua", "Filter.lua", "Dependencies.lua", "FilterWindow.lua",
-              "Gear.lua", "Professions.lua", "Account.lua", "Options.lua", "Warnings.lua", "Core.lua"):
+    for f in ("Locales.lua", "Ruleset.lua", "Keep.lua", "Prices.lua", "Share.lua", "Filter.lua", "Dependencies.lua", "FilterWindow.lua",
+              "Gear.lua", "Professions.lua", "Account.lua", "Options.lua", "Warnings.lua", "RewardCoin.lua", "Core.lua"):
         rt.eval("function(path, ns) assert(loadfile(path))('KeepOrSell', ns) end")(
             source(f), ns)
     return rt, ns
@@ -187,6 +187,7 @@ class OptionsTests(unittest.TestCase):
     def test_new_options_on_by_default(self):
         self.assertTrue(self.rt.eval("KeepOrSellDB.keepClick"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.lootCoins"))
+        self.assertTrue(self.rt.eval("KeepOrSellDB.rewardCoin"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.upcomingReagents"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.lossWarnings"))
         self.assertTrue(self.rt.eval("KeepOrSellDB.helpButton"))

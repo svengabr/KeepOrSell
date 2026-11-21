@@ -123,6 +123,17 @@ class FindTests(unittest.TestCase):
         self.rt.execute("Scrap = {IsJunk = function() return false end}")
         self.assertIsNone(self.ns.FindDestroyTarget())
 
+    def test_scrap_list_never_destroys_an_open_quest_item(self):
+        # the player once put the item on Scrap's list; now an open quest needs it
+        self.rt.execute("Scrap = {IsJunk = function(self, id) return id == 20 or id == 10 end}")
+        self.ns.GetObjectiveState = self.rt.eval("function(id) if id == 20 then return 'open' end end")
+        self.assertEqual(self.ns.FindDestroyTarget().slot, 3)
+
+    def test_scrap_list_never_destroys_a_keep_mark(self):
+        self.rt.execute("Scrap = {IsJunk = function(self, id) return id == 20 or id == 10 end}")
+        self.rt.execute("KeepOrSellDB.keep = {[20] = true}")
+        self.assertEqual(self.ns.FindDestroyTarget().slot, 3)
+
 
 class DestroyTests(unittest.TestCase):
     def setUp(self):
@@ -450,3 +461,49 @@ class PairLootTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# bag 2: the reagent bag behind the regular bags, one free slot, Silk Cloth worth auctioning in slot 1
+REAGENT_BAG_STUBS = BAGS_STUBS + """
+NUM_TOTAL_EQUIPPED_BAG_SLOTS = 2
+FAMILY[2], FREE[2] = 0, 1
+REAGENTS = {[3] = true, [30] = true}
+BAG2 = {[1] = {itemID = 3, stackCount = 5, quality = 1}}
+AH.link3 = 900
+local slots, info, itemInfo = C_Container.GetContainerNumSlots, C_Container.GetContainerItemInfo, C_Item.GetItemInfo
+C_Container.GetContainerNumSlots = function(bag) return bag == 2 and 2 or slots(bag) end
+C_Container.GetContainerItemInfo = function(bag, slot)
+  if bag ~= 2 then return info(bag, slot) end
+  local s = BAG2[slot]
+  if not s then return nil end
+  return {itemID = s.itemID, hyperlink = "link" .. s.itemID, stackCount = s.stackCount, quality = s.quality,
+    isLocked = false, iconFileID = 100 + s.itemID}
+end
+C_Item.GetItemInfo = function(id)
+  local values = {itemInfo(id)}
+  local n = select("#", itemInfo(id))
+  local itemID = type(id) == "number" and id or tonumber(tostring(id):match("%d+"))
+  values[17] = REAGENTS[itemID] or false
+  return unpack(values, 1, math.max(n, 17))
+end
+"""
+
+
+class ReagentBagTests(unittest.TestCase):
+    def setUp(self):
+        self.rt, self.ns = load(CORE_FILES + ("Scrap.lua", "Bags.lua", "Destroy.lua"), STUBS + REAGENT_BAG_STUBS)
+
+    def test_scan_includes_the_reagent_bag(self):
+        silk = [i for i in self.ns.ScanBags().values() if i.bag == 2]
+        self.assertEqual(len(silk), 1)
+        self.assertEqual(silk[0].ah, 900 * 5)
+        self.assertTrue(silk[0].special)  # destroying there frees no regular slot
+
+    def test_free_slot_in_the_reagent_bag_is_not_regular(self):
+        self.assertEqual(self.ns.FreeSlots(), 0)
+
+    def test_crafting_reagent_fits_into_the_reagent_bag(self):
+        self.rt.execute("FREE[1] = 0")
+        self.assertTrue(self.ns.LootFits(30, 1))   # herb is a crafting reagent
+        self.assertFalse(self.ns.LootFits(9, 1))   # potion isn't
+        self.assertEqual(self.ns.CountSlots(3), 1)

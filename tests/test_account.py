@@ -25,6 +25,10 @@ class RecordTests(unittest.TestCase):
         self.assertEqual(self.ns.RulesetName(active("RPRuleset")), "RP")
         self.assertEqual(self.ns.RulesetName(active("HardcoreRuleset")), "HC")
         self.assertEqual(self.ns.RulesetName(active("none")), "PvE")
+        both = self.rt.eval("function(k) return k == 'RPRuleset' or k == 'PvPRuleset' end")
+        self.assertEqual(self.ns.RulesetName(both), "RPPvP")
+        hardcore_pvp = self.rt.eval("function(k) return k == 'HardcoreRuleset' or k == 'PvPRuleset' end")
+        self.assertEqual(self.ns.RulesetName(hardcore_pvp), "HC")
 
     def test_current_ruleset_needs_regional_names(self):
         self.assertIsNone(self.ns.CurrentRuleset())
@@ -71,7 +75,9 @@ class RecordTests(unittest.TestCase):
     def test_record_character_keeps_ruleset_when_unknown(self):
         self.rt.execute("KeepOrSellDB.characters = {['Tester-Realm'] = {faction = 'Alliance', ruleset = 'PvP'}}")
         self.ns.RecordCharacter()
-        self.assertEqual(self.rt.eval("KeepOrSellDB.characters['Tester-Realm'].ruleset"), "PvP")
+        # the stored ruleset also names the key
+        self.assertEqual(self.rt.eval("KeepOrSellDB.characters['Tester-PvP'].ruleset"), "PvP")
+        self.assertIsNone(self.rt.eval("KeepOrSellDB.characters['Tester-Realm']"))
 
     def test_migrated_alt_matches_by_realm_of_its_key(self):
         self.rt.execute("function UnitFactionGroup() return 'Alliance' end")
@@ -94,6 +100,50 @@ class RecordTests(unittest.TestCase):
         self.assertEqual(self.ns.CharacterKey(), "Drache Offiziell-Realm")
         self.rt.execute("function UnitName() return 'Drache', nil end")
         self.assertEqual(self.ns.CharacterKey(), "Drache-Realm")
+
+    def test_character_key_uses_the_ruleset_on_forever(self):
+        self.rt.execute(GAME_RULES + "ACTIVE_RULE = 1; function UnitName() return 'Drache', 'Offiziell' end")
+        self.assertEqual(self.ns.CharacterKey(), "Drache Offiziell-PvP")
+        # ruleset not known yet: the one stored for this character, never the realm
+        self.rt.execute("""C_GameRules = {IsGameRuleActive = function() return nil end}; Enum.GameRule = {}
+          KeepOrSellDB.characters = {['Drache Offiziell-RP'] = {ruleset = 'RP'}}""")
+        self.assertEqual(self.ns.CharacterKey(), "Drache Offiziell-RP")
+
+    def test_record_character_moves_the_realm_key_to_the_ruleset(self):
+        self.rt.execute(GAME_RULES + """ACTIVE_RULE = 1
+          function UnitName() return 'Drache', 'Offiziell' end
+          function UnitFactionGroup() return 'Horde' end
+          KeepOrSellDB.recipes = {['Drache Offiziell-Old Realm'] = {[1] = {3}}}
+          KeepOrSellDB.opened = {['Drache Offiziell-?'] = {Tailoring = true}}
+          KeepOrSellDB.altSettings = {['Drache Offiziell-Old Realm'] = {included = false}}
+          KeepOrSellDB.characters = {['Drache Offiziell-Old Realm'] = {faction = 'Horde', realm = 'Old Realm'},
+            ['Bob-Old Realm'] = {faction = 'Horde', realm = 'Old Realm'}}""")
+        self.ns.RecordCharacter()
+        self.assertEqual(self.rt.eval("KeepOrSellDB.recipes['Drache Offiziell-PvP'][1][1]"), 3)
+        self.assertTrue(self.rt.eval("KeepOrSellDB.opened['Drache Offiziell-PvP'].Tailoring"))  # ruleset was unknown
+        self.assertIsNone(self.rt.eval("KeepOrSellDB.recipes['Drache Offiziell-Old Realm']"))
+        self.assertIs(self.rt.eval("KeepOrSellDB.altSettings['Drache Offiziell-PvP'].included"), False)
+        me = self.rt.eval("KeepOrSellDB.characters['Drache Offiziell-PvP']")
+        self.assertEqual((me.faction, me.ruleset, me.realm), ("Horde", "PvP", None))
+        self.assertIsNone(self.rt.eval("KeepOrSellDB.characters['Drache Offiziell-Old Realm']"))
+        self.assertIsNotNone(self.rt.eval("KeepOrSellDB.characters['Bob-Old Realm']"))  # alts move at their own login
+
+    def test_first_name_key_moves_only_when_unambiguous(self):
+        db = self.rt.eval("""{characters = {['Drache-A'] = {faction = 'Horde', class = 'DRUID'},
+          ['Drache-B'] = {faction = 'Horde', class = 'DRUID'}, ['Drache-C'] = {faction = 'Alliance'}}}""")
+        me = self.rt.eval("{faction = 'Horde', class = 'DRUID', ruleset = 'PvP'}")
+        self.assertEqual(list(self.ns.OldCharacterKeys(db, "Drache Offiziell", "Drache", "Drache Offiziell-PvP", me).values()), [])
+        db.characters["Drache-B"] = None
+        self.assertEqual(list(self.ns.OldCharacterKeys(db, "Drache Offiziell", "Drache", "Drache Offiziell-PvP", me).values()),
+                         ["Drache-A"])
+
+    def test_auction_house_key_uses_the_ruleset(self):
+        self.rt.execute(GAME_RULES + "ACTIVE_RULE = 3; function UnitFactionGroup() return 'Horde' end")
+        self.assertEqual(self.ns.HouseKey(), "HC-Horde")
+
+    def test_pool_text_names_rp_pvp(self):
+        me = self.rt.eval("{ruleset = 'RPPvP', faction = 'Horde'}")
+        self.assertEqual(self.ns.PoolText(me), "RP-PvP · Horde")
 
     def test_move_character_data(self):
         db = self.rt.eval("""{recipes = {['Drache-Realm'] = {[1] = {3}}}, opened = {['Drache-Realm'] = {Tailoring = true}},

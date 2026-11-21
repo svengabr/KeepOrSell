@@ -63,6 +63,7 @@ NOT_IN_DOCS = {
     "GetLootSlotLink": "legacy global, used by Blizzard's LootFrame; Destroy.lua checks it exists",
     "GetLootSlotInfo": "legacy global, used by Blizzard's LootFrame; Destroy.lua checks it exists",
     "NUM_BAG_SLOTS": "FrameXML constant (Blizzard_FrameXMLBase/Constants.lua)",
+    "NUM_TOTAL_EQUIPPED_BAG_SLOTS": "FrameXML constant (Blizzard_FrameXMLBase/Constants.lua): bags plus reagent bag",
     "Enum": "checked per value below",
     # Legacy global C functions without generated docs
     "GetProfessions": "legacy global, used by Blizzard_Professions on Forever",
@@ -77,6 +78,12 @@ NOT_IN_DOCS = {
     "IsInGroup": "legacy global, used by Blizzard_FrameXMLUtil/PartyUtil and the unit frames on Forever",
     "IsInRaid": "legacy global, used by the raid frames on Forever",
     "GetNumGroupMembers": "legacy global, used by the party and raid frames on Forever",
+    "GetQuestItemLink": "legacy global, used by Blizzard_UIPanels_Game QuestInfo.lua on Forever",
+    "GetQuestItemInfo": "legacy global, used by Blizzard_UIPanels_Game QuestInfo.lua on Forever",
+    "GetQuestLogItemLink": "legacy global, used by Blizzard_UIPanels_Game QuestInfo.lua on Forever",
+    "GetQuestLogChoiceInfo": "legacy global, used by Blizzard_UIPanels_Game QuestInfo.lua on Forever",
+    "QuestInfoFrame": "FrameXML frame (Blizzard_UIPanels_Game/Vanilla/QuestInfo.xml), used behind a guard",
+    "QuestInfo_Display": "FrameXML (Blizzard_UIPanels_Game/Vanilla/QuestInfo.lua), post-hooked behind a guard",
     "InCombatLockdown": "legacy global, used throughout FrameXML for secure frames",
 }
 

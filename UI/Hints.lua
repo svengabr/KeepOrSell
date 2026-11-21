@@ -47,7 +47,8 @@ function ns.UnstackedList(counts)
   return list
 end
 
-local BAGS = NUM_BAG_SLOTS or 4
+-- bags 0 to NUM_BAG_SLOTS plus the reagent bag behind them (bag 5 on Forever)
+local BAGS = NUM_TOTAL_EQUIPPED_BAG_SLOTS or NUM_BAG_SLOTS or 4
 
 -- Items the player carries on purpose (Soul Shards, tools, keep marks): their slots are no surprise
 local CARRIED = {classitem = true, tool = true, kept = true}

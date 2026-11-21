@@ -233,6 +233,8 @@ function ns.TooltipText(verdict, prices, db, slots, unstacked)
     text = L.TIP_KEEP .. " – " .. L.TIP_EQUIP_SET
   elseif reason == "usable" then
     text = L.TIP_KEEP .. " – " .. L.TIP_USABLE
+  elseif reason == "key" then
+    text = L.TIP_KEEP .. " – " .. L.TIP_KEY
   elseif reason == "new" then
     text = L.TIP_KEEP .. " – " .. L.TIP_NEW
   elseif verdict.needsPrice and verdict.priceReason == "noprice" then
@@ -282,6 +284,8 @@ local function AddLine(tooltip, data)
   end
   -- loot with a coin (LootCoins.lua): which junk to destroy for it
   local note = ns.LootTooltipNote and tooltip.GetOwner and ns.LootTooltipNote(tooltip:GetOwner())
+  -- quest reward with a coin (RewardCoin.lua): the most vendor gold among the choices
+  note = note or (ns.RewardTooltipNote and tooltip.GetOwner and ns.RewardTooltipNote(tooltip:GetOwner()))
   if note then
     if not text then tooltip:AddLine(" ") end
     tooltip:AddLine(PREFIX .. note, 0.2, 1, 0.2, true)

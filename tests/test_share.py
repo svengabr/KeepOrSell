@@ -161,14 +161,11 @@ class SenderTests(unittest.TestCase):
     def setUp(self):
         self.rt, self.ns = load(("Share.lua",), base=False)
 
-    def test_same_realm(self):
-        self.assertEqual(self.ns.ParseSender("Sven", "Thunderstrike"), "Sven")
-        # modern clients add the realm even for the own one
-        self.assertEqual(self.ns.ParseSender("Sven-Thunderstrike", "Thunderstrike"), "Sven")
-
-    def test_other_realm_rejected(self):
-        self.assertIsNone(self.ns.ParseSender("Sven-Spineshatter", "Thunderstrike"))
-        self.assertIsNone(self.ns.ParseSender(None, "Thunderstrike"))
+    def test_short_name(self):
+        self.assertEqual(self.ns.ParseSender("Sven"), "Sven")
+        # whatever follows the name (realm, surname): a group only forms within one ruleset, one house per faction
+        self.assertEqual(self.ns.ParseSender("Sven-Thunderstrike"), "Sven")
+        self.assertIsNone(self.ns.ParseSender(None))
 
     def test_send_outcome(self):
         codes = self.rt.eval("{Success = 0, AddonMessageThrottle = 3, ChannelThrottle = 8}")
@@ -189,10 +186,11 @@ SEND_RESULT = 0
 SERVER_TIME = %d
 function GetServerTime() return SERVER_TIME end
 function GetTime() return CLOCK or 0 end
-function GetNormalizedRealmName() return "Thunderstrike" end
+function RegionalUniqueNamesEnabled() return true end
+C_GameRules = {IsGameRuleActive = function(rule) return rule == 1 end}
 function UnitName() return "Me" end
 function UnitFactionGroup() return "Alliance" end
-KEY = "Thunderstrike-Alliance"
+KEY = "PvP-Alliance"
 function IsInGroup() return GROUP end
 function IsInRaid() return RAID end
 function GetNumGroupMembers() return GROUP and MEMBERS or 0 end
@@ -202,7 +200,8 @@ function hooksecurefunc(tbl, name, fn)
   local original = tbl[name]
   tbl[name] = function(...) original(...) fn(...) end
 end
-Enum = {SendAddonMessageResult = {Success = 0, AddonMessageThrottle = 3, ChannelThrottle = 8}}
+Enum = {SendAddonMessageResult = {Success = 0, AddonMessageThrottle = 3, ChannelThrottle = 8},
+  GameRule = {PvPRuleset = 1, RPRuleset = 2, HardcoreRuleset = 3}}
 C_ChatInfo = {
   RegisterAddonMessagePrefix = function(prefix) PREFIX = prefix return 0 end,
   InChatMessagingLockdown = function() return LOCKDOWN end,
@@ -268,7 +267,7 @@ class ExchangeTests(unittest.TestCase):
         self.query()
         self.assertEqual(self.sent(), ["PARTY 2|Q|3,4:0:%d" % (NOW - 3600)])
 
-    def test_full_scan_of_another_realm_does_not_count(self):
+    def test_full_scan_of_another_house_does_not_count(self):
         self.rt.execute("OWN[4] = {35, 0}; KeepOrSellDB.fullScans['Other-Horde'] = SERVER_TIME - 3600")
         self.query()
         self.assertEqual(self.sent(), ["PARTY 2|Q|3,4:0"])
@@ -351,9 +350,8 @@ class ExchangeTests(unittest.TestCase):
         self.assertEqual((entry.price, entry.visit), (40, NOW - 300))
         self.assertEqual(self.ns.refreshed, 1)
 
-    def test_ignores_own_other_realm_whisper_and_disabled(self):
+    def test_ignores_own_whisper_and_disabled(self):
         self.receive("2|A|3:1200:1", sender="Me-Thunderstrike")
-        self.receive("2|A|3:1200:1", sender="Sven-Spineshatter")
         self.receive("2|A|3:1200:1", channel="WHISPER")
         self.rt.execute("KeepOrSellDB.share = false")
         self.receive("2|A|3:1200:1")

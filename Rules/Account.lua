@@ -1,31 +1,9 @@
--- Account mode: one record per character of the account (faction, class, ruleset, realm, Reagent Economy) in
+-- Account mode: one record per character of the account (faction, class, ruleset, Reagent Economy) in
 -- KeepOrSellDB.characters, so items another character needs can be told apart.
 local _, ns = ...
 
--- Name of the ruleset ("PvP", "RP", "HC" or "PvE"); isActive(ruleKey) answers for "PvPRuleset", "RPRuleset" and
--- "HardcoreRuleset". Pure.
-function ns.RulesetName(isActive)
-  if isActive("PvPRuleset") then return "PvP" end
-  if isActive("RPRuleset") then return "RP" end
-  if isActive("HardcoreRuleset") then return "HC" end
-  return "PvE"
-end
-
--- The current ruleset on clients where all servers of a ruleset play together (Forever), else nil.
--- Enum.GameRule is missing from the generated API docs; Syndicator uses it the same way.
-function ns.CurrentRuleset()
-  if not (RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled()) then return nil end
-  local rules = Enum and Enum.GameRule
-  if not (C_GameRules and C_GameRules.IsGameRuleActive and rules) then return nil end
-  -- without the rules the answer would always be "PvE" and pool Hardcore with normal characters: unknown instead
-  if not (rules.PvPRuleset or rules.RPRuleset or rules.HardcoreRuleset) then return nil end
-  return ns.RulesetName(function(key)
-    return Enum.GameRule[key] ~= nil and C_GameRules.IsGameRuleActive(Enum.GameRule[key]) == true
-  end)
-end
-
 -- true = an item can be mailed between the two characters: same faction and same ruleset (the ruleset is the
--- server on Forever). Records written before rulesets were stored compare by realm. Pure.
+-- server on Forever). Records written before rulesets were stored compare by the realm they stored. Pure.
 function ns.SamePool(me, other)
   if not (me and other and me.faction and me.faction == other.faction) then return false end
   if me.ruleset and other.ruleset then return me.ruleset == other.ruleset end
@@ -47,6 +25,37 @@ function ns.MoveCharacterData(db, oldKey, newKey)
       t[oldKey] = nil
     end
   end
+end
+
+-- Keys under which older versions kept this character, to move to newKey: "Name-Realm" (until Forever stopped telling
+-- the realm), "Name-?" (ruleset not known yet) and the first-name-only key from before surnames. A full name with a
+-- surname is unique in the region, so every key with it is this character; a first name alone is not, so such a key
+-- moves only when exactly one record under it fits me ({faction, class, ruleset}; unknown values fit). Pure.
+function ns.OldCharacterKeys(db, name, firstName, newKey, me)
+  local keys = {}
+  for _, tableName in ipairs(PER_CHARACTER) do
+    local t = db[tableName]
+    for key in pairs(type(t) == "table" and t or {}) do
+      if type(key) == "string" and key ~= newKey then keys[key] = true end
+    end
+  end
+  local result, firstNameKeys = {}, {}
+  for key in pairs(keys) do
+    local keyName = key:match("^(.-)%-")
+    if keyName == name and name ~= firstName then
+      table.insert(result, key)
+    elseif keyName == firstName then
+      local record = db.characters and db.characters[key]
+      if type(record) == "table" and (record.faction == nil or me.faction == nil or record.faction == me.faction)
+          and (record.class == nil or record.class == me.class)
+          and (record.ruleset == nil or me.ruleset == nil or record.ruleset == me.ruleset) then
+        table.insert(firstNameKeys, key)
+      end
+    end
+  end
+  if #firstNameKeys == 1 then table.insert(result, firstNameKeys[1]) end
+  table.sort(result)
+  return result
 end
 
 local altIndex -- built once per session: other characters only change in their own sessions
@@ -80,14 +89,19 @@ function ns.RecordCharacter()
   end
   KeepOrSellDB.factions = nil
   local key = ns.CharacterKey()
-  -- versions before the surname kept this character under its first name only
-  ns.MoveCharacterData(KeepOrSellDB, ns.CharacterKey(true), key)
+  local faction, class = UnitFactionGroup and UnitFactionGroup("player"), select(2, UnitClass("player"))
+  local ruleset = ns.CurrentRuleset()
+  local me = {faction = faction, class = class, ruleset = ruleset or ns.StoredRuleset(characters, ns.CharacterName())}
+  for _, oldKey in ipairs(ns.OldCharacterKeys(KeepOrSellDB, ns.CharacterName(), ns.CharacterName(true), key, me)) do
+    ns.MoveCharacterData(KeepOrSellDB, oldKey, key)
+  end
   local old = characters[key] or {}
   characters[key] = {
-    faction = UnitFactionGroup and UnitFactionGroup("player") or old.faction,
-    class = select(2, UnitClass("player")),
-    ruleset = ns.CurrentRuleset() or old.ruleset,
-    realm = GetRealmName(),
+    faction = faction or old.faction,
+    class = class,
+    ruleset = ruleset or old.ruleset,
+    -- only where there is no ruleset to pool by (other clients): Forever no longer tells addons the realm
+    realm = not (ruleset or old.ruleset) and GetRealmName and GetRealmName() or nil,
     reagentEconomy = ns.HasReagentEconomy(),
     professions = ns.CurrentProfessions() or old.professions,
   }
@@ -258,5 +272,6 @@ local FACTION_NAMES = {Alliance = "FACTION_ALLIANCE", Horde = "FACTION_HORDE"}
 -- faction names (globals FACTION_ALLIANCE / FACTION_HORDE when they exist).
 function ns.PoolText(me)
   local faction = me.faction and (_G[FACTION_NAMES[me.faction] or ""] or me.faction) or "?"
-  return ("%s · %s"):format(me.ruleset or me.realm or "?", faction)
+  local ruleset = me.ruleset == "RPPvP" and "RP-PvP" or me.ruleset
+  return ("%s · %s"):format(ruleset or me.realm or "?", faction)
 end

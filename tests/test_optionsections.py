@@ -8,7 +8,7 @@ FILES = ("Locales.lua", "Prices.lua", "OptionSections.lua")
 # every option the Blizzard settings page showed before the own window, plus the "? KoS" switch
 OPTIONS = ["factor", "minProfit", "maxAge", "share", "greyVendor", "scrap", "gear", "plainGear", "recipeJunk", "profession",
            "upcomingReagents", "questie", "disenchant", "openable", "keepClick", "accountMode", "tooltip", "hints",
-           "helpButton", "destroy", "destroyConfirm", "lootCoins", "lossWarnings", "bagValue", "setSource"]
+           "helpButton", "destroy", "destroyConfirm", "lootCoins", "rewardCoin", "lossWarnings", "bagValue", "setSource"]
 REFRESH = {"factor", "minProfit", "maxAge", "share", "greyVendor", "scrap", "gear", "plainGear", "recipeJunk", "profession", "upcomingReagents", "questie",
            "disenchant", "openable", "accountMode", "hints", "helpButton", "destroy", "bagValue"}
 ACTIONS = {"ForgetKept", "ShowFilterWindow", "UndoFilterCommand", "ClearFilterCommand", "ShowSetup"}

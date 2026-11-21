@@ -4,15 +4,9 @@
 local _, ns = ...
 local L = ns.L
 
-local KEPT_REASONS = {kept = true, classitem = true, tool = true, equipset = true, usable = true}
-
--- true if losing an item with this verdict deserves a warning. A filter keep rule counts like a keep mark: it
--- is the only filter verdict without a group (a category junk rule waiting for a price has needsPrice). Pure.
+-- true if losing an item with this verdict deserves a warning (ns.IsKeepVerdict). Pure.
 function ns.ShouldWarnLoss(verdict)
-  if not verdict then return false end
-  if verdict.reason == "filter" and not verdict.kind and not verdict.needsPrice then return true end
-  return verdict.kind == "quest" or verdict.kind == "profession" or verdict.kind == "alt"
-    or KEPT_REASONS[verdict.reason] == true
+  return ns.IsKeepVerdict(verdict)
 end
 
 local DELETE_POPUPS = {DELETE_ITEM = true, DELETE_GOOD_ITEM = true, DELETE_QUEST_ITEM = true, DELETE_GOOD_QUEST_ITEM = true}

@@ -78,6 +78,19 @@ function ns.IsProfessionTool(itemID, classID, subclassID)
   return itemID ~= nil and PROFESSION_TOOLS[itemID] == true
 end
 
+-- Keys that are items of the quest item class (or gear) rather than of the key class: they open or summon
+-- something in a dungeon or raid, long after any quest that handed them out
+local KEY_ITEMS = Set(
+  9240, 17191, 12344, -- Mallet of Zul'Farrak, Scepter of Celebras, Seal of Ascension
+  16309, 21175, -- Drakefire Amulet, The Scepter of the Shifting Sands
+  17333, 22754 -- Aqual Quintessence, Eternal Quintessence
+)
+
+-- true = a key listed above, kept no matter what. Pure.
+function ns.IsKeyItem(itemID)
+  return itemID ~= nil and KEY_ITEMS[itemID] == true
+end
+
 -- Spell reagents and class tools by class. Some come from class quests, so QuestieDB sees them as
 -- handed-out quest items; others drop or are worth auctioning, but the class needs them all the same.
 local CLASS_ITEMS = {

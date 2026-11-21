@@ -27,12 +27,20 @@ function ns.PickCheapest(candidates)
   return ns.SortCheapest(candidates)[1]
 end
 
+-- true if KeepOrSell keeps the bag item (ns.IsKeepVerdict), e.g. an open quest needs it although the player
+-- once put it on Scrap's junk list
+local function Keeps(item)
+  local location = ItemLocation and ItemLocation.CreateFromBagAndSlot
+    and ItemLocation:CreateFromBagAndSlot(item.bag, item.slot)
+  return ns.IsKeepVerdict(ns.Classify(item.itemID, item.link, location))
+end
+
 -- Junk in the regular bags (see ns.ScanBags), cheapest first: destroying junk in a profession bag
--- frees no slot for other items
+-- frees no slot for other items. Never an item KeepOrSell keeps, whatever Scrap says
 function ns.DestroyCandidates()
   local candidates = {}
   for _, item in ipairs(ns.ScanBags()) do
-    if item.junk and not item.special then table.insert(candidates, item) end
+    if item.junk and not item.special and not Keeps(item) then table.insert(candidates, item) end
   end
   return ns.SortCheapest(candidates)
 end
