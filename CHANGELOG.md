@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.23.0
 
 - Fix: items in the reagent bag were left out of the bag scan, so the bag value line showed no auction house value for reagents there (herbs, cloth …), price sharing never asked for them, and the hints and the destroy button didn't see them. Junk in the reagent bag is not destroyed to make room, since its slot only takes reagents; loot that is a crafting reagent counts as fitting while the reagent bag has a free slot.
 - Fix for the WoW: Forever patch of 20 November 2026: the game no longer tells addons the realm name. KeepOrSell now stores per-character data (recipes, account mode, setup) and shared auction prices by ruleset instead of realm; Forever has one realm per ruleset anyway. Your data moves over by itself the next time each character logs in; until then an alt that hasn't logged in since may be missing from account mode. Shared prices and full scan times start fresh.
