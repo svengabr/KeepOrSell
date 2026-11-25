@@ -50,6 +50,23 @@ class StepsTests(unittest.TestCase):
         self.assertTrue(steps["auctionator"].done)
         self.assertTrue(steps["scan"].done)
 
+    def test_forever_ledger_stands_in_for_auctionator(self):
+        steps, _ = steps_by_key(self.ns, self.rt, ledger=True, ahVisited=False)
+        self.assertTrue(steps["auctionator"].done)
+        self.assertFalse(steps["scan"].done)
+        steps, _ = steps_by_key(self.ns, self.rt, ledger=True, ahVisited=True)
+        self.assertTrue(steps["scan"].done)
+
+    def test_tile_names_the_price_addons_in_use(self):
+        names = lambda **state: self.ns.PriceAddonText(self.rt.table_from(state))
+        self.assertEqual(names(), "Auctionator or Forever Ledger")
+        self.assertEqual(names(auctionator=True), "In use: Auctionator")
+        self.assertEqual(names(ledger=True), "In use: Forever Ledger")
+        self.assertEqual(names(auctionator=True, ledger=True), "In use: Auctionator, Forever Ledger")
+        # TSM only fills gaps, so it is only named when it is all there is
+        self.assertEqual(names(tsm=True), "In use: TradeSkillMaster")
+        self.assertEqual(names(auctionator=True, tsm=True), "In use: Auctionator")
+
     def test_steps_keep_their_order(self):
         _, raw = steps_by_key(self.ns, self.rt)
         self.assertEqual([s.key for s in raw.values()],
@@ -165,6 +182,13 @@ class StateTests(unittest.TestCase):
         self.assertTrue(state.ahVisited)  # BASE_STUBS has ahVisited
         self.assertFalse(state.baganatorSetup)
         self.assertFalse(state.scrap)
+
+    def test_reads_forever_ledger(self):
+        self.assertFalse(self.ns.GetSetupState().ledger)
+        self.rt.execute("LOADED.ForeverLedger = true")
+        self.assertFalse(self.ns.GetSetupState().ledger)  # before 0.29 it has no API
+        self.rt.execute("ForeverLedgerAPI = {version = 1, GetPrice = function() end}")
+        self.assertTrue(self.ns.GetSetupState().ledger)
 
     def test_baganator_setup_is_per_character(self):
         self.ns.MarkBaganatorSetup()

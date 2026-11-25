@@ -82,8 +82,17 @@ class TooltipTests(unittest.TestCase):
         """)
         self.assertIn("Auction house (TSM)", self.show(3))
 
-    def test_auctionator_price_not_named_tsm(self):
+    def test_forever_ledger_price_named(self):
+        self.rt.execute("""
+          Auctionator = nil
+          function GetServerTime() return 8640000 end
+          ForeverLedgerAPI = {version = 1, GetPrice = function(id) if id == 3 then return 1200, 1000, 5, 8640000 end end}
+        """)
+        self.assertIn("Auction house (Forever Ledger)", self.show(3))
+
+    def test_auctionator_price_not_named(self):
         self.assertNotIn("(TSM)", self.show(3))
+        self.assertNotIn("(Forever Ledger)", self.show(3))
 
     def test_junk(self):
         text = self.show(4)

@@ -1,4 +1,4 @@
--- Compares auction price (Auctionator) with vendor price. Pure logic, no Baganator.
+-- Compares auction price (Auctionator, Forever Ledger) with vendor price. Pure logic, no Baganator.
 local addonName, ns = ...
 
 local AH_CUT = 0.05 -- auction house fee on a sale
@@ -67,10 +67,12 @@ local function Api()
   return Auctionator and Auctionator.API and Auctionator.API.v1
 end
 
--- true once the player has opened the auction house with Auctionator loaded (Auctionator has no
--- public API telling whether it has scanned)
+-- true when a missing price means nobody sells the item: once the player has opened the auction house with
+-- Auctionator loaded (Auctionator has no public API telling whether it has scanned), or after a full scan of this
+-- auction house with Forever Ledger (its own scan time doesn't tell which house it was)
 function ns.HasPriceData()
-  return Api() ~= nil and KeepOrSellDB.ahVisited == true
+  if Api() ~= nil and KeepOrSellDB.ahVisited == true then return true end
+  return ns.HasLedgerScan ~= nil and ns.HasLedgerScan() and ns.LastFullScan() ~= nil
 end
 
 local function VendorPrice(itemLink)
@@ -126,15 +128,28 @@ function ns.IsFresher(a, b)
   return a.days == 0 and a.visit ~= nil and b.visit ~= nil and a.visit >= b.visit + SCAN_MARGIN
 end
 
--- own = {ah, vendor, age, hasAge} from Auctionator; shared = {price, seen, visit, from} from a group
--- member; lastScan = our last full scan. The shared price wins when the own one is missing or older. Pure.
+-- own = {ah, age, hasAge} from Auctionator, plus vendor and count; ledger = {price, seen} from Forever Ledger or nil.
+-- Forever Ledger wins when Auctionator has no price or one from an earlier day. On the same day Auctionator stays:
+-- it tells the versions of random-stat gear apart, Forever Ledger's API doesn't. seen = server time the price was
+-- seen, never later than now (Forever Ledger uses the computer's clock). Pure.
+function ns.PickLedger(own, ledger, now)
+  if not ledger then return own end
+  local seen = math.min(ledger.seen, now)
+  local days = math.floor((now - seen) / DAY)
+  if own.ah and own.ah > 0 and (not own.hasAge or (own.age and own.age <= days)) then return own end
+  return {ah = ledger.price, vendor = own.vendor, count = own.count, age = days, hasAge = true, seen = seen,
+    source = "ledger"}
+end
+
+-- own = {ah, vendor, age, hasAge, seen} from Auctionator or Forever Ledger (only Forever Ledger knows seen);
+-- shared = {price, seen, visit, from} from a group member; lastScan = our last full scan. The shared price wins when the own one is missing or older. Pure.
 function ns.PickPrice(own, shared, now, lastScan)
   if not (shared and shared.price and shared.seen) then return own end
   local fresh = ns.SharedFreshness(shared, now)
   if own.ah and own.ah > 0 then
     -- without an age API the own price is trusted as before
     if not own.hasAge then return own end
-    if own.age and not ns.IsFresher(fresh, ns.OwnFreshness(own.age, lastScan, now)) then return own end
+    if own.age and not ns.IsFresher(fresh, ns.OwnFreshness(own.age, own.seen or lastScan, now)) then return own end
   end
   return {ah = shared.price, vendor = own.vendor, count = own.count, age = fresh.days, hasAge = true, from = shared.from}
 end
@@ -155,9 +170,14 @@ local function WithShared(prices, id)
   return prices
 end
 
--- {ah, age, hasAge, from} of an item known only by its ID (disenchanting materials): Auctionator and shared
--- group prices, no TSM and no vendor price
-function ns.GetPricesByID(itemID)
+-- Forever Ledger's price next to the one from Auctionator
+local function WithLedger(prices, id)
+  if not (id and ns.GetLedgerPrice and GetServerTime) then return prices end
+  return ns.PickLedger(prices, ns.GetLedgerPrice(id), GetServerTime())
+end
+
+-- {ah, age, hasAge, seen, source}: our own price of an item by its ID, from Auctionator or (unless noLedger) Forever Ledger
+function ns.GetOwnPricesByID(itemID, noLedger)
   local api = Api()
   local prices = {}
   if api and api.GetAuctionPriceByItemID then prices.ah = api.GetAuctionPriceByItemID(addonName, itemID) end
@@ -165,12 +185,18 @@ function ns.GetPricesByID(itemID)
     prices.hasAge = true
     prices.age = api.GetAuctionAgeByItemID(addonName, itemID)
   end
-  return WithShared(prices, itemID)
+  return noLedger and prices or WithLedger(prices, itemID)
 end
 
--- {ah, vendor, count, age, hasAge, from, source}; count = copies in the bags; age = days since last seen on the AH (nil = never or older than
--- 21 days), from = the group member who shared the price (nil for the own Auctionator price),
--- source = "tsm" when the price came from TradeSkillMaster
+-- {ah, age, hasAge, seen, from, source} of an item known only by its ID (disenchanting materials): our own and
+-- shared group prices, no TSM and no vendor price
+function ns.GetPricesByID(itemID)
+  return WithShared(ns.GetOwnPricesByID(itemID), itemID)
+end
+
+-- {ah, vendor, count, age, hasAge, seen, from, source}; count = copies in the bags; age = days since last seen on the AH (nil = never or older than
+-- 21 days), from = the group member who shared the price (nil for an own price), seen = server time
+-- of a Forever Ledger price, source = "ledger" when the price came from Forever Ledger, "tsm" from TradeSkillMaster
 function ns.GetPrices(itemLink)
   local api = Api()
   local prices = {}
@@ -185,8 +211,8 @@ function ns.GetPrices(itemLink)
   prices.vendor = VendorPrice(itemLink)
   prices.count = C_Item and C_Item.GetItemCount and C_Item.GetItemCount(itemLink)
   local id = C_Item and C_Item.GetItemInfoInstant and C_Item.GetItemInfoInstant(itemLink)
-  prices = WithShared(prices, id)
-  -- TSM only fills gaps, so it is never asked for items Auctionator or the group knows
+  prices = WithShared(WithLedger(prices, id), id)
+  -- TSM only fills gaps, so it is never asked for items Auctionator, Forever Ledger or the group knows
   if not (prices.ah and prices.ah > 0) and ns.GetTSMPrice then
     prices = ns.MergeFallback(prices, ns.GetTSMPrice(itemLink), "tsm")
   end

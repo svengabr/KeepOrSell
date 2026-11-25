@@ -10,11 +10,11 @@ local L = ns.L
 local PROFILE = '{"addon":"Baganator","version":3,"kind":"profile","bag_view_type":"category","bank_view_type":"category","seen_welcome":1}'
 local PROFILE_NAME = "KeepOrSell"
 
--- state: {baganator, baganatorSetup, auctionator, tsm, ahVisited, scrap, questie}, all booleans.
+-- state: {baganator, baganatorSetup, auctionator, ledger (Forever Ledger), tsm, ahVisited, scrap, questie}, all booleans.
 -- Returns the steps in display order: {key, done, required}. Pure.
 function ns.SetupSteps(state)
   local scanned
-  if state.auctionator then
+  if state.auctionator or state.ledger then
     scanned = state.ahVisited == true
   else
     -- like the hints: TSM alone already brings prices, there is no scan to ask for
@@ -23,11 +23,22 @@ function ns.SetupSteps(state)
   return {
     {key = "baganator", done = state.baganator == true, required = true},
     {key = "view", done = state.baganator == true and state.baganatorSetup == true, required = true},
-    {key = "auctionator", done = state.auctionator == true or state.tsm == true, required = true},
+    {key = "auctionator", done = state.auctionator == true or state.ledger == true or state.tsm == true, required = true},
     {key = "scan", done = scanned, required = true},
     {key = "scrap", done = state.scrap == true, required = false},
     {key = "questie", done = state.questie == true, required = false},
   }
+end
+
+-- Short text of the price addon tile: which ones KeepOrSell reads, or which to install. With Auctionator and
+-- Forever Ledger the more recent price counts (ns.PickLedger), there is nothing to choose. Pure.
+function ns.PriceAddonText(state)
+  local names = {}
+  if state.auctionator then table.insert(names, "Auctionator") end
+  if state.ledger then table.insert(names, "Forever Ledger") end
+  if #names == 0 and state.tsm then table.insert(names, "TradeSkillMaster") end
+  if #names == 0 then return L.SETUP_AUCTIONATOR_SHORT end
+  return L.SETUP_AUCTIONATOR_USED:format(table.concat(names, ", "))
 end
 
 -- Required steps done and in total, for the progress bar. Pure.
@@ -60,6 +71,7 @@ function ns.GetSetupState()
     -- Baganator keeps the active profile per character
     baganatorSetup = done ~= nil and done[ns.CharacterKey()] == true,
     auctionator = ns.IsDependencyReady("Auctionator"),
+    ledger = ns.IsDependencyReady("ForeverLedger"),
     tsm = ns.IsDependencyReady("TradeSkillMaster"),
     ahVisited = KeepOrSellDB.ahVisited == true,
     scrap = ns.IsDependencyReady("Scrap"),
@@ -282,7 +294,9 @@ local function BuildRight(panel)
 end
 
 local function Refresh()
-  local steps = ns.SetupSteps(ns.GetSetupState())
+  local state = ns.GetSetupState()
+  local steps = ns.SetupSteps(state)
+  frame.tiles.auctionator.Short:SetText(ns.PriceAddonText(state))
   for _, step in ipairs(steps) do
     local tile = frame.tiles[step.key]
     -- optional addons that are missing get no badge, they are no task
@@ -303,7 +317,7 @@ local function Refresh()
   view.SetUp:SetEnabled(baganator)
   view.Already:SetEnabled(baganator)
   -- "Set up" stays to import the profile again (e.g. after picking another one in Baganator)
-  view.Already:SetShown(not ns.GetSetupState().baganatorSetup)
+  view.Already:SetShown(not state.baganatorSetup)
 
   local done, total = ns.SetupProgress(steps)
   frame.ProgressText:SetText(L.SETUP_PROGRESS_TEXT:format(done, total))

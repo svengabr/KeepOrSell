@@ -17,6 +17,7 @@ read_globals = {
   -- Third-party addons (all optional)
   "Auctionator",
   "Baganator",
+  "ForeverLedgerAPI",
   "LibQuestieDB",
   "TSM_API",
 

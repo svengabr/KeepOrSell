@@ -241,7 +241,7 @@ function SHARED(id) return (KeepOrSellDB.sharedPrices[KEY] or {})[id] end
 
 class ExchangeTests(unittest.TestCase):
     def setUp(self):
-        self.rt, self.ns = load(("Prices.lua", "Share.lua"), stubs=RUNTIME_STUBS, base=False)
+        self.rt, self.ns = load(("Prices.lua", "ForeverLedger.lua", "Share.lua"), stubs=RUNTIME_STUBS, base=False)
         self.rt.eval("""function(ns)
           ns.SettingsChanged = function() ns.refreshed = (ns.refreshed or 0) + 1 end
         end""")(self.ns)
@@ -319,6 +319,32 @@ class ExchangeTests(unittest.TestCase):
         self.receive("2|Q|3:0:%d,4:0:%d" % (NOW - 10800, NOW - 3600))
         self.rt.execute("RunTimers()")
         self.assertEqual(self.sent(), ["PARTY 2|A|3:40:0:%d" % (NOW - 300)])
+
+    LEDGER = """
+      Auctionator = nil
+      ForeverLedgerAPI = {version = 1, GetPrice = function(id) if id == 3 then return 45, 40, 9, %d end end}
+    """ % (NOW - 600)
+
+    def test_shares_forever_ledger_prices(self):
+        self.rt.execute(self.LEDGER)
+        self.query()
+        self.assertEqual(self.sent(), ["PARTY 2|Q|3:0:%d,4" % (NOW - 600)])
+        self.rt.execute("SENT = {}")
+        self.receive("2|Q|3:1,4")
+        self.rt.execute("RunTimers()")
+        self.assertEqual(self.sent(), ["PARTY 2|A|3:40:0:%d" % (NOW - 600)])
+
+    def test_no_forever_ledger_prices_while_the_auction_house_is_open(self):
+        # at a neutral auction house the API returns that house's prices
+        self.rt.execute(self.LEDGER)
+        self.ns.ShareAuctionHouseShown()
+        self.receive("2|Q|3:1")
+        self.rt.execute("RunTimers()")
+        self.assertEqual(self.sent(), [])
+        self.ns.ShareAuctionHouseClosed()
+        self.receive("2|Q|3:1")
+        self.rt.execute("RunTimers()")
+        self.assertEqual(self.sent(), ["PARTY 2|A|3:40:0:%d" % (NOW - 600)])
 
     def test_answer_for_several_askers_helps_the_oldest(self):
         self.rt.execute("OWN[3] = {40, 1}")

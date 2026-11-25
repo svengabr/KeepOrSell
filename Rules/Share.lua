@@ -1,6 +1,6 @@
 -- Shares auction prices within the group: members ask for their bag items with the age of their
 -- price, members with a fresher price answer. Freshness: see ns.IsFresher (Prices.lua).
-local addonName, ns = ...
+local _, ns = ...
 
 local VERSION = "2" -- 2: ages carry the time of the last full scan; 1 (0.8.0) is ignored
 local MAX_MESSAGE = 255 -- SendAddonMessage limit
@@ -232,13 +232,12 @@ local function SharedStore()
   return KeepOrSellDB.sharedPrices[key]
 end
 
--- Auctionator price and freshness of an item in our own database
+-- Price and freshness of an item in our own database (Auctionator or Forever Ledger). While the auction house is
+-- open Forever Ledger doesn't count: at a neutral one its API returns that house's prices.
 local function OwnPrice(id, now)
-  local api = Auctionator and Auctionator.API and Auctionator.API.v1
-  if not (api and api.GetAuctionPriceByItemID and api.GetAuctionAgeByItemID) then return nil end
-  local price = api.GetAuctionPriceByItemID(addonName, id)
-  if not price then return nil end
-  return price, ns.OwnFreshness(api.GetAuctionAgeByItemID(addonName, id), ns.LastFullScan(), now)
+  local prices = ns.GetOwnPricesByID(id, ahOpenedAt ~= nil)
+  if not (prices.ah and prices.hasAge) then return nil end
+  return prices.ah, ns.OwnFreshness(prices.age, prices.seen or ns.LastFullScan(), now)
 end
 
 -- The freshest price we know for an item: our own or one shared earlier
@@ -319,9 +318,9 @@ local function ScheduleRefresh()
 end
 
 local function Asked(items, now)
-  -- without Auctionator there is nothing to answer with
+  -- without Auctionator or Forever Ledger there is nothing to answer with
   local api = Auctionator and Auctionator.API and Auctionator.API.v1
-  if not (api and api.GetAuctionPriceByItemID) then return end
+  if not (api and api.GetAuctionPriceByItemID or ns.HasForeverLedger and ns.HasForeverLedger()) then return end
   for _, item in ipairs(items) do
     pending[item.id] = pending[item.id] or {}
     table.insert(pending[item.id], ns.WireFreshness(item.days, item.visit, now) or NO_PRICE)

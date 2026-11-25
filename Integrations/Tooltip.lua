@@ -14,7 +14,7 @@ local function Money(copper)
   return text
 end
 
--- what else to know about the prices: who shared the auction price, TSM as its source, and for junk the rule
+-- what else to know about the prices: who shared the auction price, Forever Ledger or TSM as its source, and for junk the rule
 -- that made the auction house not worth it; nil when there is nothing
 local function PriceNote(prices, verdict, db)
   local notes = {}
@@ -23,6 +23,7 @@ local function PriceNote(prices, verdict, db)
     table.insert(notes, (prices.age or 0) > 0 and L.TIP_SHARED:format(prices.from, prices.age)
       or L.TIP_SHARED_TODAY:format(prices.from))
   end
+  if prices.source == "ledger" then table.insert(notes, L.TIP_LEDGER) end
   if prices.source == "tsm" then table.insert(notes, L.TIP_TSM) end
   if verdict.kind == "junk" and verdict.priceReason == "factor" then
     table.insert(notes, L.TIP_BELOW_FACTOR:format(db.factor))

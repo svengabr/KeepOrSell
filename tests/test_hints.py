@@ -40,10 +40,15 @@ class CollectTests(unittest.TestCase):
         # TSM prices already sort items into the auction house group
         self.assertEqual(self.collect(auctionator=False, tsm=True, ahVisited=False, stale=0), [])
 
+    def test_forever_ledger_hints_like_auctionator(self):
+        self.assertEqual(self.collect(ledger=True, ahVisited=True, stale=0), [])
+        self.assertIn("Visit the auction house", self.collect(ledger=True, ahVisited=False, stale=0)[0])
+        self.assertIn("older than 7 days", self.collect(ledger=True, ahVisited=True, stale=2)[0])
+
     def test_without_auctionator(self):
         hints = self.collect(auctionator=False, ahVisited=False, stale=0)
         self.assertEqual(len(hints), 1)
-        self.assertIn("Auctionator is not loaded", hints[0])
+        self.assertIn("Neither Auctionator nor Forever Ledger is loaded", hints[0])
 
     def test_never_scanned(self):
         hints = self.collect(auctionator=True, ahVisited=False, stale=3)

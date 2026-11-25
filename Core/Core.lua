@@ -153,7 +153,7 @@ frame:SetScript("OnEvent", function(_, event, arg1, ...)
     ns.ShareAuctionHouseShown()
     ns.UpdateSetup()
   elseif event == "AUCTION_HOUSE_CLOSED" then
-    -- an Auctionator scan brings new prices
+    -- a scan brings new prices
     ns.RefreshBaganator()
     ScheduleHints()
     ns.ShareAuctionHouseClosed()

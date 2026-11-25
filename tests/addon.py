@@ -61,7 +61,7 @@ KeepOrSellDB = {factor = 2, minProfit = 0, maxAge = 7, scrap = true, gear = true
   accountMode = true}
 """
 
-CORE_FILES = ("Locales.lua", "Starts.lua", "NewItems.lua", "Ruleset.lua", "Keep.lua", "Objectives.lua", "Prices.lua", "Filter.lua", "TSM.lua", "Gear.lua", "Professions.lua", "Account.lua", "Questie.lua", "Classify.lua")
+CORE_FILES = ("Locales.lua", "Starts.lua", "NewItems.lua", "Ruleset.lua", "Keep.lua", "Objectives.lua", "Prices.lua", "Filter.lua", "TSM.lua", "ForeverLedger.lua", "Gear.lua", "Professions.lua", "Account.lua", "Questie.lua", "Classify.lua")
 
 
 def load(files=CORE_FILES, stubs="", base=True):

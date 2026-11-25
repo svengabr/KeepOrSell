@@ -40,15 +40,16 @@ Want to keep something it would sell? **Alt+Right-click** it in your bags.
 | Addon | Needed? | What for |
 | --- | --- | --- |
 | [Baganator](https://www.curseforge.com/wow/addons/baganator) | yes | Shows the groups in your bags. |
-| [Auctionator](https://www.curseforge.com/wow/addons/auctionator) | yes | Prices. Scan the auction house once. |
+| [Auctionator](https://www.curseforge.com/wow/addons/auctionator) | yes, or Forever Ledger | Prices. Scan the auction house once. |
+| [Forever Ledger](https://www.curseforge.com/wow/addons/forever-ledger) | yes, or Auctionator | Prices too (0.29 or newer). With both, the more recent price counts. |
 | [Scrap](https://www.curseforge.com/wow/addons/scrap) | optional | Sells your junk automatically. |
 | [Questie](https://www.curseforge.com/wow/addons/questie) | optional | Keeps items for quests you haven't picked up yet, and junks quest items once their quests are done. |
-| [TradeSkillMaster](https://www.curseforge.com/wow/addons/tradeskill-master) | optional | Fills in prices Auctionator doesn't have. |
+| [TradeSkillMaster](https://www.curseforge.com/wow/addons/tradeskill-master) | optional | Fills in prices the others don't have. |
 
 ## Getting started
 
 1. Install it and log in. A setup window shows what's still missing and switches Baganator to category groups with one click. `/kos setup` opens it again.
-2. Scan the auction house once with Auctionator.
+2. Scan the auction house once with Auctionator or Forever Ledger.
 3. Open each of your profession windows once, so KeepOrSell knows your recipes.
 
 All options are under `/kos`.

@@ -5,12 +5,12 @@ local L = ns.L
 
 local PREFIX = "|cffffd200KeepOrSell:|r "
 
--- state: {auctionator, tsm, ahVisited, stale, open, unstacked, unopened = {names}}; open = bag slots of items to open,
+-- state: {auctionator, ledger (Forever Ledger), tsm, ahVisited, stale, open, unstacked, unopened = {names}}; open = bag slots of items to open,
 -- unstacked = {{name, slots}} of items that don't stack (ns.UnstackedList). Returns a list of texts. Pure.
 -- A missing price after a scan is no hint: nobody sells the item on the auction house.
 function ns.CollectHints(state, db)
   local hints = {}
-  if not state.auctionator then
+  if not (state.auctionator or state.ledger) then
     -- with TSM alone there are prices, just no scan or age to hint at
     if not state.tsm then table.insert(hints, L.HINT_NO_AUCTIONATOR) end
   elseif not state.ahVisited then
@@ -86,6 +86,7 @@ function ns.GetHints()
   local stale, open, unstacked = CountBags()
   return ns.CollectHints({
     auctionator = Auctionator and Auctionator.API and Auctionator.API.v1 and true or false,
+    ledger = ns.HasForeverLedger ~= nil and ns.HasForeverLedger(),
     tsm = TSM_API and TSM_API.GetCustomPriceValue and true or false,
     ahVisited = KeepOrSellDB.ahVisited == true,
     stale = stale,

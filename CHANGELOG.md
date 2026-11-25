@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.25.0
+
+- Forever Ledger as a price source (0.29 or newer): KeepOrSell reads the prices of your own Forever Ledger scans, next to Auctionator or instead of it. With both, the more recent price counts; from the same day Auctionator's does. The tooltip marks Forever Ledger prices with "(Forever Ledger)". "Maximum price age" applies to them, and they are shared in the group. Forever Ledger's prices are per item, so gear with random stats ("of the Eagle") gets the price of its cheapest version. Grey and white gear without an auction price counts as not worth auctioning after a full scan with Forever Ledger. Requested on CurseForge.
+
 ## 0.24.0
 
 - The addon's creator has a "KeepOrSell Creator" line in the tooltip.

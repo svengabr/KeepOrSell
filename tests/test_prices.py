@@ -345,5 +345,107 @@ class TSMLookupTests(unittest.TestCase):
         self.assertIsNone(ns.GetPrices("link4").ah)
 
 
+LEDGER_STUB = """
+LEDGER = {}        -- itemID -> {typical, cheapest, listed, scan time}
+function GetServerTime() return %d end
+ForeverLedgerAPI = {
+  version = 1,
+  GetPrice = function(id)
+    assert(type(id) == "number")
+    if LEDGER_FAIL then error("broken") end
+    if LEDGER[id] then return unpack(LEDGER[id], 1, 4) end
+  end,
+  GetLastFullScan = function() return LEDGER_SCAN end,
+}
+""" % NOW
+
+
+class ForeverLedgerTests(unittest.TestCase):
+    FILES = ("Prices.lua", "TSM.lua", "ForeverLedger.lua")
+
+    def load(self, extra=""):
+        return load(self.FILES, stubs=LEDGER_STUB + extra)
+
+    def prices(self, extra):
+        return self.load(extra)[1].GetPrices("link4")
+
+    def test_alone_gives_cheapest_price_with_age(self):
+        p = self.prices("Auctionator = nil; LEDGER[4] = {250, 200, 8, %d}" % (NOW - 2 * DAY - 100))
+        self.assertEqual((p.ah, p.vendor, p.age, p.hasAge, p.source), (200, 13, 2, True, "ledger"))
+
+    def test_old_price_is_stale(self):
+        rt, ns = self.load("Auctionator = nil; LEDGER[4] = {250, 200, 8, %d}" % (NOW - 9 * DAY))
+        self.assertTrue(ns.IsStale(ns.GetPrices("link4"), rt.eval("KeepOrSellDB")))
+
+    def test_clock_ahead_of_the_server_counts_as_now(self):
+        p = self.prices("Auctionator = nil; LEDGER[4] = {250, 200, 8, %d}" % (NOW + 500))
+        self.assertEqual((p.age, p.seen), (0, NOW))
+
+    def test_fills_a_price_auctionator_lacks(self):
+        self.assertEqual(self.prices("LEDGER[4] = {250, 200, 8, %d}" % NOW).source, "ledger")
+
+    def test_fewer_days_than_auctionator_wins(self):
+        p = self.prices('AH["link4"] = 300; AGE["link4"] = 5; LEDGER[4] = {250, 200, 8, %d}' % (NOW - DAY))
+        self.assertEqual((p.ah, p.age, p.source), (200, 1, "ledger"))
+
+    def test_same_day_keeps_auctionator(self):
+        # Auctionator knows the versions of random-stat gear, Forever Ledger's API only the item
+        p = self.prices('AH["link4"] = 300; AGE["link4"] = 1; LEDGER[4] = {250, 200, 8, %d}' % (NOW - DAY))
+        self.assertEqual((p.ah, p.source), (300, None))
+
+    def test_auctionator_without_age_api_wins(self):
+        p = self.prices("""Auctionator.API.v1.GetAuctionAgeByItemLink = nil
+          AH["link4"] = 300; LEDGER[4] = {250, 200, 8, %d}""" % NOW)
+        self.assertEqual(p.ah, 300)
+
+    def test_auctionator_price_too_old_for_an_age_loses(self):
+        p = self.prices("""Auctionator.API.v1.GetAuctionAgeByItemLink = function() return nil end
+          AH["link4"] = 300; LEDGER[4] = {250, 200, 8, %d}""" % (NOW - 15 * DAY))
+        self.assertEqual((p.ah, p.age), (200, 15))
+
+    def test_none_listed_is_no_price(self):
+        self.assertIsNone(self.prices("Auctionator = nil; LEDGER[4] = {nil, nil, 0, %d}" % NOW).ah)
+
+    def test_beats_tsm(self):
+        p = self.prices(TSM_STUB + 'Auctionator = nil; TSM["i:4"] = 900; LEDGER[4] = {250, 200, 8, %d}' % NOW)
+        self.assertEqual((p.ah, p.source), (200, "ledger"))
+
+    def test_by_item_id(self):
+        rt, ns = self.load("Auctionator = nil; LEDGER[10940] = {60, 50, 8, %d}" % (NOW - DAY))
+        p = ns.GetPricesByID(10940)
+        self.assertEqual((p.ah, p.age, p.hasAge), (50, 1, True))
+
+    def test_error_broken_or_newer_api_gives_no_price(self):
+        for extra in ("LEDGER_FAIL = true", "ForeverLedgerAPI.version = 2", "ForeverLedgerAPI.GetPrice = nil",
+                      "ForeverLedgerAPI = nil"):
+            self.assertIsNone(self.prices("Auctionator = nil; LEDGER[4] = {250, 200, 8, %d}; %s" % (NOW, extra)).ah, extra)
+
+    SHARE = """
+      KeepOrSellDB.share = true
+      function UnitFactionGroup() return "Horde" end
+      KeepOrSellDB.sharedPrices = {["Realm-Horde"] = {[4] = {price = 700, seen = %d, visit = %d, from = "Sven"}}}
+    """
+
+    def test_shared_price_from_a_later_scan_today_wins(self):
+        ledger = "Auctionator = nil; LEDGER[4] = {250, 200, 8, %d}" % (NOW - 3600)
+        self.assertEqual(self.prices(ledger + self.SHARE % (NOW - 600, NOW - 600)).ah, 700)
+        p = self.prices(ledger + self.SHARE % (NOW - 7200, NOW - 7200))
+        self.assertEqual((p.ah, p.source), (200, "ledger"))
+
+    def has_data(self, extra):
+        rt, ns = self.load("function UnitFactionGroup() return 'Horde' end; KeepOrSellDB.ahVisited = true; " + extra)
+        return ns.HasPriceData()
+
+    def test_price_data_needs_a_full_scan_of_this_house(self):
+        # only then a missing price means nobody sells the item
+        scanned = "KeepOrSellDB.fullScans = {['Realm-Horde'] = %d}; LEDGER_SCAN = %d; " % (NOW, NOW)
+        self.assertTrue(self.has_data("Auctionator = nil; " + scanned))
+        self.assertFalse(self.has_data("Auctionator = nil"))
+        self.assertFalse(self.has_data("Auctionator = nil; LEDGER_SCAN = %d" % NOW))
+        self.assertFalse(self.has_data("Auctionator = nil; " + scanned + "LEDGER_SCAN = nil"))
+        self.assertFalse(self.has_data("Auctionator = nil; " + scanned + "ForeverLedgerAPI = nil"))
+        self.assertTrue(self.has_data(""))  # with Auctionator a visit is enough, as before
+
+
 if __name__ == "__main__":
     unittest.main()

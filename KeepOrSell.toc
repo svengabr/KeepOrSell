@@ -11,7 +11,7 @@
 #@end-non-debug@
 ## IconTexture: Interface\AddOns\KeepOrSell\Icon
 ## SavedVariables: KeepOrSellDB
-## OptionalDeps: Baganator, Auctionator, Scrap, QuestieDB, TradeSkillMaster
+## OptionalDeps: Baganator, Auctionator, Scrap, QuestieDB, TradeSkillMaster, ForeverLedger
 ## X-License: GPL-3.0-or-later
 ## X-Curse-Project-ID: 1725855
 
@@ -23,6 +23,7 @@ Rules\Keep.lua
 Rules\Objectives.lua
 Rules\Prices.lua
 Integrations\TSM.lua
+Integrations\ForeverLedger.lua
 Rules\Share.lua
 Rules\Gear.lua
 Rules\Professions.lua

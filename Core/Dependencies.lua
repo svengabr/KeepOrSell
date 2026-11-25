@@ -5,6 +5,7 @@ local L = ns.L
 -- name = addon folder; use = what KeepOrSell needs it for
 ns.DEPENDENCIES = {
   {name = "Auctionator", use = L.DEP_AUCTIONATOR},
+  {name = "ForeverLedger", use = L.DEP_LEDGER},
   {name = "TradeSkillMaster", use = L.DEP_TSM},
   {name = "Baganator", use = L.DEP_BAGANATOR},
   {name = "Scrap", use = L.DEP_SCRAP},
@@ -13,9 +14,10 @@ ns.DEPENDENCIES = {
 
 -- Options that do nothing without the addon; a list means any of them is enough
 ns.OPTION_NEEDS = {
-  factor = {"Auctionator", "TradeSkillMaster"}, minProfit = {"Auctionator", "TradeSkillMaster"},
-  maxAge = "Auctionator", -- TSM has no price age
-  greyVendor = {"Auctionator", "TradeSkillMaster"},
+  factor = {"Auctionator", "ForeverLedger", "TradeSkillMaster"},
+  minProfit = {"Auctionator", "ForeverLedger", "TradeSkillMaster"},
+  maxAge = {"Auctionator", "ForeverLedger"}, -- TSM has no price age
+  greyVendor = {"Auctionator", "ForeverLedger", "TradeSkillMaster"},
   setSource = "Baganator", destroy = "Baganator", bagValue = "Baganator", questie = "Questie",
 }
 
@@ -30,8 +32,9 @@ function ns.DependencyStatus(loaded, exists, compatible)
   return exists and "disabled" or "missing"
 end
 
--- KeepOrSell talks to QuestieDB, not Questie itself
+-- KeepOrSell talks to QuestieDB, not Questie itself; Forever Ledger before 0.29.0 has no API
 local COMPATIBLE = {
+  ForeverLedger = function() return ns.HasForeverLedger ~= nil and ns.HasForeverLedger() end,
   Questie = function() return ns.HasQuestieDB ~= nil and ns.HasQuestieDB() end,
 }
 

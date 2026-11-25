@@ -178,6 +178,15 @@ class OptionsTests(unittest.TestCase):
         self.assertTrue(ready("minProfit"))
         self.assertFalse(ready("maxAge"))  # TSM has no price age
 
+    def test_price_options_work_with_forever_ledger_alone(self):
+        ready = lambda key: self.ns.IsAnyDependencyReady(self.ns.OPTION_NEEDS[key])
+        self.rt.execute("LOADED.ForeverLedger = true")
+        self.assertEqual(self.ns.GetDependencyStatus("ForeverLedger"), "outdated")
+        self.assertFalse(ready("factor"))
+        self.ns.HasForeverLedger = self.rt.eval("function() return true end")
+        for key in ("factor", "minProfit", "maxAge", "greyVendor"):
+            self.assertTrue(ready(key), key)
+
     def test_questie_needs_matching_database(self):
         self.rt.execute("LOADED.Questie = true")
         self.assertFalse(self.ns.IsAnyDependencyReady(self.ns.OPTION_NEEDS["questie"]))
