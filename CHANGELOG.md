@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.25.1
+
+- Scrap no longer sells what KeepOrSell keeps when only Scrap's own automatic calls it junk ("Automatic Optimization", which learns from your sales, or filters like "Low Consumables"). This covers items for quests and professions, items for alts, keep marks, class items, tools, equipment sets, usable quest rewards and keys. Items you put on Scrap's junk list yourself are still sold. Reported on CurseForge with a quest fish (Darkshore Grouper).
+
 ## 0.25.0
 
 - Forever Ledger as a price source (0.29 or newer): KeepOrSell reads the prices of your own Forever Ledger scans, next to Auctionator or instead of it. With both, the more recent price counts; from the same day Auctionator's does. The tooltip marks Forever Ledger prices with "(Forever Ledger)". "Maximum price age" applies to them, and they are shared in the group. Forever Ledger's prices are per item, so gear with random stats ("of the Eagle") gets the price of its cheapest version. Grey and white gear without an auction price counts as not worth auctioning after a full scan with Forever Ledger. Requested on CurseForge.

@@ -1,5 +1,7 @@
 -- Extends Scrap: whatever KeepOrSell classifies as junk (cheap trade goods, gear the class can never wear).
--- Uses Scrap's public API Scrap:IsJunk(id, bag, slot); Scrap's own list takes precedence.
+-- The other way round, Scrap's automatic (its filters, what it learned from sales) never takes an item
+-- KeepOrSell keeps. Uses Scrap's public API Scrap:IsJunk(id, bag, slot); the player's own list in Scrap
+-- (Scrap.junk) takes precedence.
 local _, ns = ...
 
 local function ItemLink(id, bag, slot)
@@ -16,8 +18,12 @@ local function Location(bag, slot)
   end
 end
 
+local function Verdict(id, bag, slot)
+  return ns.Classify(id, ItemLink(id, bag, slot), Location(bag, slot))
+end
+
 function ns.ShouldScrap(id, bag, slot)
-  return ns.Classify(id, ItemLink(id, bag, slot), Location(bag, slot)).kind == "junk"
+  return Verdict(id, bag, slot).kind == "junk"
 end
 
 function ns.HookScrap()
@@ -25,9 +31,10 @@ function ns.HookScrap()
   local original = Scrap.IsJunk
   Scrap.IsJunk = function(self, id, ...)
     local junk = original(self, id, ...)
-    if junk then return junk end
-    -- explicitly marked as "not junk" in Scrap by the player
-    if not id or (self.junk and self.junk[id] == false) then return junk end
+    -- explicitly marked as junk or not junk in Scrap by the player
+    if not id or (self.junk and self.junk[id] ~= nil) then return junk end
+    -- Scrap's automatic doesn't know what quests or professions need
+    if junk then return not ns.IsKeepVerdict(Verdict(id, ...)) end
     if ns.ShouldScrap(id, ...) then return true end
     return junk
   end

@@ -428,7 +428,8 @@ local KEPT_REASONS = {kept = true, classitem = true, tool = true, equipset = tru
 -- true if KeepOrSell keeps an item with this verdict: quest, profession, for alts, a keep mark, class item,
 -- tool, equipment set, usable quest reward or key. A filter keep rule counts like a keep mark: it is the only
 -- filter verdict without a group (a category junk rule waiting for a price has needsPrice). Used by the loss
--- warnings and the destroy button, which must not destroy these even when Scrap's own list calls them junk. Pure.
+-- warnings, the Scrap hook (Scrap's automatic must not sell these) and the destroy button, which must not destroy
+-- these even when Scrap's own list calls them junk. Pure.
 function ns.IsKeepVerdict(verdict)
   if not verdict then return false end
   if verdict.reason == "filter" and not verdict.kind and not verdict.needsPrice then return true end
