@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.24.0
+
+- The addon's creator has a "KeepOrSell Creator" line in the tooltip.
+
 ## 0.23.0
 
 - Fix: items in the reagent bag were left out of the bag scan, so the bag value line showed no auction house value for reagents there (herbs, cloth …), price sharing never asked for them, and the hints and the destroy button didn't see them. Junk in the reagent bag is not destroyed to make room, since its slot only takes reagents; loot that is a crafting reagent counts as fitting while the reagent bag has a free slot.

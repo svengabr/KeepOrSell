@@ -36,6 +36,7 @@ UI\OptionSections.lua
 Integrations\Scrap.lua
 Integrations\Baganator.lua
 Integrations\Tooltip.lua
+Integrations\Creator.lua
 UI\Hints.lua
 UI\Help.lua
 UI\Style.lua
