@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.26.0
+
+- New options section "Baganator groups": turn each KeepOrSell group in Baganator on or off on its own (Quest, Open, Profession, AuctionHouse, Disenchant, For alts, Unstacked). Items of a group that is off stay in Baganator's own categories; KeepOrSell still decides the same way, the tooltip still explains it, and kept items are still never junk. Takes effect right away, without a reload. The "Show groups in Baganator" switch moved into the same section and still turns all groups off at once. Requested on CurseForge.
+
 ## 0.25.1
 
 - Scrap no longer sells what KeepOrSell keeps when only Scrap's own automatic calls it junk ("Automatic Optimization", which learns from your sales, or filters like "Low Consumables"). This covers items for quests and professions, items for alts, keep marks, class items, tools, equipment sets, usable quest rewards and keys. Items you put on Scrap's junk list yourself are still sold. Reported on CurseForge with a quest fish (Darkshore Grouper).
