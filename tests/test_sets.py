@@ -47,6 +47,26 @@ class ItemSetTests(unittest.TestCase):
     def test_unknown_item(self):
         self.assertEqual(self.ns.ItemSets(None, None), None)
 
+    def test_hidden_group_falls_back_to_baganator(self):
+        self.rt.execute("KeepOrSellDB.groupQuest = false")
+        self.assertEqual(names(self.ns, 1), [])
+        self.assertEqual(names(self.ns, 3), ["AuctionHouse"])
+        self.rt.execute("KeepOrSellDB.groupAH = false")
+        self.assertEqual(names(self.ns, 3), [])
+
+    def test_missing_switch_means_shown(self):
+        self.rt.execute("KeepOrSellDB.groupQuest = nil")
+        self.assertEqual(names(self.ns, 1), ["Quest"])
+
+    def test_group_switch_rule(self):
+        shown = self.ns.GroupShown
+        db = self.rt.eval("{groupQuest = false, groupAH = true}")
+        self.assertFalse(shown(db, "quest"))
+        self.assertTrue(shown(db, "ah"))
+        self.assertTrue(shown(db, "open"))
+        self.assertFalse(shown(db, "junk"))
+        self.assertFalse(shown(db, None))
+
     def test_short_group_name(self):
         self.assertEqual(self.ns.L.SET_QUEST, "Quest")
 
@@ -82,6 +102,15 @@ class UnstackedSetTests(unittest.TestCase):
 
     def test_gear_stays(self):
         self.assertEqual(names(self.ns, 5), [])
+
+    def test_unstacked_group_can_be_hidden(self):
+        self.rt.execute("KeepOrSellDB.groupUnstacked = false")
+        self.assertEqual(names(self.ns, 9), [])
+
+    def test_hidden_group_leaves_no_unstacked(self):
+        # an AH item whose group is off falls back to Baganator, it doesn't become "Unstacked"
+        self.rt.execute("KeepOrSellDB.groupAH = false")
+        self.assertEqual(names(self.ns, 3), [])
 
     def test_other_groups_win(self):
         self.assertEqual(names(self.ns, 3), ["AuctionHouse"])

@@ -51,8 +51,13 @@ ns.OPTION_SECTIONS = {
   {id = "display", label = "SECTION_DISPLAY", icon = "INV_Misc_Spyglass_02", columns = {
     {Check("tooltip", "OPT_TOOLTIP"), Check("hints", "OPT_HINTS", true), Check("helpButton", "OPT_HELP_BUTTON", true),
       Check("destroy", "OPT_DESTROY", true), Check("destroyConfirm", "OPT_DESTROY_CONFIRM")},
-    {Check("lootCoins", "OPT_LOOT_COINS"), Check("rewardCoin", "OPT_REWARD_COIN"), Check("lossWarnings", "OPT_LOSS_WARNINGS"), Check("bagValue", "OPT_BAG_VALUE", true),
-      NeedsReload(Check("setSource", "OPT_SETS"))},
+    {Check("lootCoins", "OPT_LOOT_COINS"), Check("rewardCoin", "OPT_REWARD_COIN"), Check("lossWarnings", "OPT_LOSS_WARNINGS"), Check("bagValue", "OPT_BAG_VALUE", true)},
+  }},
+  {id = "groups", label = "SECTION_GROUPS", icon = "INV_Misc_Bag_10", columns = {
+    {NeedsReload(Check("setSource", "OPT_SETS")), Check("groupQuest", "OPT_GROUP_QUEST", true),
+      Check("groupOpen", "OPT_GROUP_OPEN", true), Check("groupProfession", "OPT_GROUP_PROFESSION", true)},
+    {Check("groupAH", "OPT_GROUP_AH", true), Check("groupDisenchant", "OPT_GROUP_DISENCHANT", true),
+      Check("groupAlt", "OPT_GROUP_ALT", true), Check("groupUnstacked", "OPT_GROUP_UNSTACKED", true)},
   }},
   {id = "addons", label = "DEPENDENCIES", icon = "INV_Misc_Gear_01", columns = {
     {{kind = "dependencies"}},

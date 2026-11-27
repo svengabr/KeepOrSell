@@ -19,6 +19,8 @@ ns.OPTION_NEEDS = {
   maxAge = {"Auctionator", "ForeverLedger"}, -- TSM has no price age
   greyVendor = {"Auctionator", "ForeverLedger", "TradeSkillMaster"},
   setSource = "Baganator", destroy = "Baganator", bagValue = "Baganator", questie = "Questie",
+  groupQuest = "Baganator", groupOpen = "Baganator", groupProfession = "Baganator", groupAH = "Baganator",
+  groupDisenchant = "Baganator", groupAlt = "Baganator", groupUnstacked = "Baganator",
 }
 
 -- OPTION_NEEDS value as a list of addon names. Pure.

@@ -8,9 +8,11 @@ FILES = ("Locales.lua", "Prices.lua", "OptionSections.lua")
 # every option the Blizzard settings page showed before the own window, plus the "? KoS" switch
 OPTIONS = ["factor", "minProfit", "maxAge", "share", "greyVendor", "scrap", "gear", "plainGear", "recipeJunk", "profession",
            "upcomingReagents", "questie", "disenchant", "openable", "keepClick", "accountMode", "tooltip", "hints",
-           "helpButton", "destroy", "destroyConfirm", "lootCoins", "rewardCoin", "lossWarnings", "bagValue", "setSource"]
+           "helpButton", "destroy", "destroyConfirm", "lootCoins", "rewardCoin", "lossWarnings", "bagValue", "setSource",
+           "groupQuest", "groupOpen", "groupProfession", "groupAH", "groupDisenchant", "groupAlt", "groupUnstacked"]
+GROUPS = {"groupQuest", "groupOpen", "groupProfession", "groupAH", "groupDisenchant", "groupAlt", "groupUnstacked"}
 REFRESH = {"factor", "minProfit", "maxAge", "share", "greyVendor", "scrap", "gear", "plainGear", "recipeJunk", "profession", "upcomingReagents", "questie",
-           "disenchant", "openable", "accountMode", "hints", "helpButton", "destroy", "bagValue"}
+           "disenchant", "openable", "accountMode", "hints", "helpButton", "destroy", "bagValue"} | GROUPS
 ACTIONS = {"ForgetKept", "ShowFilterWindow", "UndoFilterCommand", "ClearFilterCommand", "ShowSetup"}
 
 
@@ -33,7 +35,7 @@ class OptionSectionTests(unittest.TestCase):
         self.assertEqual(sorted(keys), sorted(OPTIONS))
 
     def test_section_order(self):
-        self.assertEqual([s.id for s in self.sections()], ["ah", "junk", "keep", "account", "filter", "display", "addons"])
+        self.assertEqual([s.id for s in self.sections()], ["ah", "junk", "keep", "account", "filter", "display", "groups", "addons"])
 
     def test_section_controls_left_column_first(self):
         self.assertEqual([c.key for c in self.ns.SectionControls("junk").values()], ["scrap", "gear", "plainGear", "greyVendor", "recipeJunk"])
@@ -96,6 +98,11 @@ class OptionSectionTests(unittest.TestCase):
 
     def test_only_baganator_groups_need_a_reload(self):
         self.assertEqual([c.key for c in self.controls() if c.reload], ["setSource"])
+
+    def test_group_switches_live_in_their_own_section(self):
+        keys = [c.key for c in self.ns.SectionControls("groups").values()]
+        self.assertEqual(keys, ["setSource", "groupQuest", "groupOpen", "groupProfession", "groupAH", "groupDisenchant",
+                                "groupAlt", "groupUnstacked"])
 
     def test_special_rows(self):
         kinds = [c.kind for c in self.controls()]

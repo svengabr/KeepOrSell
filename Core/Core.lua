@@ -6,6 +6,8 @@ local DEFAULTS = {
   profession = true, gear = true, plainGear = true, recipeJunk = true, questie = true, tooltip = true, hints = true, destroy = true, destroyConfirm = true, bagValue = true, share = true,
   disenchant = true, openable = true, keepClick = true, lootCoins = true, rewardCoin = true, upcomingReagents = true,
   lossWarnings = true, accountMode = true, helpButton = true, greyVendor = true,
+  groupQuest = true, groupOpen = true, groupProfession = true, groupAH = true, groupDisenchant = true, groupAlt = true,
+  groupUnstacked = true,
 }
 
 local frame = CreateFrame("Frame")

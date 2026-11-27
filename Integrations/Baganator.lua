@@ -49,6 +49,19 @@ function ns.RegisterBaganator()
   end
 end
 
+-- Option per group: the player may hide a group, its items then stay in Baganator's own categories
+local GROUP_OPTION = {
+  quest = "groupQuest", open = "groupOpen", profession = "groupProfession", ah = "groupAH",
+  disenchant = "groupDisenchant", alt = "groupAlt", unstacked = "groupUnstacked",
+}
+
+-- Whether the group of this kind shows in Baganator; a missing value means on. Pure.
+function ns.GroupShown(db, kind)
+  local key = kind and GROUP_OPTION[kind]
+  if not key then return false end
+  return db[key] ~= false
+end
+
 local INFO = {
   quest = {name = ns.L.SET_QUEST, iconTexture = ICON},
   open = {name = ns.L.SET_OPEN, iconTexture = "Interface\\Icons\\INV_Box_01"},
@@ -78,8 +91,12 @@ end
 function ns.ItemSets(itemID, itemLink, location)
   if not itemID then return nil end
   local kind = ns.Classify(itemID, itemLink, location).kind
-  if INFO[kind] then return {INFO[kind]} end
-  if ns.IsUnstackedSet(kind, ns.IsUnstackable(itemID), ns.CountSlots(itemID), IsGear(itemID)) then
+  if INFO[kind] then
+    if ns.GroupShown(KeepOrSellDB, kind) then return {INFO[kind]} end
+    return nil
+  end
+  if ns.GroupShown(KeepOrSellDB, "unstacked")
+    and ns.IsUnstackedSet(kind, ns.IsUnstackable(itemID), ns.CountSlots(itemID), IsGear(itemID)) then
     return {UNSTACKED}
   end
 end

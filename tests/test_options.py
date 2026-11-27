@@ -163,7 +163,7 @@ class OptionsTests(unittest.TestCase):
 
     def test_options_need_their_addon(self):
         ready = lambda key: self.ns.IsAnyDependencyReady(self.ns.OPTION_NEEDS[key])
-        for key in ("factor", "minProfit", "maxAge", "setSource", "destroy", "bagValue", "questie"):
+        for key in ("factor", "minProfit", "maxAge", "setSource", "destroy", "bagValue", "questie", "groupQuest", "groupAH"):
             self.assertFalse(ready(key), key)
         for key in ("scrap", "gear", "tooltip", "hints", "share", "helpButton"):
             self.assertIsNone(self.ns.OPTION_NEEDS[key], key)

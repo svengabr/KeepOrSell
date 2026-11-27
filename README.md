@@ -25,6 +25,8 @@ Hover an item and the tooltip says which group it's in and why. When KeepOrSell 
 
 Want to keep something it would sell? **Alt+Right-click** it in your bags.
 
+Only want some of the groups? Under `/kos` → Baganator groups you can turn each one off on its own. Its items then stay in Baganator's own categories, and KeepOrSell still decides as before.
+
 ## Extras
 
 - **Destroy button:** bags full and no vendor around? One click destroys the cheapest junk. It never touches rare or better items.
